@@ -1,0 +1,13 @@
+<resources>
+    <style name="Theme.Rewriter" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <!-- Used by RewriteActivity so it floats as a dialog over the host app -->
+    <style name="Theme.Rewriter.Translucent" parent="Theme.Rewriter">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    </style>
+</resources>
