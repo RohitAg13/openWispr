@@ -1,7 +1,9 @@
 package com.voicerewriter
 
 import android.content.Context
+import android.util.Log
 import com.whispercpp.whisper.WhisperContext
+import com.whispercpp.whisper.WhisperCpuConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -26,6 +28,8 @@ object LocalWhisperStt {
         if (!WhisperModelManager.isReady(context, id)) {
             throw IllegalStateException("On-device model not downloaded. Open Settings → Voice → Download model.")
         }
+        val seconds = samples.size / AudioRecorder.SAMPLE_RATE.toFloat()
+        val t0 = System.nanoTime()
         val whisper = loadLock.withLock {
             if (ctx == null || loadedId != id) {
                 ctx?.let { runCatching { it.release() } }
@@ -36,8 +40,16 @@ object LocalWhisperStt {
             }
             ctx!!
         }
+        val tLoaded = System.nanoTime()
         // transcribeData runs on whisper's own single-thread dispatcher internally.
         val raw = whisper.transcribeData(samples, printTimestamp = false)
+        val tDone = System.nanoTime()
+        Log.i(
+            "LocalWhisperStt",
+            "model=$id audio=${"%.1f".format(seconds)}s " +
+                "load=${(tLoaded - t0) / 1_000_000}ms infer=${(tDone - tLoaded) / 1_000_000}ms " +
+                "threads=${WhisperCpuConfig.preferredThreadCount}",
+        )
         return cleanTranscript(raw)
     }
 
