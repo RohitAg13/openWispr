@@ -50,6 +50,15 @@ object Defaults {
     )
 
     val PROVIDERS: Map<String, Provider> = mapOf(
+        "local" to Provider(
+            id = "local",
+            label = "On-device (Gemma / Qwen)",
+            endpoint = "",
+            defaultModel = "gemma3-270m",
+            keyHelp = "Runs a small LLM on your phone — offline, private, no API key. Pick and download a model below.",
+            keyUrl = "",
+            modelHint = "On-device model (managed below).",
+        ),
         "anthropic" to Provider(
             id = "anthropic",
             label = "Anthropic (Claude)",

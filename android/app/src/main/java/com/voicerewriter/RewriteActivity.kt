@@ -166,6 +166,15 @@ class RewriteActivity : ComponentActivity() {
         cb.setPrimaryClip(ClipData.newPlainText("rewrite", text))
     }
 
+    /** Rewrite via the on-device LLM or the cloud, depending on the chosen provider. */
+    private fun streamFor(s: Settings, prompt: String, text: String): kotlinx.coroutines.flow.Flow<String> =
+        if (s.provider == "local") LocalLlmEngine.streamWithPrompt(applicationContext, s, prompt, text)
+        else RewriteEngine.streamWithPrompt(s, prompt, text)
+
+    /** Whether the chosen LLM provider is ready to run (key set, or model downloaded). */
+    private fun llmReady(s: Settings): Boolean =
+        if (s.provider == "local") LlmModelManager.isReady(this, s.model) else s.isConfigured
+
     // ---------------- voice sheet ----------------
 
     private enum class Stage { IDLE, RECORDING, TRANSCRIBING, PROCESSING, DONE, ERROR }
@@ -207,7 +216,7 @@ class RewriteActivity : ComponentActivity() {
                     return
                 }
                 stage = Stage.PROCESSING
-                val flow = RewriteEngine.streamInstruction(s, spoken, target)
+                val flow = streamFor(s, "${Defaults.VOICE_COMMAND_PROMPT} ${spoken.trim()}", target)
                 streamJob = scope.launch { collectInto(flow, { output += it }, { e ->
                     error = e; stage = Stage.ERROR
                 }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }
@@ -219,7 +228,7 @@ class RewriteActivity : ComponentActivity() {
                     return
                 }
                 stage = Stage.PROCESSING
-                val flow = RewriteEngine.streamDictationCleanup(s, spoken)
+                val flow = streamFor(s, Defaults.DICTATION_PROMPT, spoken)
                 streamJob = scope.launch { collectInto(flow, { output += it }, { e ->
                     error = e; stage = Stage.ERROR
                 }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }
@@ -486,12 +495,14 @@ class RewriteActivity : ComponentActivity() {
             streaming = true
             streamJob = scope.launch {
                 val settings = repo.get()
-                if (!settings.isConfigured) {
-                    error = "No API key set. Open OpenWispr to configure it."
+                if (!llmReady(settings)) {
+                    error = if (settings.provider == "local")
+                        "On-device model not downloaded. Open OpenWispr → Save settings."
+                    else "No API key set. Open OpenWispr to configure it."
                     streaming = false
                     return@launch
                 }
-                RewriteEngine.stream(settings, actionId, sourceState.value)
+                streamFor(settings, Defaults.DEFAULT_PROMPTS.getValue(actionId), sourceState.value)
                     .catch { e ->
                         error = e.message ?: e.toString()
                         streaming = false

@@ -126,6 +126,9 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var antiAI by remember { mutableStateOf(true) }
     var temperature by remember { mutableStateOf(Defaults.DEFAULT_TEMPERATURE.toFloat()) }
     var providerMenu by remember { mutableStateOf(false) }
+    var llmModelMenu by remember { mutableStateOf(false) }
+    var llmReady by remember { mutableStateOf(false) }
+    var llmProgress by remember { mutableStateOf<Float?>(null) } // non-null while downloading
 
     // Voice / speech-to-text
     var sttProvider by remember { mutableStateOf(Defaults.DEFAULT_STT_PROVIDER) }
@@ -161,6 +164,10 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         a11yEnabled = isAccessibilityEnabled(context)
         modelReady = WhisperModelManager.isReady(context)
         loaded = true
+    }
+    // Refresh on-device LLM readiness when the provider/model selection changes.
+    LaunchedEffect(provider, model) {
+        llmReady = provider == "local" && LlmModelManager.isReady(context, model)
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text("OpenWispr") }) }) { pad ->
@@ -245,36 +252,114 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 }
             }
 
-            if (provider == "custom") {
+            if (provider == "local") {
+                // On-device LLM: model picker + one-time download.
+                ExposedDropdownMenuBox(
+                    expanded = llmModelMenu,
+                    onExpandedChange = { llmModelMenu = it },
+                ) {
+                    val sel = LlmModelManager.model(model)
+                    OutlinedTextField(
+                        value = "${sel.label} (${sel.sizeLabel})",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("On-device model") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = llmModelMenu) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = llmModelMenu,
+                        onDismissRequest = { llmModelMenu = false },
+                    ) {
+                        LlmModelManager.MODELS.forEach { m ->
+                            DropdownMenuItem(
+                                text = { Text("${m.label} (${m.sizeLabel})") },
+                                onClick = { model = m.id; llmModelMenu = false },
+                            )
+                        }
+                    }
+                }
+                val downloading = llmProgress != null
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            when {
+                                llmReady -> "Ready — runs offline on this phone."
+                                downloading -> "Downloading… ${((llmProgress ?: 0f) * 100).toInt()}%"
+                                else -> "Not downloaded (${LlmModelManager.model(model).sizeLabel}, one time)."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (llmReady) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!llmReady) {
+                        Button(
+                            enabled = !downloading,
+                            onClick = {
+                                val id = model
+                                llmProgress = 0f
+                                launch {
+                                    try {
+                                        LlmModelManager.download(context, id) { p -> llmProgress = p }
+                                        llmReady = true
+                                        llmProgress = null
+                                        Toast.makeText(context, "Model ready", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        llmProgress = null
+                                        Toast.makeText(context, e.message ?: "Download failed", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                        ) { Text(if (downloading) "…" else "Download") }
+                    }
+                }
+                if (downloading) {
+                    LinearProgressIndicator(
+                        progress = { llmProgress ?: 0f },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Text(
+                    "Small on-device models are best for dictation cleanup; full voice rewriting is weaker than cloud.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                if (provider == "custom") {
+                    OutlinedTextField(
+                        value = customEndpoint,
+                        onValueChange = { customEndpoint = it },
+                        label = { Text("Endpoint URL") },
+                        placeholder = { Text("https://…/v1/chat/completions") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 OutlinedTextField(
-                    value = customEndpoint,
-                    onValueChange = { customEndpoint = it },
-                    label = { Text("Endpoint URL") },
-                    placeholder = { Text("https://…/v1/chat/completions") },
+                    value = model,
+                    onValueChange = { model = it },
+                    label = { Text("Model") },
+                    supportingText = {
+                        Defaults.PROVIDERS[provider]?.modelHint?.let { Text(it) }
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                OutlinedTextField(
+                    value = apiKey,
+                    onValueChange = { apiKey = it },
+                    label = { Text("API key") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-
-            OutlinedTextField(
-                value = model,
-                onValueChange = { model = it },
-                label = { Text("Model") },
-                supportingText = {
-                    Defaults.PROVIDERS[provider]?.modelHint?.let { Text(it) }
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = apiKey,
-                onValueChange = { apiKey = it },
-                label = { Text("API key") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-            )
 
             OutlinedTextField(
                 value = voice,

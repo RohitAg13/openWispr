@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "OpenWispr"
 include(":app")
 include(":lib")
+include(":llm")

@@ -36,6 +36,13 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        // The on-device LLM loads ggml backend .so files from nativeLibraryDir at
+        // runtime, so they must be extracted on install (matches extractNativeLibs=true).
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {
@@ -57,4 +64,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     implementation(project(":lib")) // on-device whisper.cpp
+    implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
 }

@@ -91,23 +91,27 @@ object RewriteEngine {
      * extension's port.onDisconnect).
      */
     fun stream(settings: Settings, actionId: String, text: String): Flow<String> =
-        streamPrompt(settings, promptFor(actionId), text)
+        streamWithPrompt(settings, promptFor(actionId), text)
 
     /**
      * Dictate-fresh cleanup: turn a raw speech transcript into clean written text
      * without changing meaning. (Defaults.DICTATION_PROMPT)
      */
     fun streamDictationCleanup(settings: Settings, transcript: String): Flow<String> =
-        streamPrompt(settings, Defaults.DICTATION_PROMPT, transcript)
+        streamWithPrompt(settings, Defaults.DICTATION_PROMPT, transcript)
 
     /**
      * Rewrite-clipboard mode: [instruction] is the spoken command and [text] is the
      * clipboard contents it operates on. (Defaults.VOICE_COMMAND_PROMPT)
      */
     fun streamInstruction(settings: Settings, instruction: String, text: String): Flow<String> =
-        streamPrompt(settings, "${Defaults.VOICE_COMMAND_PROMPT} ${instruction.trim()}", text)
+        streamWithPrompt(settings, "${Defaults.VOICE_COMMAND_PROMPT} ${instruction.trim()}", text)
 
-    private fun streamPrompt(settings: Settings, prompt: String, text: String): Flow<String> = callbackFlow {
+    /** The user-turn content: the action/instruction prompt plus the marked text. */
+    fun buildUserContent(prompt: String, text: String): String =
+        "$prompt\n\nRewrite the text between the markers. Output only the rewrite.\n<<<TEXT\n$text\nTEXT>>>"
+
+    fun streamWithPrompt(settings: Settings, prompt: String, text: String): Flow<String> = callbackFlow {
         if (settings.apiKey.isBlank()) throw IllegalStateException("No API key configured.")
         val url = endpointFor(settings)
         val provider = settings.provider
@@ -117,8 +121,7 @@ object RewriteEngine {
         if (model.isEmpty()) throw IllegalStateException("No model configured.")
 
         val isAnthropic = provider == "anthropic"
-        val userContent =
-            "$prompt\n\nRewrite the text between the markers. Output only the rewrite.\n<<<TEXT\n$text\nTEXT>>>"
+        val userContent = buildUserContent(prompt, text)
 
         // Anthropic's Messages API is not OpenAI-compatible: `system` is a
         // separate top-level field, `max_tokens` is required, and recent models
@@ -229,6 +232,8 @@ object RewriteEngine {
     /** Port of cleanOutput(): strip code fences and a single wrapping quote pair. */
     fun cleanOutput(s: String): String {
         var t = s.trim()
+        // Strip reasoning blocks some local models (e.g. Qwen3) emit.
+        t = t.replace(Regex("(?s)<think>.*?</think>"), "").trim()
         val fence = Regex("^```[a-zA-Z]*\\n([\\s\\S]*?)\\n```$").find(t)
         if (fence != null) t = fence.groupValues[1].trim()
         val pairs = listOf('"' to '"', '“' to '”', '\'' to '\'')
