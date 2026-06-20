@@ -226,14 +226,17 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
-        // Stop recording, revert the bubble, transcribe, then process.
+        // Stop recording, revert the bubble, transcribe (local or cloud), then process.
         fun stopRecording(s: Settings) {
             if (stage != Stage.RECORDING) return
             BubbleService.recordingStopper = null
             ampJob?.cancel()
             BubbleService.instance?.showIdle()
-            val file = audioRecorder.stop()
-            if (file == null) {
+            val local = s.sttProvider == "local"
+            // On-device wants float samples; cloud wants an uploadable WAV.
+            val floats = if (local) audioRecorder.stopToFloats() else null
+            val wav = if (local) null else audioRecorder.stopToWav()
+            if ((local && floats == null) || (!local && wav == null)) {
                 error = "Didn't catch any audio. Tap and speak a little longer."
                 stage = Stage.ERROR
                 return
@@ -241,12 +244,15 @@ class RewriteActivity : ComponentActivity() {
             stage = Stage.TRANSCRIBING
             streamJob = scope.launch {
                 try {
-                    val text = SttEngine.transcribe(s, file)
-                    file.delete()
+                    val text = if (local) {
+                        LocalWhisperStt.transcribe(this@RewriteActivity, floats!!)
+                    } else {
+                        SttEngine.transcribe(s, wav!!).also { wav.delete() }
+                    }
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
-                    file.delete(); error = e.message ?: e.toString(); stage = Stage.ERROR
+                    wav?.delete(); error = e.message ?: e.toString(); stage = Stage.ERROR
                 }
             }
         }
@@ -269,7 +275,13 @@ class RewriteActivity : ComponentActivity() {
         }
 
         fun ensurePermissionThenRecord(s: Settings) {
-            if (!s.isSttConfigured) {
+            if (s.sttProvider == "local") {
+                if (!WhisperModelManager.isReady(this)) {
+                    error = "On-device model not downloaded. Open Settings → Voice → Download model."
+                    stage = Stage.ERROR
+                    return
+                }
+            } else if (!s.isSttConfigured) {
                 error = "No speech-to-text key set. Open OpenWispr settings."
                 stage = Stage.ERROR
                 return

@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -135,6 +136,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var cleanupDictation by remember { mutableStateOf(true) }
     var sttProviderMenu by remember { mutableStateOf(false) }
     var a11yEnabled by remember { mutableStateOf(false) }
+    var modelReady by remember { mutableStateOf(false) }
+    var modelProgress by remember { mutableStateOf<Float?>(null) } // non-null while downloading
 
     val accessibilityLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -156,6 +159,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         defaultMode = s.defaultMode
         cleanupDictation = s.cleanupDictation
         a11yEnabled = isAccessibilityEnabled(context)
+        modelReady = WhisperModelManager.isReady(context)
         loaded = true
     }
 
@@ -360,34 +364,82 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 }
             }
 
-            if (sttProvider == "custom") {
+            if (sttProvider == "local") {
+                // On-device model: status + one-time download.
+                val downloading = modelProgress != null
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Whisper model", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            when {
+                                modelReady -> "Ready — transcription runs offline on this phone."
+                                downloading -> "Downloading… ${((modelProgress ?: 0f) * 100).toInt()}%"
+                                else -> "Not downloaded (~488MB, one time)."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (modelReady) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!modelReady) {
+                        Button(
+                            enabled = !downloading,
+                            onClick = {
+                                modelProgress = 0f
+                                launch {
+                                    try {
+                                        WhisperModelManager.download(context) { p -> modelProgress = p }
+                                        modelReady = true
+                                        modelProgress = null
+                                        Toast.makeText(context, "Model ready", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        modelProgress = null
+                                        Toast.makeText(context, e.message ?: "Download failed", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                        ) { Text(if (downloading) "…" else "Download") }
+                    }
+                }
+                if (downloading) {
+                    LinearProgressIndicator(
+                        progress = { modelProgress ?: 0f },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else {
+                if (sttProvider == "custom") {
+                    OutlinedTextField(
+                        value = sttEndpoint,
+                        onValueChange = { sttEndpoint = it },
+                        label = { Text("Transcription endpoint URL") },
+                        placeholder = { Text("https://…/v1/audio/transcriptions") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 OutlinedTextField(
-                    value = sttEndpoint,
-                    onValueChange = { sttEndpoint = it },
-                    label = { Text("Transcription endpoint URL") },
-                    placeholder = { Text("https://…/v1/audio/transcriptions") },
+                    value = sttModel,
+                    onValueChange = { sttModel = it },
+                    label = { Text("Speech-to-text model") },
+                    supportingText = { Defaults.STT_PROVIDERS[sttProvider]?.modelHint?.let { Text(it) } },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                OutlinedTextField(
+                    value = sttKey,
+                    onValueChange = { sttKey = it },
+                    label = { Text("Speech-to-text API key") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-
-            OutlinedTextField(
-                value = sttModel,
-                onValueChange = { sttModel = it },
-                label = { Text("Speech-to-text model") },
-                supportingText = { Defaults.STT_PROVIDERS[sttProvider]?.modelHint?.let { Text(it) } },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = sttKey,
-                onValueChange = { sttKey = it },
-                label = { Text("Speech-to-text API key") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-            )
 
             // Default voice mode
             Row(

@@ -95,6 +95,15 @@ object Defaults {
     // ---------------- speech-to-text ----------------
 
     val STT_PROVIDERS: Map<String, SttProvider> = mapOf(
+        "local" to SttProvider(
+            id = "local",
+            label = "On-device (Whisper)",
+            endpoint = "",
+            defaultModel = WhisperModelManager.MODEL_FILE,
+            keyHelp = "Runs Whisper directly on your phone — fully offline, private, no API key. Download the model once (~488MB) below.",
+            keyUrl = "",
+            modelHint = "Managed automatically (multilingual small).",
+        ),
         "groq" to SttProvider(
             id = "groq",
             label = "Groq (Whisper)",

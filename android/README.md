@@ -8,9 +8,9 @@ selection in place.
 
 It reuses the extension's exact prompts, voice profile, anti-AI guardrails, and
 OpenAI-compatible gateway logic (Vercel AI Gateway / OpenRouter / Anthropic /
-custom). Speech-to-text uses any OpenAI-compatible Whisper endpoint (Groq /
-OpenAI / custom). This is **v1 with cloud STT + cloud LLM**; the engines are
-isolated so on-device Whisper and a local SLM can drop in later.
+custom). Speech-to-text runs either **on-device** (whisper.cpp, fully offline) or via any
+OpenAI-compatible Whisper endpoint (Groq / OpenAI / custom). The LLM rewrite is
+still cloud; the engines are isolated so a local SLM can drop in later.
 
 ## How it works
 
@@ -36,12 +36,21 @@ isolated so on-device Whisper and a local SLM can drop in later.
 - **`RewriteEngine`** — builds the system prompt, streams from the gateway over
   SSE (OkHttp), cleans output. Adds `streamDictationCleanup` and
   `streamInstruction` paths for the voice modes.
-- **`SttEngine`** — multipart upload to `/v1/audio/transcriptions`, returns the
-  transcript.
+- **Speech-to-text — two backends behind one seam:**
+  - **Cloud** (`SttEngine`) — multipart upload to an OpenAI-compatible
+    `/v1/audio/transcriptions` (Groq / OpenAI / custom).
+  - **On-device** (`LocalWhisperStt` + `:lib`) — whisper.cpp running locally, fully
+    offline and private. `WhisperModelManager` downloads the multilingual `small`
+    model (~488MB) once into app storage. Audio is captured as raw 16 kHz mono PCM
+    (`AudioRecorder`) and fed directly to whisper as float samples (cloud gets a WAV).
+  The active backend is the **STT provider** chosen in Settings.
 
 ## Build
 
-Requires JDK 17 (Android Studio bundles it) and the Android SDK.
+Requires JDK 17 (Android Studio bundles it) and the Android SDK. The on-device
+Whisper module (`:lib`) compiles native code, so you also need the **NDK** and
+**CMake** (install via Android Studio → SDK Manager → SDK Tools). The native build
+targets **arm64-v8a** only (see `lib/build.gradle.kts` `abiFilters`).
 
 ```bash
 cd android
@@ -50,6 +59,9 @@ cd android
 ```
 
 Or open the `android/` folder in Android Studio and Run.
+
+The `:lib` module vendors a pinned copy of whisper.cpp (v1.7.4, CPU-only ggml
+backend) under `lib/src/main/jni/whispercpp/`.
 
 ## Install (sideload, no Play Store)
 
@@ -67,10 +79,12 @@ A debug-signed APK is fine for personal use indefinitely.
 1. Open **OpenWispr** from the launcher.
 2. **LLM:** pick a provider, paste your API key, set the model, optionally write
    a voice profile.
-3. **Voice:** under **Voice**, pick a speech-to-text provider (Groq is the
-   default — free tier, fast), paste its key (Groq keys start with `gsk_`; get
-   one at console.groq.com → API Keys), optionally set a model. Choose your
-   default mode and the dictation-cleanup toggle. **Save**.
+3. **Voice:** under **Voice**, pick a speech-to-text provider:
+   - **On-device (Whisper)** — fully offline, no key. Tap **Download** to fetch the
+     model once (~488MB); wait for "Ready".
+   - **Groq / OpenAI / custom** — cloud; paste the provider key (Groq keys start
+     with `gsk_`; get one at console.groq.com → API Keys).
+   Choose your default mode and the dictation-cleanup toggle. **Save**.
 4. **Auto-insert:** tap **Enable** next to "Auto-insert (accessibility)" and turn
    on *OpenWispr* under Settings → Accessibility. Without it, results are
    copied to the clipboard instead of typed in.
