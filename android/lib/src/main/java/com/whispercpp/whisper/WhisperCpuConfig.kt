@@ -6,10 +6,10 @@ import java.io.FileReader
 
 object WhisperCpuConfig {
     val preferredThreadCount: Int
-        // The high-perf-core heuristic often under-counts (e.g. 2), which makes
-        // transcription slow. Use more cores, capped to avoid the little cores.
-        get() = maxOf(CpuInfo.getHighPerfCpuCount(), Runtime.getRuntime().availableProcessors())
-            .coerceIn(4, 6)
+        // Use the big cores only: spanning onto the slow "little" cores makes ggml
+        // wait on the stragglers each layer and is slower overall. 4 is a good cap
+        // for typical phone SoCs (≈1 prime + 3 big).
+        get() = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
 }
 
 private class CpuInfo(private val lines: List<String>) {

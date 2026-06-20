@@ -33,7 +33,7 @@ object WhisperModelManager {
         WhisperModel("small", "Small (most accurate)", "ggml-small.bin", hf("ggml-small.bin"), "~488MB"),
     )
 
-    const val DEFAULT_MODEL = "base"
+    const val DEFAULT_MODEL = "tiny"
     private const val MIN_VALID_BYTES = 30L * 1024 * 1024
 
     private val client = OkHttpClient.Builder()
