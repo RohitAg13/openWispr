@@ -1,30 +1,28 @@
 package com.voicerewriter
 
 import android.content.Context
+import android.util.Log
 import com.arm.aichat.AiChat
 import com.arm.aichat.InferenceEngine
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.transformWhile
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * On-device LLM rewrite via llama.cpp (vendored `:llm` / ARM aichat). Loads a GGUF
- * model once, sets the (stable) system prompt, then streams tokens for each rewrite.
- * Same role as the cloud path in [RewriteEngine] — picked by the LLM provider.
+ * On-device LLM rewrite via llama.cpp (vendored `:llm` / ARM aichat). Each rewrite
+ * loads the model fresh, sets the system prompt, and streams tokens. Same role as
+ * the cloud path in [RewriteEngine] — picked by the LLM provider.
  *
- * The native engine is a stateful singleton with a strict lifecycle, so a mutex
- * serializes load/reload; the system prompt only changes when settings change.
+ * We reload per call on purpose: the native engine accumulates chat history, but a
+ * rewrite must be independent of previous ones. A mutex serializes the lifecycle.
  */
 object LocalLlmEngine {
 
     private val mutex = Mutex()
-    @Volatile private var loadedPath: String? = null
-    @Volatile private var loadedSystem: String? = null
 
     /** Cap output to roughly the input size so a looping model can't ramble. */
     private fun predictLengthFor(text: String): Int {
@@ -33,7 +31,6 @@ object LocalLlmEngine {
     }
 
     /** Stream the rewrite for [prompt] applied to [text]. Mirrors RewriteEngine.streamWithPrompt. */
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun streamWithPrompt(context: Context, settings: Settings, prompt: String, text: String): Flow<String> = flow {
         val file = LlmModelManager.modelFile(context, settings.model)
         if (!file.exists()) {
@@ -49,30 +46,34 @@ object LocalLlmEngine {
 
         mutex.withLock {
             awaitReady(engine)
-            if (loadedPath != file.absolutePath || loadedSystem != system) {
-                if (engine.state.value is InferenceEngine.State.ModelReady) {
-                    engine.cleanUp()
-                    awaitInitialized(engine)
-                }
-                engine.loadModel(file.absolutePath)
-                engine.setSystemPrompt(system) // must be right after load
-                loadedPath = file.absolutePath
-                loadedSystem = system
+            // Fresh load every time → independent rewrites + known-good engine state.
+            if (engine.state.value is InferenceEngine.State.ModelReady) {
+                engine.cleanUp()
+                awaitInitialized(engine)
             }
+            engine.loadModel(file.absolutePath)
+            engine.setSystemPrompt(system) // must be right after load
         }
-        // Stop early once the model starts repeating its own output — tiny models
-        // that don't emit a stop token otherwise loop until the length cap.
+
+        Log.i("LocalLlmEngine", "model=${settings.model} userLen=${user.length} userTail='${user.takeLast(160)}'")
+        // Suppress emission once the model starts repeating, but DON'T cancel the
+        // upstream — cancelling surfaces as a CancellationException and the caller
+        // would never see normal completion. Let generation finish (it's capped).
         val acc = StringBuilder()
+        var stopped = false
         emitAll(
             engine.sendUserPrompt(user, predictLength = predictLengthFor(text))
-                .transformWhile { token ->
+                .transform { token ->
+                    if (stopped) return@transform
                     acc.append(token)
-                    val loop = acc.contains("<<<") || acc.contains("TEXT>>>") ||
-                        RewriteEngine.looksRepeating(acc)
-                    if (!loop) emit(token)
-                    !loop
+                    if (acc.contains("<<<") || acc.contains("TEXT>>>") || RewriteEngine.looksRepeating(acc)) {
+                        stopped = true
+                    } else {
+                        emit(token)
+                    }
                 }
         )
+        Log.i("LocalLlmEngine", "raw='${acc.toString().take(240)}'")
     }
 
     /** Wait until the engine is idle (initialized or a model is ready). */
