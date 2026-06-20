@@ -41,7 +41,10 @@ object LocalLlmEngine {
         }
         // Lean prompt + marker-free user turn: tiny models loop on the full guardrails.
         val system = RewriteEngine.buildLocalSystemPrompt(settings)
-        val user = RewriteEngine.buildLocalUserContent(prompt, text)
+        var user = RewriteEngine.buildLocalUserContent(prompt, text)
+        // Qwen3 has a reasoning mode on by default; "/no_think" disables it so we get
+        // the answer directly instead of (capped) chain-of-thought.
+        if (settings.model.startsWith("qwen")) user += " /no_think"
         val engine = AiChat.getInferenceEngine(context.applicationContext)
 
         mutex.withLock {

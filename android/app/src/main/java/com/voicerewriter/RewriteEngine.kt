@@ -133,22 +133,44 @@ object RewriteEngine {
      * generation early.
      */
     fun looksRepeating(text: CharSequence): Boolean {
-        val s = text.toString().trimStart()
-        val m = Regex("(?s)^(.{12,}?[.!?\\n])").find(s) ?: return false
-        val unit = m.value.trim()
+        val s = text.toString()
+        val m = Regex("(?s)^\\s*(.{12,}?[.!?\\n])").find(s) ?: return false
+        val unit = m.groupValues[1].trim()
         if (unit.length < 12) return false
+        val after = s.substring(m.range.last + 1).trimStart()
+        if (after.isEmpty()) return false
+        // The next sentence is starting to retype the first one → stop early.
+        val take = minOf(after.length, unit.length)
+        if (take >= 6 && unit.regionMatches(0, after, 0, take, ignoreCase = true)) return true
         return s.indexOf(unit, m.range.last + 1) >= 0
     }
 
-    /** Collapse a model that repeated whole sentences: keep the unique leading run. */
-    private fun collapseRepetition(t: String): String {
+    /** Collapse a model that looped on its own output, keeping one clean copy. */
+    private fun collapseRepetition(raw: String): String {
+        val t = raw.trim()
+        // Punctuation-independent: if the text is one unit repeated (with an optional
+        // partial trailing copy), keep just the unit. Uses the KMP minimal period.
+        val norm = t.replace(Regex("\\s+"), " ")
+        val n = norm.length
+        if (n >= 16) {
+            val f = IntArray(n)
+            var k = 0
+            for (i in 1 until n) {
+                while (k > 0 && norm[i] != norm[k]) k = f[k - 1]
+                if (norm[i] == norm[k]) k++
+                f[i] = k
+            }
+            val period = n - f[n - 1]
+            if (period in 1 until n && n - period >= 8) return norm.substring(0, period).trim()
+        }
+        // Fallback: sentence-level dedupe for near-duplicate (not byte-identical) repeats.
         val parts = t.split(Regex("(?<=[.!?])\\s+|\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return t
         val seen = HashSet<String>()
         val kept = ArrayList<String>()
         for (p in parts) {
-            val norm = p.lowercase().replace(Regex("\\s+"), " ")
-            if (!seen.add(norm)) break // first repeat → stop
+            val nrm = p.lowercase().replace(Regex("\\s+"), " ")
+            if (!seen.add(nrm)) break
             kept.add(p)
         }
         return if (kept.size == parts.size) t else kept.joinToString(" ")
@@ -275,8 +297,10 @@ object RewriteEngine {
     /** Port of cleanOutput(): strip code fences and a single wrapping quote pair. */
     fun cleanOutput(s: String): String {
         var t = s.trim()
-        // Strip reasoning blocks some local models (e.g. Qwen3) emit.
+        // Strip reasoning blocks some local models (e.g. Qwen3) emit — closed first,
+        // then any unclosed `<think>` left when generation was cut mid-thought.
         t = t.replace(Regex("(?s)<think>.*?</think>"), "").trim()
+        t = t.replace(Regex("(?s)<think>.*"), "").trim()
         // Tiny local models sometimes echo our markers and repeat the output; cut
         // at the first marker so we keep only the first clean copy.
         for (m in listOf("<<<TEXT", "TEXT>>>", "<<<")) {
