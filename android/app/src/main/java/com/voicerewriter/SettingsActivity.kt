@@ -136,6 +136,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var sttKey by remember { mutableStateOf("") }
     var sttModel by remember { mutableStateOf("") }
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
+    var deterministicCleanup by remember { mutableStateOf(true) }
     var cleanupDictation by remember { mutableStateOf(true) }
     var vadAutoStop by remember { mutableStateOf(true) }
     var sttProviderMenu by remember { mutableStateOf(false) }
@@ -162,6 +163,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         sttKey = s.sttKey
         sttModel = s.sttModel
         defaultMode = s.defaultMode
+        deterministicCleanup = s.deterministicCleanup
         cleanupDictation = s.cleanupDictation
         vadAutoStop = s.vadAutoStop
         a11yEnabled = isAccessibilityEnabled(context)
@@ -588,15 +590,33 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 )
             }
 
-            // Dictation cleanup
+            // Deterministic cleanup (fast, offline, no model)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Clean up dictation", style = MaterialTheme.typography.bodyLarge)
+                    Text("Smart cleanup (instant)", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Run dictated text through the LLM to fix filler, punctuation and grammar.",
+                        "Rule-based, offline: removes fillers, converts spoken punctuation/numbers " +
+                            "(\"question mark\"→?, \"twenty three\"→23) and resolves self-corrections.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = deterministicCleanup, onCheckedChange = { deterministicCleanup = it })
+            }
+
+            // Optional LLM polish on top
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Polish with LLM", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "After smart cleanup, also run the text through the LLM for grammar and flow. " +
+                            "Slower; on-device models may be less reliable.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -661,6 +681,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                                 sttKey = sttKey.trim(),
                                 sttModel = sttModel.trim(),
                                 defaultMode = defaultMode,
+                                deterministicCleanup = deterministicCleanup,
                                 cleanupDictation = cleanupDictation,
                                 vadAutoStop = vadAutoStop,
                             )

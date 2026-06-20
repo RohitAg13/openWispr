@@ -35,6 +35,15 @@ class OpenWisprAccessibilityService : AccessibilityService() {
         @Volatile
         private var instance: OpenWisprAccessibilityService? = null
 
+        /**
+         * Package of the last non-self app to take window focus. The dictation
+         * pipeline reads this to decide whether the target is a code/terminal field
+         * (where spoken "dot"/"slash"/"dash" should pass through as words).
+         */
+        @Volatile
+        var lastHostPackage: String? = null
+            private set
+
         /** True when the user has enabled the service in Accessibility settings. */
         val isEnabled: Boolean get() = instance != null
 
@@ -63,6 +72,12 @@ class OpenWisprAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
+        // Track the foreground host app (cheap: window changes are infrequent) so the
+        // dictation pipeline can adapt normalization to code/terminal fields.
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            val pkg = event.packageName?.toString()
+            if (pkg != null && pkg != packageName) lastHostPackage = pkg
+        }
         if (pendingText == null) return
         when (event.eventType) {
             AccessibilityEvent.TYPE_VIEW_FOCUSED,

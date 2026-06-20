@@ -9,6 +9,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
+import com.voicerewriter.textproc.CodeContext
+import com.voicerewriter.textproc.TextProcessor
+import com.voicerewriter.textproc.TextProcessingConfig
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -221,14 +224,20 @@ class RewriteActivity : ComponentActivity() {
                     error = e; stage = Stage.ERROR
                 }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }
             } else {
-                // Dictate fresh: optionally clean the raw transcript with the LLM.
+                // Dictate fresh. First run the deterministic pipeline (fast, reliable,
+                // offline) — fillers, spoken punctuation, numbers, self-corrections.
+                val cleaned = if (s.deterministicCleanup) {
+                    val isCode = CodeContext.isCode(OpenWisprAccessibilityService.lastHostPackage)
+                    TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
+                } else spoken
+                // Then optionally layer the LLM on top for further polish.
                 if (!s.cleanupDictation) {
-                    output = spoken
+                    output = cleaned
                     stage = Stage.DONE
                     return
                 }
                 stage = Stage.PROCESSING
-                val flow = streamFor(s, Defaults.DICTATION_PROMPT, spoken)
+                val flow = streamFor(s, Defaults.DICTATION_PROMPT, cleaned)
                 streamJob = scope.launch { collectInto(flow, { output += it }, { e ->
                     error = e; stage = Stage.ERROR
                 }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }

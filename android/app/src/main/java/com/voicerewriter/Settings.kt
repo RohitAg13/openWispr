@@ -28,7 +28,8 @@ data class Settings(
     val sttModel: String = "",
     // --- OpenWispr behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
-    val cleanupDictation: Boolean = true,
+    val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
+    val cleanupDictation: Boolean = true, // additionally polish the dictation with the LLM
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
 ) {
     /** Mirrors the extension's gate: needs a key before it can rewrite. */
@@ -66,6 +67,7 @@ class SettingsRepository(private val context: Context) {
         val STT_KEY = stringPreferencesKey("sttKey")
         val STT_MODEL = stringPreferencesKey("sttModel")
         val DEFAULT_MODE = stringPreferencesKey("defaultMode")
+        val DETERMINISTIC_CLEANUP = booleanPreferencesKey("deterministicCleanup")
         val CLEANUP_DICTATION = booleanPreferencesKey("cleanupDictation")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
     }
@@ -85,6 +87,7 @@ class SettingsRepository(private val context: Context) {
             sttKey = p[Keys.STT_KEY] ?: defaults.sttKey,
             sttModel = p[Keys.STT_MODEL] ?: defaults.sttModel,
             defaultMode = p[Keys.DEFAULT_MODE] ?: defaults.defaultMode,
+            deterministicCleanup = p[Keys.DETERMINISTIC_CLEANUP] ?: defaults.deterministicCleanup,
             cleanupDictation = p[Keys.CLEANUP_DICTATION] ?: defaults.cleanupDictation,
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
         )
@@ -106,6 +109,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.STT_KEY] = s.sttKey
             p[Keys.STT_MODEL] = s.sttModel
             p[Keys.DEFAULT_MODE] = s.defaultMode
+            p[Keys.DETERMINISTIC_CLEANUP] = s.deterministicCleanup
             p[Keys.CLEANUP_DICTATION] = s.cleanupDictation
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
         }
