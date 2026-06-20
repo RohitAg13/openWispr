@@ -141,6 +141,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var a11yEnabled by remember { mutableStateOf(false) }
     var modelReady by remember { mutableStateOf(false) }
     var modelProgress by remember { mutableStateOf<Float?>(null) } // non-null while downloading
+    var sttModelMenu by remember { mutableStateOf(false) }
 
     val accessibilityLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -162,12 +163,20 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         defaultMode = s.defaultMode
         cleanupDictation = s.cleanupDictation
         a11yEnabled = isAccessibilityEnabled(context)
-        modelReady = WhisperModelManager.isReady(context)
         loaded = true
     }
     // Refresh on-device LLM readiness when the provider/model selection changes.
     LaunchedEffect(provider, model) {
         llmReady = provider == "local" && LlmModelManager.isReady(context, model)
+    }
+    // Normalize + refresh on-device Whisper readiness for the selected model.
+    LaunchedEffect(sttProvider, sttModel) {
+        if (sttProvider == "local") {
+            if (WhisperModelManager.MODELS.none { it.id == sttModel }) {
+                sttModel = WhisperModelManager.DEFAULT_MODEL
+            }
+            modelReady = WhisperModelManager.isReady(context, sttModel)
+        }
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text("OpenWispr") }) }) { pad ->
@@ -450,19 +459,43 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             }
 
             if (sttProvider == "local") {
-                // On-device model: status + one-time download.
+                // On-device Whisper: model picker + one-time download.
+                ExposedDropdownMenuBox(
+                    expanded = sttModelMenu,
+                    onExpandedChange = { sttModelMenu = it },
+                ) {
+                    val sel = WhisperModelManager.model(sttModel)
+                    OutlinedTextField(
+                        value = "${sel.label} (${sel.sizeLabel})",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Whisper model") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttModelMenu) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = sttModelMenu,
+                        onDismissRequest = { sttModelMenu = false },
+                    ) {
+                        WhisperModelManager.MODELS.forEach { m ->
+                            DropdownMenuItem(
+                                text = { Text("${m.label} (${m.sizeLabel})") },
+                                onClick = { sttModel = m.id; sttModelMenu = false },
+                            )
+                        }
+                    }
+                }
                 val downloading = modelProgress != null
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Whisper model", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             when {
                                 modelReady -> "Ready — transcription runs offline on this phone."
                                 downloading -> "Downloading… ${((modelProgress ?: 0f) * 100).toInt()}%"
-                                else -> "Not downloaded (~488MB, one time)."
+                                else -> "Not downloaded (${WhisperModelManager.model(sttModel).sizeLabel}, one time)."
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = if (modelReady) MaterialTheme.colorScheme.primary
@@ -473,10 +506,11 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         Button(
                             enabled = !downloading,
                             onClick = {
+                                val id = sttModel
                                 modelProgress = 0f
                                 launch {
                                     try {
-                                        WhisperModelManager.download(context) { p -> modelProgress = p }
+                                        WhisperModelManager.download(context, id) { p -> modelProgress = p }
                                         modelReady = true
                                         modelProgress = null
                                         Toast.makeText(context, "Model ready", Toast.LENGTH_SHORT).show()
@@ -495,6 +529,11 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                Text(
+                    "Smaller models are faster and lighter on memory; Small is most accurate but heavy on phones.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             } else {
                 if (sttProvider == "custom") {
                     OutlinedTextField(

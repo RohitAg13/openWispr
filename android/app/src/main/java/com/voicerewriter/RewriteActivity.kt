@@ -254,7 +254,7 @@ class RewriteActivity : ComponentActivity() {
             streamJob = scope.launch {
                 try {
                     val text = if (local) {
-                        LocalWhisperStt.transcribe(this@RewriteActivity, floats!!)
+                        LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!)
                     } else {
                         SttEngine.transcribe(s, wav!!).also { wav.delete() }
                     }
@@ -285,7 +285,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun ensurePermissionThenRecord(s: Settings) {
             if (s.sttProvider == "local") {
-                if (!WhisperModelManager.isReady(this)) {
+                if (!WhisperModelManager.isReady(this, s.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL })) {
                     error = "On-device model not downloaded. Open Settings → Voice → Download model."
                     stage = Stage.ERROR
                     return
@@ -420,7 +420,8 @@ class RewriteActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
                                 .verticalScroll(rememberScrollState()),
                         ) {
-                            Text(text = output, style = MaterialTheme.typography.bodyLarge)
+                            // Show the cleaned text so local-model repeats/tags don't flash.
+                            Text(text = RewriteEngine.cleanOutput(output), style = MaterialTheme.typography.bodyLarge)
                         }
                         transcript.isNotEmpty() -> Text(
                             text = transcript,
@@ -570,7 +571,7 @@ class RewriteActivity : ComponentActivity() {
                                 .verticalScroll(rememberScrollState()),
                         ) {
                             Text(
-                                text = output.ifEmpty { "…" },
+                                text = RewriteEngine.cleanOutput(output).ifEmpty { "…" },
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                         }

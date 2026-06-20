@@ -18,16 +18,23 @@ object LocalWhisperStt {
 
     private val loadLock = Mutex()
     @Volatile private var ctx: WhisperContext? = null
+    @Volatile private var loadedId: String? = null
 
     /** Transcribe [samples] (16 kHz mono, normalized -1..1). Suspends on heavy CPU work. */
-    suspend fun transcribe(context: Context, samples: FloatArray): String {
-        if (!WhisperModelManager.isReady(context)) {
+    suspend fun transcribe(context: Context, settings: Settings, samples: FloatArray): String {
+        val id = settings.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL }
+        if (!WhisperModelManager.isReady(context, id)) {
             throw IllegalStateException("On-device model not downloaded. Open Settings → Voice → Download model.")
         }
         val whisper = loadLock.withLock {
-            ctx ?: withContext(Dispatchers.IO) {
-                WhisperContext.createContextFromFile(WhisperModelManager.modelFile(context).absolutePath)
-            }.also { ctx = it }
+            if (ctx == null || loadedId != id) {
+                ctx?.let { runCatching { it.release() } }
+                ctx = withContext(Dispatchers.IO) {
+                    WhisperContext.createContextFromFile(WhisperModelManager.modelFile(context, id).absolutePath)
+                }
+                loadedId = id
+            }
+            ctx!!
         }
         // transcribeData runs on whisper's own single-thread dispatcher internally.
         val raw = whisper.transcribeData(samples, printTimestamp = false)
