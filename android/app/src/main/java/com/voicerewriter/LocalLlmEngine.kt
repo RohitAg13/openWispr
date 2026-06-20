@@ -3,10 +3,12 @@ package com.voicerewriter
 import android.content.Context
 import com.arm.aichat.AiChat
 import com.arm.aichat.InferenceEngine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,20 +22,26 @@ import kotlinx.coroutines.sync.withLock
  */
 object LocalLlmEngine {
 
-    private const val PREDICT_LENGTH = 768
-
     private val mutex = Mutex()
     @Volatile private var loadedPath: String? = null
     @Volatile private var loadedSystem: String? = null
 
+    /** Cap output to roughly the input size so a looping model can't ramble. */
+    private fun predictLengthFor(text: String): Int {
+        val words = text.trim().split(Regex("\\s+")).count { it.isNotEmpty() }
+        return (words * 2 + 48).coerceIn(48, 512)
+    }
+
     /** Stream the rewrite for [prompt] applied to [text]. Mirrors RewriteEngine.streamWithPrompt. */
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun streamWithPrompt(context: Context, settings: Settings, prompt: String, text: String): Flow<String> = flow {
         val file = LlmModelManager.modelFile(context, settings.model)
         if (!file.exists()) {
             throw IllegalStateException("On-device model not downloaded. Open Settings → On-device LLM → Download.")
         }
-        val system = RewriteEngine.buildSystemPrompt(settings)
-        val user = RewriteEngine.buildUserContent(prompt, text)
+        // Lean prompt + marker-free user turn: tiny models loop on the full guardrails.
+        val system = RewriteEngine.buildLocalSystemPrompt(settings)
+        val user = RewriteEngine.buildLocalUserContent(prompt, text)
         val engine = AiChat.getInferenceEngine(context.applicationContext)
 
         mutex.withLock {
@@ -49,7 +57,18 @@ object LocalLlmEngine {
                 loadedSystem = system
             }
         }
-        emitAll(engine.sendUserPrompt(user, predictLength = PREDICT_LENGTH))
+        // Stop early if the model starts echoing our markers / looping — saves the
+        // tiny model from regenerating the same text many times.
+        val acc = StringBuilder()
+        emitAll(
+            engine.sendUserPrompt(user, predictLength = predictLengthFor(text))
+                .transformWhile { token ->
+                    acc.append(token)
+                    val loop = acc.contains("<<<") || acc.contains("TEXT>>>")
+                    if (!loop) emit(token)
+                    !loop
+                }
+        )
     }
 
     /** Wait until the engine is idle (initialized or a model is ready). */

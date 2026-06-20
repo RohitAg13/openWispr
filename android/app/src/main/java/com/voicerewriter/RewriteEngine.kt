@@ -111,6 +111,22 @@ object RewriteEngine {
     fun buildUserContent(prompt: String, text: String): String =
         "$prompt\n\nRewrite the text between the markers. Output only the rewrite.\n<<<TEXT\n$text\nTEXT>>>"
 
+    /**
+     * Minimal system prompt for tiny on-device models. The full guardrails confuse
+     * sub-1B models (they echo instructions and loop), so keep it short.
+     */
+    fun buildLocalSystemPrompt(settings: Settings): String {
+        val voice = settings.voice.trim()
+        var s = "You rewrite text for the user. Output ONLY the rewritten text once — " +
+            "no preamble, no quotes, no markdown, and never repeat the text."
+        if (voice.isNotEmpty()) s += " Match this writing style: $voice"
+        return s
+    }
+
+    /** Marker-free user turn for small local models (markers make them loop). */
+    fun buildLocalUserContent(prompt: String, text: String): String =
+        "$prompt\n\n$text"
+
     fun streamWithPrompt(settings: Settings, prompt: String, text: String): Flow<String> = callbackFlow {
         if (settings.apiKey.isBlank()) throw IllegalStateException("No API key configured.")
         val url = endpointFor(settings)
@@ -234,6 +250,12 @@ object RewriteEngine {
         var t = s.trim()
         // Strip reasoning blocks some local models (e.g. Qwen3) emit.
         t = t.replace(Regex("(?s)<think>.*?</think>"), "").trim()
+        // Tiny local models sometimes echo our markers and repeat the output; cut
+        // at the first marker so we keep only the first clean copy.
+        for (m in listOf("<<<TEXT", "TEXT>>>", "<<<")) {
+            val i = t.indexOf(m)
+            if (i >= 0) t = t.substring(0, i).trim()
+        }
         val fence = Regex("^```[a-zA-Z]*\\n([\\s\\S]*?)\\n```$").find(t)
         if (fence != null) t = fence.groupValues[1].trim()
         val pairs = listOf('"' to '"', '“' to '”', '\'' to '\'')
