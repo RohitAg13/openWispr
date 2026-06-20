@@ -28,12 +28,12 @@ object WhisperModelManager {
     private fun hf(file: String) = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$file"
 
     val MODELS = listOf(
-        WhisperModel("tiny", "Tiny (fastest)", "ggml-tiny.bin", hf("ggml-tiny.bin"), "~75MB"),
+        WhisperModel("tiny-q8", "Tiny (fastest)", "ggml-tiny-q8_0.bin", hf("ggml-tiny-q8_0.bin"), "~44MB"),
         WhisperModel("base", "Base (balanced)", "ggml-base.bin", hf("ggml-base.bin"), "~142MB"),
         WhisperModel("small", "Small (most accurate)", "ggml-small.bin", hf("ggml-small.bin"), "~488MB"),
     )
 
-    const val DEFAULT_MODEL = "tiny"
+    const val DEFAULT_MODEL = "tiny-q8"
     private const val MIN_VALID_BYTES = 30L * 1024 * 1024
 
     private val client = OkHttpClient.Builder()
