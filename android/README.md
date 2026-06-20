@@ -8,9 +8,10 @@ selection in place.
 
 It reuses the extension's exact prompts, voice profile, anti-AI guardrails, and
 OpenAI-compatible gateway logic (Vercel AI Gateway / OpenRouter / Anthropic /
-custom). Speech-to-text runs either **on-device** (whisper.cpp, fully offline) or via any
-OpenAI-compatible Whisper endpoint (Groq / OpenAI / custom). The LLM rewrite is
-still cloud; the engines are isolated so a local SLM can drop in later.
+custom). Both stages can run **fully on-device**: speech-to-text via whisper.cpp and the
+rewrite/cleanup via llama.cpp (a small local model) — or via the cloud
+(OpenAI-compatible Whisper + Anthropic/OpenRouter/custom). Each is selectable in
+Settings, so you can mix (e.g. local STT + cloud LLM) or go fully offline.
 
 ## How it works
 
@@ -61,7 +62,9 @@ cd android
 Or open the `android/` folder in Android Studio and Run.
 
 The `:lib` module vendors a pinned copy of whisper.cpp (v1.7.4, CPU-only ggml
-backend) under `lib/src/main/jni/whispercpp/`.
+backend) under `lib/src/main/jni/whispercpp/`. The `:llm` module vendors
+llama.cpp + ARM's `aichat` JNI under `llm/src/main/cpp/`, built with **NDK 29 +
+CMake 3.31** (install both via SDK Manager) for arm64-v8a, CPU-only.
 
 ## Install (sideload, no Play Store)
 
@@ -77,8 +80,9 @@ A debug-signed APK is fine for personal use indefinitely.
 ## First run
 
 1. Open **OpenWispr** from the launcher.
-2. **LLM:** pick a provider, paste your API key, set the model, optionally write
-   a voice profile.
+2. **LLM:** pick a provider. For **On-device (Gemma/Qwen)**, choose a model
+   (Gemma-3-270M default) and tap **Download** (one time). For cloud providers,
+   paste your API key and model. Optionally write a voice profile.
 3. **Voice:** under **Voice**, pick a speech-to-text provider:
    - **On-device (Whisper)** — fully offline, no key. Tap **Download** to fetch the
      model once (~488MB); wait for "Ready".
