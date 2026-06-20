@@ -29,6 +29,7 @@ data class Settings(
     // --- OpenWispr behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val cleanupDictation: Boolean = true,
+    val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
 ) {
     /** Mirrors the extension's gate: needs a key before it can rewrite. */
     val isConfigured: Boolean get() = apiKey.isNotBlank()
@@ -66,6 +67,7 @@ class SettingsRepository(private val context: Context) {
         val STT_MODEL = stringPreferencesKey("sttModel")
         val DEFAULT_MODE = stringPreferencesKey("defaultMode")
         val CLEANUP_DICTATION = booleanPreferencesKey("cleanupDictation")
+        val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -84,6 +86,7 @@ class SettingsRepository(private val context: Context) {
             sttModel = p[Keys.STT_MODEL] ?: defaults.sttModel,
             defaultMode = p[Keys.DEFAULT_MODE] ?: defaults.defaultMode,
             cleanupDictation = p[Keys.CLEANUP_DICTATION] ?: defaults.cleanupDictation,
+            vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
         )
     }
 
@@ -104,6 +107,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.STT_MODEL] = s.sttModel
             p[Keys.DEFAULT_MODE] = s.defaultMode
             p[Keys.CLEANUP_DICTATION] = s.cleanupDictation
+            p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
         }
     }
 }

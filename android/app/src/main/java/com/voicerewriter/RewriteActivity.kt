@@ -269,7 +269,8 @@ class RewriteActivity : ComponentActivity() {
         // Begin recording: switch the bubble to a live waveform and feed amplitudes.
         fun startRecording(s: Settings) {
             error = null; transcript = ""; output = ""
-            try { audioRecorder.start() }
+            // Silero VAD auto-stops when the speaker pauses (hands-free dictation).
+            try { audioRecorder.start(vadAutoStop = s.vadAutoStop, onAutoStop = { stopRecording(s) }) }
             catch (e: Exception) { error = e.message ?: "Couldn't start the mic."; stage = Stage.ERROR; return }
             stage = Stage.RECORDING
             BubbleService.instance?.showRecording()

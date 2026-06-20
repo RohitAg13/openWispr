@@ -137,6 +137,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var sttModel by remember { mutableStateOf("") }
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
     var cleanupDictation by remember { mutableStateOf(true) }
+    var vadAutoStop by remember { mutableStateOf(true) }
     var sttProviderMenu by remember { mutableStateOf(false) }
     var a11yEnabled by remember { mutableStateOf(false) }
     var modelReady by remember { mutableStateOf(false) }
@@ -162,6 +163,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         sttModel = s.sttModel
         defaultMode = s.defaultMode
         cleanupDictation = s.cleanupDictation
+        vadAutoStop = s.vadAutoStop
         a11yEnabled = isAccessibilityEnabled(context)
         loaded = true
     }
@@ -602,6 +604,22 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Switch(checked = cleanupDictation, onCheckedChange = { cleanupDictation = it })
             }
 
+            // Auto-stop on silence (Silero VAD)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Auto-stop when you pause", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "On-device voice detection (Silero VAD) stops recording after a short pause and trims silence.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = vadAutoStop, onCheckedChange = { vadAutoStop = it })
+            }
+
             // Accessibility insertion
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -644,6 +662,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                                 sttModel = sttModel.trim(),
                                 defaultMode = defaultMode,
                                 cleanupDictation = cleanupDictation,
+                                vadAutoStop = vadAutoStop,
                             )
                         )
                         Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()

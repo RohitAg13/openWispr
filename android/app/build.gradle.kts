@@ -65,4 +65,5 @@ dependencies {
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2") // Silero VAD
 }
