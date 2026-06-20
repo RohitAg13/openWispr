@@ -57,14 +57,15 @@ object LocalLlmEngine {
                 loadedSystem = system
             }
         }
-        // Stop early if the model starts echoing our markers / looping — saves the
-        // tiny model from regenerating the same text many times.
+        // Stop early once the model starts repeating its own output — tiny models
+        // that don't emit a stop token otherwise loop until the length cap.
         val acc = StringBuilder()
         emitAll(
             engine.sendUserPrompt(user, predictLength = predictLengthFor(text))
                 .transformWhile { token ->
                     acc.append(token)
-                    val loop = acc.contains("<<<") || acc.contains("TEXT>>>")
+                    val loop = acc.contains("<<<") || acc.contains("TEXT>>>") ||
+                        RewriteEngine.looksRepeating(acc)
                     if (!loop) emit(token)
                     !loop
                 }

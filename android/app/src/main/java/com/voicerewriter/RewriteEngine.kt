@@ -127,6 +127,33 @@ object RewriteEngine {
     fun buildLocalUserContent(prompt: String, text: String): String =
         "$prompt\n\n$text"
 
+    /**
+     * True once the generated text has started repeating its first sentence — tiny
+     * models that don't emit a stop token loop on their own output. Used to halt
+     * generation early.
+     */
+    fun looksRepeating(text: CharSequence): Boolean {
+        val s = text.toString().trimStart()
+        val m = Regex("(?s)^(.{12,}?[.!?\\n])").find(s) ?: return false
+        val unit = m.value.trim()
+        if (unit.length < 12) return false
+        return s.indexOf(unit, m.range.last + 1) >= 0
+    }
+
+    /** Collapse a model that repeated whole sentences: keep the unique leading run. */
+    private fun collapseRepetition(t: String): String {
+        val parts = t.split(Regex("(?<=[.!?])\\s+|\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
+        if (parts.size < 2) return t
+        val seen = HashSet<String>()
+        val kept = ArrayList<String>()
+        for (p in parts) {
+            val norm = p.lowercase().replace(Regex("\\s+"), " ")
+            if (!seen.add(norm)) break // first repeat → stop
+            kept.add(p)
+        }
+        return if (kept.size == parts.size) t else kept.joinToString(" ")
+    }
+
     fun streamWithPrompt(settings: Settings, prompt: String, text: String): Flow<String> = callbackFlow {
         if (settings.apiKey.isBlank()) throw IllegalStateException("No API key configured.")
         val url = endpointFor(settings)
@@ -265,6 +292,8 @@ object RewriteEngine {
                 break
             }
         }
+        // Tiny local models loop on their own output; keep the unique leading run.
+        t = collapseRepetition(t)
         return t
     }
 }
