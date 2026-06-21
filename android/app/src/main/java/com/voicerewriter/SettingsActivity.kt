@@ -650,6 +650,24 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Switch(checked = vadAutoStop, onCheckedChange = { vadAutoStop = it })
             }
 
+            // Personal dictionary (names/terms the recognizer mishears)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Personal dictionary", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Fix names, emails and jargon the recognizer gets wrong — corrected on-device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Button(onClick = { context.startActivity(Intent(context, VocabActivity::class.java)) }) {
+                    Text("Manage")
+                }
+            }
+
             // Accessibility insertion
             Row(
                 modifier = Modifier.fillMaxWidth(),

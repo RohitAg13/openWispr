@@ -12,6 +12,7 @@ import android.widget.Toast
 import com.voicerewriter.textproc.CodeContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
+import com.voicerewriter.textproc.VocabCorrector
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -263,11 +264,15 @@ class RewriteActivity : ComponentActivity() {
             stage = Stage.TRANSCRIBING
             streamJob = scope.launch {
                 try {
-                    val text = if (local) {
+                    val raw = if (local) {
                         LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!)
                     } else {
                         SttEngine.transcribe(s, wav!!).also { wav.delete() }
                     }
+                    // Snap mis-transcribed names/terms to the personal vocabulary
+                    // before any cleanup (STT errors can't be fixed downstream).
+                    val vocab = VocabRepository(this@RewriteActivity).get()
+                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {

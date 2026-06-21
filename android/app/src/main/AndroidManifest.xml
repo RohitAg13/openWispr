@@ -29,6 +29,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Personal dictionary management -->
+        <activity
+            android:name=".VocabActivity"
+            android:exported="false"
+            android:label="Personal dictionary" />
+
         <!-- The "Rewrite" entry in the text-selection floating toolbar -->
         <activity
             android:name=".RewriteActivity"
