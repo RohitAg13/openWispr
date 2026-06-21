@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.animation.AnimatedVisibility
@@ -18,6 +19,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,6 +75,7 @@ import kotlinx.coroutines.launch
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge() // full-screen: the hero gradient fills under the status bar
         super.onCreate(savedInstanceState)
         val repo = SettingsRepository(applicationContext)
         setContent {
@@ -114,6 +118,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var loaded by remember { mutableStateOf(false) }
 
     var bubbleOn by remember { mutableStateOf(BubbleService.isRunning) }
+    var keepHistory by remember { mutableStateOf(DictationHistory.keepHistory(context)) }
     var a11yEnabled by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
     var micGranted by remember { mutableStateOf(false) }
@@ -226,7 +231,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         HeroHeader()
 
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // ---- Setup / permissions ----
@@ -284,6 +289,18 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                             Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
                         }
                     }
+                }
+            }
+
+            // ---- Privacy ----
+            SectionCard("Privacy") {
+                SwitchRow(
+                    "Keep history",
+                    "Save recent dictations on this device for the home screen. Off: nothing is written to disk.",
+                    keepHistory,
+                ) { want ->
+                    keepHistory = want
+                    DictationHistory.setKeepHistory(context, want)
                 }
             }
 
@@ -529,7 +546,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
 @Composable
 private fun HeroHeader() {
     Column(
-        modifier = Modifier.fillMaxWidth().background(SunsetBrush).padding(24.dp, 36.dp, 24.dp, 28.dp),
+        modifier = Modifier.fillMaxWidth().background(SunsetBrush).statusBarsPadding()
+            .padding(24.dp, 24.dp, 24.dp, 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
