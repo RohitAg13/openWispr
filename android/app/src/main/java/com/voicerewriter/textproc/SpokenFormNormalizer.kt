@@ -23,11 +23,42 @@ object SpokenFormNormalizer {
         r = Regex("\\bdash\\s+dash\\s+(\\w+)\\b", RegexOption.IGNORE_CASE).replace(r, "--$1")
         if (!unambiguousOnly) {
             r = normalizeLabelColons(r)                      // "re colon ..." -> "Re: ..."
+            r = normalizeSpokenPunctuation(r)                // "hello comma world" -> "hello, world"
             r = normalizeCommandPatterns(r)                  // single-dash flags
         }
         r = cleanupSymbolSpacing(r)
-        r = r.replace(Regex("\\s{2,}"), " ").trim()
+        r = r.replace(Regex("[ \\t]{2,}"), " ").trim()       // collapse spaces, preserve newlines
         return r
+    }
+
+    // ---- spoken sentence punctuation (gated to prose) ----
+
+    /** Words that signal the *noun* sense, so we don't punctuate ("a comma", "the period"). */
+    private val determinerBeforeMark = setOf(
+        "a", "an", "the", "this", "that", "these", "those", "its", "his", "her",
+        "their", "our", "my", "your", "of", "in", "during", "each", "every",
+        "another", "no", "one", "semi",
+    )
+
+    /**
+     * Convert an explicitly dictated mark that follows a real word into the symbol:
+     * "send it comma then wait" -> "send it, then wait", "that's all period" -> "that's all."
+     * Skipped when the preceding word marks the noun sense ("a comma", "the period").
+     */
+    private fun normalizeSpokenPunctuation(text: String): String {
+        val re = Regex("\\b(\\w+)\\s+(full stop|period|comma|semicolon|colon)\\b", RegexOption.IGNORE_CASE)
+        return re.replace(text) { m ->
+            val prev = m.groupValues[1]
+            if (prev.lowercase() in determinerBeforeMark) return@replace m.value
+            val mark = when (m.groupValues[2].lowercase()) {
+                "full stop", "period" -> "."
+                "comma" -> ","
+                "semicolon" -> ";"
+                "colon" -> ":"
+                else -> return@replace m.value
+            }
+            "$prev$mark"
+        }
     }
 
     // ---- symbol spacing ----

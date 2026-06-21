@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
+import com.voicerewriter.textproc.AppContext
 import com.voicerewriter.textproc.CodeContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
@@ -300,9 +301,13 @@ class RewriteActivity : ComponentActivity() {
             } else spoken
             if (!s.llmPolishEnabled) { toReview(cleaned); return }
             stage = Stage.CORRECTING
-            val flow = streamFor(s, Defaults.DICTATION_PROMPT, cleaned)
+            // App-context: tone the polish to the focused app (formal email, casual chat).
+            val category = AppContext.categoryFor(OpenWisprAccessibilityService.lastHostPackage, spoken)
             streamJob = scope.launch {
-                collectInto(flow, { output += it }, { e -> error = e; stage = Stage.ERROR },
+                val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
+                val prompt = if (tone.isBlank()) Defaults.DICTATION_PROMPT
+                    else Defaults.DICTATION_PROMPT + "\n\nTone for this app: " + tone
+                collectInto(streamFor(s, prompt, cleaned), { output += it }, { e -> error = e; stage = Stage.ERROR },
                     { toReview(RewriteEngine.cleanOutput(output)) })
             }
         }

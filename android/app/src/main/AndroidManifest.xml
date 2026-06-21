@@ -41,6 +41,10 @@
             android:exported="false"
             android:label="Import from contacts" />
         <activity
+            android:name=".AppToneActivity"
+            android:exported="false"
+            android:label="Tone by app" />
+        <activity
             android:name=".FixDictationActivity"
             android:exported="false"
             android:label="Fix a word"

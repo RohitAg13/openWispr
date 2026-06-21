@@ -6,16 +6,20 @@ import android.util.Log
 data class TextProcessingConfig(
     val selfCorrectionEnabled: Boolean = true,
     val fillerRemovalEnabled: Boolean = true,
+    val listFormattingEnabled: Boolean = true,
+    val capitalizationEnabled: Boolean = true,
     val fillerWords: List<String> = DEFAULT_FILLER_WORDS,
 ) {
     companion object {
         /**
-         * Filler words safe for word-boundary removal. Excludes high-false-positive
-         * words ("like" as a verb, "right" as direction, "so" as connector) — the
-         * LLM polish layer handles those nuances better when it's enabled.
+         * Phrase fillers safe for word-boundary removal. Hesitation sounds (um/uh/
+         * hmm + variants) are handled by a regex pass in FillerWordRemover, so they're
+         * not listed here. Excludes high-false-positive words ("like" as a verb,
+         * "right" as direction, "so" as connector) — the LLM polish layer handles
+         * those nuances better when it's enabled.
          */
         val DEFAULT_FILLER_WORDS = listOf(
-            "um", "uh", "erm", "hmm", "you know", "basically", "literally",
+            "you know", "basically", "literally",
         )
     }
 }
@@ -36,6 +40,8 @@ data class TextProcessingResult(val output: String, val stages: List<StageResult
  *   2. filler removal
  *   3. spoken-form normalization  (skips ambiguous rules in code/terminal fields)
  *   4. number normalization
+ *   5. structure: "new line"/"new paragraph" + numbered lists  (introduces newlines)
+ *   6. sentence capitalization  (newline-aware; skipped in code/terminal fields)
  */
 object TextProcessor {
 
@@ -96,6 +102,22 @@ object TextProcessor {
             val before = text
             text = NumberNormalizer.normalize(text)
             stages.add(StageResult("number normalization", before, text))
+        }
+
+        // 5. Structure: spoken "new line"/"new paragraph" + explicit numbered lists.
+        //    Runs after numbers so digits are settled and no earlier stage flattens
+        //    the newlines it introduces.
+        if (config.listFormattingEnabled) {
+            val before = text
+            text = ListFormatter.format(text)
+            stages.add(StageResult("list formatting", before, text))
+        }
+
+        // 6. Sentence capitalization (newline-aware). Skipped in code/terminal fields.
+        if (config.capitalizationEnabled && !isCodeContext) {
+            val before = text
+            text = Capitalizer.capitalizeSentences(text)
+            stages.add(StageResult("capitalization", before, text))
         }
 
         if (stages.any { it.changed }) {

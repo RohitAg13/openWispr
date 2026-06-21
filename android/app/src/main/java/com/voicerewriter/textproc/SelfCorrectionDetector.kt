@@ -18,9 +18,23 @@ object SelfCorrectionDetector {
 
     /** Restart markers: when they form their own clause, drop everything before. */
     private val restartMarkers = listOf(
-        "let me start over", "let me rephrase", "scratch that", "actually no",
-        "never mind", "nevermind", "forget that", "forget it", "start over",
-        "no no no", "no no",
+        "let me start over", "let me rephrase", "scratch all that", "scratch that",
+        "actually no", "never mind", "nevermind", "forget that", "forget it",
+        "start over", "no no no", "no no",
+    )
+
+    /** A value (digit/time or small number word) for the "X … actually Y" swap heuristic. */
+    private const val VAL =
+        "(?:\\d+(?::\\d+)?(?:\\s?[ap]\\.?m\\.?)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+
+    /**
+     * Numeric mind-changes: "meet at 2 actually 3" / "2pm no 3pm" / "two, make that
+     * three" -> keep only the corrected value. Both sides must be values, so prose
+     * isn't touched. Worded/multi-word corrections are left for the LLM.
+     */
+    private val valueSwap = Regex(
+        "\\b($VAL)[\\s,.…]*(?:actually|no,?\\s+make that|make that|or rather|i mean|no)\\s+($VAL)(?=\\W|$)",
+        RegexOption.IGNORE_CASE,
     )
 
     /**
@@ -32,8 +46,10 @@ object SelfCorrectionDetector {
     private val inlineMarkers = listOf(
         Inline("oops i meant", false), Inline("on second thought", false),
         Inline("wait hold on", false), Inline("no make that", false),
+        Inline("make that", false), Inline("let's make it", false),
         Inline("or rather", false), Inline("no wait", false),
-        Inline("i mean", true), Inline("sorry", true), Inline("wait", true),
+        Inline("i mean", true), Inline("actually", true),
+        Inline("sorry", true), Inline("wait", true),
     )
 
     /** Words that introduce a brand-new full clause (a total replacement). */
@@ -50,7 +66,8 @@ object SelfCorrectionDetector {
 
     fun detectAndResolve(text: String): String {
         if (text.isEmpty()) return text
-        var t = resolveStandaloneRestarts(text)
+        var t = valueSwap.replace(text) { it.groupValues[2] }  // "2 actually 3" -> "3"
+        t = resolveStandaloneRestarts(t)
         t = splitIntoSentences(t).joinToString(" ") { resolveInline(it) }
         return t.trim()
     }

@@ -21,16 +21,40 @@ object FillerWordRemover {
         ),
     )
 
+    /**
+     * Hesitation sounds and their repeated-letter variants — always noise. Covers
+     * "um/umm/ummm", "uh/uhh", "uhm", "hm/hmm", "mm/mmm", "mhm", "er/erm/ermm".
+     * Word-boundaried + comma-absorbing; "mm"/"er" require the safe forms (>=2 m,
+     * exact "er") so single letters and real words aren't touched.
+     */
+    private val hesitation = Regex(
+        "(,\\s*)?\\b(um+|uh+|uhm+|hm+|mm+|mhm+|erm+|er)\\b(\\s*,)?",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /**
+     * Verbal-tic fillers that are only removed when comma/clause-bounded — so the
+     * meaningful uses ("kind of blue", "I guess so") are left alone, but the tic
+     * uses ("it's done, kind of", "you know what I mean,") are stripped.
+     */
+    private val edgeFillers = listOf("you know what i mean", "i guess", "kind of", "sort of", "or whatever")
+
     fun removeFillers(text: String, fillerWords: List<String>): String {
-        if (text.isEmpty() || fillerWords.isEmpty()) return text
+        if (text.isEmpty()) return text
 
-        var result = text
-        // Longest-first so "you know" is matched before "you".
-        val sorted = fillerWords.sortedByDescending { it.length }
+        // 1. Hesitation sounds (independent of the configurable list).
+        var result = hesitation.replace(text, "")
 
-        for (filler in sorted) {
+        // 2. Comma/clause-bounded verbal tics (the meaningful uses have no comma).
+        for (f in edgeFillers) {
+            val e = Regex.escape(f)
+            result = Regex(",\\s*$e\\b", RegexOption.IGNORE_CASE).replace(result, "")  // "done, kind of"
+            result = Regex("\\b$e\\s*,", RegexOption.IGNORE_CASE).replace(result, "")  // "kind of, it's…"
+        }
+
+        // 3. Configured phrase fillers, longest-first ("you know" before "you").
+        for (filler in fillerWords.sortedByDescending { it.length }) {
             val escaped = Regex.escape(filler)
-            // Optional surrounding commas absorb commas around a parenthetical filler.
             val regex = Regex("(,\\s*)?\\b$escaped\\b(\\s*,)?", RegexOption.IGNORE_CASE)
             val guard = guardedFillers[filler.lowercase()]
             result = if (guard != null) removeWithGuards(result, regex, guard)

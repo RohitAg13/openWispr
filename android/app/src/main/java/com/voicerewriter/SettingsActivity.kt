@@ -355,6 +355,18 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 ) { if (isLocal) localLlmPolish = it else cleanupDictation = it }
             }
 
+            // ---- Tone by app ----
+            SectionCard("Tone by app") {
+                StatusRow(
+                    title = "Formal vs casual by app",
+                    subtitle = "Polish dictation differently per app — formal in email/docs, casual in chat. Used when “Polish with LLM” is on.",
+                    on = false,
+                    showDot = false,
+                ) {
+                    ActionButton("Edit") { context.startActivity(Intent(context, AppToneActivity::class.java)) }
+                }
+            }
+
             // ---- Dictionary ----
             SectionCard("Personal dictionary") {
                 StatusRow(
