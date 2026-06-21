@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,6 +76,7 @@ import java.util.Locale
  */
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge() // draw under the status/nav bars; the cream/plum bg fills the whole screen
         super.onCreate(savedInstanceState)
         setContent { OpenWisprTheme { HomeScreen() } }
     }
@@ -127,7 +129,7 @@ class HomeActivity : ComponentActivity() {
                     Column(
                         Modifier.weight(1f).fillMaxWidth().statusBarsPadding()
                             .verticalScroll(rememberScrollState())
-                            .padding(18.dp, 14.dp, 18.dp, 16.dp),
+                            .padding(18.dp, 14.dp, 18.dp, 28.dp),
                     ) {
                         TopLockup()
                         Spacer(Modifier.height(18.dp))
@@ -553,14 +555,14 @@ class HomeActivity : ComponentActivity() {
 
     @Composable
     private fun BottomBar(onTalk: () -> Unit, onSettings: () -> Unit) {
-        Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 3.dp) {
-            Box(Modifier.fillMaxWidth()) {
-                Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
-                Row(
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(14.dp, 8.dp, 14.dp, 12.dp),
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
+        // Plain Box (not Surface) so the raised Talk FAB can overflow above the bar without being clipped.
+        Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+            Row(
+                Modifier.fillMaxWidth().navigationBarsPadding().padding(14.dp, 8.dp, 14.dp, 12.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
                     // Home (active)
                     NavItem(label = "Home", selected = true, onClick = {}) {
                         Icon(painterResource(R.drawable.ic_aperture), null,
@@ -585,7 +587,6 @@ class HomeActivity : ComponentActivity() {
                             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                     }
                 }
-            }
         }
     }
 
