@@ -91,6 +91,10 @@ object VocabCorrector {
     /** 0..1 similarity of an input window to a target phrase (token-wise). */
     private fun matchScore(window: List<String>, phrase: List<String>): Double {
         if (window.size != phrase.size) return 0.0
+        // A single token that's a common English word is never a vocab match — even
+        // exactly — so a contact named "Will"/"Mark" can't corrupt "i will mark it".
+        // Multi-word phrases (deliberate snippets/aliases) are exempt.
+        if (window.size == 1 && window[0] in COMMON_WORDS) return 0.0
         if (window == phrase) return 1.0 // exact alias/canonical
         var sum = 0.0
         for (k in window.indices) {
@@ -155,7 +159,11 @@ object VocabCorrector {
         return dp[b.length]
     }
 
-    /** Frequent words we never fuzzy-correct into a vocab term. */
+    /**
+     * Frequent words we never match as a single-token vocab term. Includes common
+     * English words AND words that double as first names ("Will", "Mark", "Rose"),
+     * so importing such contacts can't corrupt ordinary speech.
+     */
     private val COMMON_WORDS = setOf(
         "the", "and", "for", "are", "you", "your", "with", "this", "that", "have",
         "from", "they", "what", "when", "will", "would", "there", "their", "right",
@@ -163,5 +171,9 @@ object VocabCorrector {
         "all", "any", "out", "our", "was", "his", "her", "him", "she", "who", "how",
         "why", "yes", "let", "set", "get", "got", "see", "way", "day", "new", "use",
         "make", "like", "just", "need", "want", "into", "over", "then", "than",
+        // common English words that are also names
+        "mark", "rose", "grace", "hope", "bill", "art", "max", "ray", "dawn", "jack",
+        "drew", "rich", "faith", "joy", "may", "june", "guy", "frank", "grant", "page",
+        "lane", "reed", "hunter", "chase", "cash", "dale", "rob", "bob", "sunny", "victor",
     )
 }
