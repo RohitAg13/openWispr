@@ -12,6 +12,29 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
+/**
+ * How hard the LLM polish edits, replacing the old on/off toggle. Mirrors the cleanup pipeline's
+ * CleanupLevel — the `instruction` is appended to the dictation polish prompt. OFF skips
+ * the model entirely (deterministic-only). The fine-tune ignores the level (it runs its
+ * trained behavior); levels steer the cloud / generic on-device models.
+ */
+enum class PolishLevel(val key: String, val label: String, val blurb: String, val instruction: String) {
+    OFF("off", "Off", "Deterministic cleanup only — no model. Fast and safe.", ""),
+    LIGHT("light", "Light", "Model fixes only capitalization, spacing and punctuation.",
+        "Only fix capitalization, spacing and punctuation. Keep all words the same."),
+    MEDIUM("medium", "Medium", "Also splits run-on sentences and fixes small grammar.",
+        "You may split run-on sentences and fix small grammar mistakes. " +
+            "If the speaker corrects a previous word or number, keep only the corrected version."),
+    FULL("full", "Full", "Fuller cleanup, with one small rewrite for clarity if needed.",
+        "You may split run-on sentences and fix grammar, and use one small rewrite only if " +
+            "needed for clarity. If the speaker corrects a previous word or number, keep only " +
+            "the corrected version.");
+
+    companion object {
+        fun from(key: String?): PolishLevel = entries.firstOrNull { it.key == key } ?: OFF
+    }
+}
+
 /** Port of DEFAULT_SETTINGS from defaults.js. */
 data class Settings(
     val provider: String = Defaults.DEFAULT_PROVIDER,
@@ -29,19 +52,17 @@ data class Settings(
     // --- OpenWispr behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
-    val cleanupDictation: Boolean = true, // polish cloud dictation with the LLM
-    val localLlmPolish: Boolean = false, // polish on-device dictation with the tiny LLM (off: small models hallucinate/over-edit)
+    val polishLevel: PolishLevel = PolishLevel.OFF, // LLM polish intensity (replaces the old on/off toggle)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
     val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
 ) {
     /**
-     * Whether to run the LLM polish layer on dictation, given the provider. Cloud
-     * models polish reliably (default on); tiny on-device models tend to
-     * hallucinate and over-edit, so on-device polish is opt-in (default off) — the
-     * deterministic pipeline handles the cleanup instead.
+     * Whether to run the LLM polish layer on dictation. Off by default — the deterministic
+     * pipeline handles the cleanup; the model is opt-in via [polishLevel] (tiny on-device
+     * models tend to over-edit, so users dial the intensity).
      */
     val llmPolishEnabled: Boolean
-        get() = if (provider == "local") localLlmPolish else cleanupDictation
+        get() = polishLevel != PolishLevel.OFF
     /** Mirrors the extension's gate: needs a key before it can rewrite. */
     val isConfigured: Boolean get() = apiKey.isNotBlank()
 
@@ -78,8 +99,7 @@ class SettingsRepository(private val context: Context) {
         val STT_MODEL = stringPreferencesKey("sttModel")
         val DEFAULT_MODE = stringPreferencesKey("defaultMode")
         val DETERMINISTIC_CLEANUP = booleanPreferencesKey("deterministicCleanup")
-        val CLEANUP_DICTATION = booleanPreferencesKey("cleanupDictation")
-        val LOCAL_LLM_POLISH = booleanPreferencesKey("localLlmPolish")
+        val POLISH_LEVEL = stringPreferencesKey("polishLevel")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
         val BUBBLE_ONLY_ON_FIELDS = booleanPreferencesKey("bubbleOnlyOnFields")
     }
@@ -100,8 +120,7 @@ class SettingsRepository(private val context: Context) {
             sttModel = p[Keys.STT_MODEL] ?: defaults.sttModel,
             defaultMode = p[Keys.DEFAULT_MODE] ?: defaults.defaultMode,
             deterministicCleanup = p[Keys.DETERMINISTIC_CLEANUP] ?: defaults.deterministicCleanup,
-            cleanupDictation = p[Keys.CLEANUP_DICTATION] ?: defaults.cleanupDictation,
-            localLlmPolish = p[Keys.LOCAL_LLM_POLISH] ?: defaults.localLlmPolish,
+            polishLevel = PolishLevel.from(p[Keys.POLISH_LEVEL]),
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
             bubbleOnlyOnFields = p[Keys.BUBBLE_ONLY_ON_FIELDS] ?: defaults.bubbleOnlyOnFields,
         )
@@ -124,8 +143,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.STT_MODEL] = s.sttModel
             p[Keys.DEFAULT_MODE] = s.defaultMode
             p[Keys.DETERMINISTIC_CLEANUP] = s.deterministicCleanup
-            p[Keys.CLEANUP_DICTATION] = s.cleanupDictation
-            p[Keys.LOCAL_LLM_POLISH] = s.localLlmPolish
+            p[Keys.POLISH_LEVEL] = s.polishLevel.key
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
             p[Keys.BUBBLE_ONLY_ON_FIELDS] = s.bubbleOnlyOnFields
         }

@@ -19,6 +19,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Row
@@ -44,6 +46,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -170,8 +173,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var sttModel by remember { mutableStateOf("") }
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
     var deterministicCleanup by remember { mutableStateOf(true) }
-    var cleanupDictation by remember { mutableStateOf(true) }
-    var localLlmPolish by remember { mutableStateOf(false) }
+    var polishLevel by remember { mutableStateOf(PolishLevel.OFF) }
     var vadAutoStop by remember { mutableStateOf(true) }
     var bubbleOnlyOnFields by remember { mutableStateOf(true) }
     var sttProviderMenu by remember { mutableStateOf(false) }
@@ -187,8 +189,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         voice = s.voice; antiAI = s.antiAI; temperature = s.temperature.toFloat()
         sttProvider = s.sttProvider; sttEndpoint = s.sttEndpoint; sttKey = s.sttKey; sttModel = s.sttModel
         defaultMode = s.defaultMode
-        deterministicCleanup = s.deterministicCleanup; cleanupDictation = s.cleanupDictation
-        localLlmPolish = s.localLlmPolish; vadAutoStop = s.vadAutoStop
+        deterministicCleanup = s.deterministicCleanup; polishLevel = s.polishLevel
+        vadAutoStop = s.vadAutoStop
         bubbleOnlyOnFields = s.bubbleOnlyOnFields
         a11yEnabled = isAccessibilityEnabled(context)
         notifOn = notificationsEnabled(context)
@@ -214,8 +216,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 apiKey = apiKey.trim(), voice = voice, antiAI = antiAI, temperature = temperature.toDouble(),
                 sttProvider = sttProvider, sttEndpoint = sttEndpoint.trim(), sttKey = sttKey.trim(),
                 sttModel = sttModel.trim(), defaultMode = defaultMode,
-                deterministicCleanup = deterministicCleanup, cleanupDictation = cleanupDictation,
-                localLlmPolish = localLlmPolish, vadAutoStop = vadAutoStop,
+                deterministicCleanup = deterministicCleanup, polishLevel = polishLevel,
+                vadAutoStop = vadAutoStop,
                 bubbleOnlyOnFields = bubbleOnlyOnFields,
             )
         )
@@ -396,13 +398,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                     deterministicCleanup,
                 ) { deterministicCleanup = it }
 
-                val isLocal = provider == "local"
-                SwitchRow(
-                    "Polish with LLM",
-                    if (isLocal) "Also run the on-device model. Off by default — small models tend to over-edit."
-                    else "Also run the cloud model for grammar and flow.",
-                    if (isLocal) localLlmPolish else cleanupDictation,
-                ) { if (isLocal) localLlmPolish = it else cleanupDictation = it }
+                PolishLevelRow(polishLevel) { polishLevel = it }
             }
 
             // ---- Tone by app ----
@@ -623,6 +619,25 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChang
         }
         Spacer(Modifier.size(8.dp))
         Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PolishLevelRow(level: PolishLevel, onChange: (PolishLevel) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Polish with LLM", style = MaterialTheme.typography.bodyLarge)
+        Text(level.blurb, style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PolishLevel.entries.forEach { lvl ->
+                FilterChip(
+                    selected = lvl == level,
+                    onClick = { onChange(lvl) },
+                    label = { Text(lvl.label) },
+                )
+            }
+        }
     }
 }
 

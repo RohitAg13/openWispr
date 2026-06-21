@@ -355,18 +355,24 @@ class RewriteActivity : ComponentActivity() {
             val cleaned = if (s.deterministicCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
             // Guards (ported from the cleanup pipeline's LocalLLMProcessor): skip the LLM where it tends to
-            // harm rather than help — disabled, code/terminal context, or very short input
-            // (the deterministic stage already handles those well, and the LLM over-edits them).
+            // harm rather than help — polish off, very short input, or code/terminal context
+            // (the deterministic stage already handles those; code only goes to the LLM at FULL).
             val wordCount = cleaned.trim().split(Regex("\\s+")).count { it.isNotBlank() }
-            if (!s.llmPolishEnabled || isCode || wordCount < 4) { toReview(cleaned); return }
+            if (!s.llmPolishEnabled || wordCount < 4 || (isCode && s.polishLevel != PolishLevel.FULL)) {
+                toReview(cleaned); return
+            }
             stage = Stage.CORRECTING
             // App-context: tone the polish to the focused app (formal email, casual chat).
             val category = AppContext.categoryFor(OpenWisprAccessibilityService.lastHostPackage, spoken)
             val relaxed = RewriteEngine.hasSelfCorrection(spoken)
             streamJob = scope.launch {
                 val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
-                val prompt = if (tone.isBlank()) Defaults.DICTATION_PROMPT
-                    else Defaults.DICTATION_PROMPT + "\n\nTone for this app: " + tone
+                // The cleanup level (light/medium/full) tunes how much the model may edit.
+                val prompt = buildString {
+                    append(Defaults.DICTATION_PROMPT)
+                    if (s.polishLevel.instruction.isNotEmpty()) append("\n\n").append(s.polishLevel.instruction)
+                    if (tone.isNotBlank()) append("\n\nTone for this app: ").append(tone)
+                }
                 collectInto(
                     streamFor(s, prompt, cleaned),
                     { output += it },
