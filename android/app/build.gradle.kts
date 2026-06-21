@@ -43,6 +43,13 @@ android {
             useLegacyPackaging = true
         }
     }
+    testOptions {
+        unitTests {
+            // textproc's TextProcessor logs via android.util.Log; return defaults so
+            // pure JVM unit tests don't need Robolectric just to no-op logging.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
@@ -62,6 +69,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    testImplementation("junit:junit:4.13.2")
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
