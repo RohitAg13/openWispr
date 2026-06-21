@@ -19,6 +19,12 @@ object NumberNormalizer {
         var i = 0
         while (i < words.size) {
             val (consumed, replacement) = tryConsumeNumber(words, i)
+            // Don't convert a lone pronoun/article "one" ("the other one", "no one",
+            // "one of them") — only as part of a larger number ("twenty one").
+            if (consumed == 1 && words[i].lowercase().trim(',', '.', '!', '?', ';', ':') == "one" &&
+                isPronounOne(result.lastOrNull(), words.getOrNull(i + 1))) {
+                result.add(words[i]); i += 1; continue
+            }
             if (consumed > 0) {
                 result.add(replacement)
                 i += consumed
@@ -28,6 +34,17 @@ object NumberNormalizer {
             }
         }
         return result.joinToString(" ")
+    }
+
+    private val oneDeterminers = setOf(
+        "the", "this", "that", "other", "another", "no", "any", "each", "every",
+        "which", "some", "such", "only",
+    )
+
+    private fun isPronounOne(prev: String?, next: String?): Boolean {
+        val p = prev?.lowercase()?.trim(',', '.', '!', '?', ';', ':', '"', '\'')
+        if (p != null && p in oneDeterminers) return true
+        return next?.lowercase()?.trim(',', '.', '!', '?', ';', ':') == "of"
     }
 
     // ---- lookups ----

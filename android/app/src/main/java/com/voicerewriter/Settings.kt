@@ -29,9 +29,18 @@ data class Settings(
     // --- OpenWispr behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
-    val cleanupDictation: Boolean = true, // additionally polish the dictation with the LLM
+    val cleanupDictation: Boolean = true, // polish cloud dictation with the LLM
+    val localLlmPolish: Boolean = false, // polish on-device dictation with the tiny LLM (off: small models hallucinate/over-edit)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
 ) {
+    /**
+     * Whether to run the LLM polish layer on dictation, given the provider. Cloud
+     * models polish reliably (default on); tiny on-device models tend to
+     * hallucinate and over-edit, so on-device polish is opt-in (default off) — the
+     * deterministic pipeline handles the cleanup instead.
+     */
+    val llmPolishEnabled: Boolean
+        get() = if (provider == "local") localLlmPolish else cleanupDictation
     /** Mirrors the extension's gate: needs a key before it can rewrite. */
     val isConfigured: Boolean get() = apiKey.isNotBlank()
 
@@ -69,6 +78,7 @@ class SettingsRepository(private val context: Context) {
         val DEFAULT_MODE = stringPreferencesKey("defaultMode")
         val DETERMINISTIC_CLEANUP = booleanPreferencesKey("deterministicCleanup")
         val CLEANUP_DICTATION = booleanPreferencesKey("cleanupDictation")
+        val LOCAL_LLM_POLISH = booleanPreferencesKey("localLlmPolish")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
     }
 
@@ -89,6 +99,7 @@ class SettingsRepository(private val context: Context) {
             defaultMode = p[Keys.DEFAULT_MODE] ?: defaults.defaultMode,
             deterministicCleanup = p[Keys.DETERMINISTIC_CLEANUP] ?: defaults.deterministicCleanup,
             cleanupDictation = p[Keys.CLEANUP_DICTATION] ?: defaults.cleanupDictation,
+            localLlmPolish = p[Keys.LOCAL_LLM_POLISH] ?: defaults.localLlmPolish,
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
         )
     }
@@ -111,6 +122,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.DEFAULT_MODE] = s.defaultMode
             p[Keys.DETERMINISTIC_CLEANUP] = s.deterministicCleanup
             p[Keys.CLEANUP_DICTATION] = s.cleanupDictation
+            p[Keys.LOCAL_LLM_POLISH] = s.localLlmPolish
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
         }
     }

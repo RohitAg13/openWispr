@@ -117,7 +117,11 @@ object RewriteEngine {
      */
     fun buildLocalSystemPrompt(settings: Settings): String {
         val voice = settings.voice.trim()
-        var s = "You rewrite text for the user. Output ONLY the rewritten text once — " +
+        // Preservation line first: tiny models otherwise "correct" unfamiliar names
+        // and reformat emails. Kept short — long guardrails make sub-1B models loop.
+        var s = "Clean up the text: fix punctuation, capitalization and obvious slips only. " +
+            "Copy names, emails, URLs, numbers and code EXACTLY; never change their spelling. " +
+            "Keep the user's own words. Output ONLY the cleaned text once — " +
             "no preamble, no quotes, no markdown, and never repeat the text."
         if (voice.isNotEmpty()) s += " Match this writing style: $voice"
         return s

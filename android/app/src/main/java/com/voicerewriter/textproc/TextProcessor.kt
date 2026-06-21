@@ -52,6 +52,14 @@ object TextProcessor {
         var text = rawText
         val stages = ArrayList<StageResult>()
 
+        // 0. Spelled-out entities ("spelled k a y l a" -> "Kayla") — runs first so
+        //    downstream stages treat the assembled name as one token.
+        run {
+            val before = text
+            text = EntityNormalizer.joinSpelledLetters(text)
+            stages.add(StageResult("spelled entities", before, text))
+        }
+
         // 1. Self-correction.
         if (config.selfCorrectionEnabled) {
             val before = text

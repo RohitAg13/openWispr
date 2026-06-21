@@ -230,8 +230,9 @@ class RewriteActivity : ComponentActivity() {
                     val isCode = CodeContext.isCode(OpenWisprAccessibilityService.lastHostPackage)
                     TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
                 } else spoken
-                // Then optionally layer the LLM on top for further polish.
-                if (!s.cleanupDictation) {
+                // Then optionally layer the LLM on top for further polish (off by
+                // default for on-device, where tiny models hallucinate/over-edit).
+                if (!s.llmPolishEnabled) {
                     output = cleaned
                     stage = Stage.DONE
                     return

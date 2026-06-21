@@ -81,11 +81,35 @@ object SpokenFormNormalizer {
     private fun normalizeURLsAndPaths(text: String): String {
         var r = text
         r = normalizeURLs(r)
+        r = normalizeBareUrlPath(r)  // "github dot com slash x" -> github.com/x (before email, so "is at github..." isn't misread as an email)
         r = normalizeEmails(r)
         r = normalizePaths(r)
         r = normalizeDottedNames(r)
         return r
     }
+
+    /** Bare domain+path (no protocol): "github dot com slash a slash b" -> "github.com/a/b". */
+    private fun normalizeBareUrlPath(text: String): String {
+        val regex = Regex(
+            "\\b(\\w+(?:\\s+dot\\s+\\w+)+)\\s+slash\\s+(\\w+(?:\\s+slash\\s+\\w+)*)\\b",
+            RegexOption.IGNORE_CASE,
+        )
+        return regex.replace(text) { m ->
+            val domain = m.groupValues[1].replace(Regex("\\s+dot\\s+"), ".")
+            val path = m.groupValues[2].replace(Regex("\\s+slash\\s+"), "/")
+            "$domain/$path"
+        }
+    }
+
+    /**
+     * Common function words that are never an email local-part. Guards against
+     * "the repo is at github dot com" becoming "is@github.com".
+     */
+    private val emailLocalStop: Set<String> = setOf(
+        "is", "at", "be", "am", "are", "was", "were", "the", "a", "an", "to", "in",
+        "on", "of", "it", "and", "or", "but", "so", "we", "he", "she", "they",
+        "you", "i", "me", "us", "this", "that", "here", "there",
+    )
 
     /** "https colon slash slash github dot com slash x" -> "https://github.com/x" */
     private fun normalizeURLs(text: String): String {
@@ -108,7 +132,10 @@ object SpokenFormNormalizer {
             RegexOption.IGNORE_CASE,
         )
         return regex.replace(text) { m ->
-            val local = m.groupValues[1].replace(Regex("\\s+dot\\s+"), ".")
+            val localRaw = m.groupValues[1]
+            // Skip if the local-part is a common word ("is at X" is not an email).
+            if (localRaw.split(Regex("\\s+")).last().lowercase() in emailLocalStop) return@replace m.value
+            val local = localRaw.replace(Regex("\\s+dot\\s+"), ".")
             val domain = m.groupValues[2].replace(Regex("\\s+dot\\s+"), ".")
             "$local@$domain"
         }

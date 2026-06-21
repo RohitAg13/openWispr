@@ -138,6 +138,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
     var deterministicCleanup by remember { mutableStateOf(true) }
     var cleanupDictation by remember { mutableStateOf(true) }
+    var localLlmPolish by remember { mutableStateOf(false) }
     var vadAutoStop by remember { mutableStateOf(true) }
     var sttProviderMenu by remember { mutableStateOf(false) }
     var a11yEnabled by remember { mutableStateOf(false) }
@@ -165,6 +166,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         defaultMode = s.defaultMode
         deterministicCleanup = s.deterministicCleanup
         cleanupDictation = s.cleanupDictation
+        localLlmPolish = s.localLlmPolish
         vadAutoStop = s.vadAutoStop
         a11yEnabled = isAccessibilityEnabled(context)
         loaded = true
@@ -607,7 +609,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Switch(checked = deterministicCleanup, onCheckedChange = { deterministicCleanup = it })
             }
 
-            // Optional LLM polish on top
+            // Optional LLM polish on top — provider-aware (off by default on-device).
+            val isLocalProvider = provider == "local"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -615,13 +618,20 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Polish with LLM", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "After smart cleanup, also run the text through the LLM for grammar and flow. " +
-                            "Slower; on-device models may be less reliable.",
+                        if (isLocalProvider)
+                            "After smart cleanup, also run the text through the on-device model. " +
+                                "Off by default — small models tend to hallucinate and over-edit; " +
+                                "smart cleanup alone is usually better."
+                        else
+                            "After smart cleanup, also run the text through the cloud LLM for grammar and flow.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = cleanupDictation, onCheckedChange = { cleanupDictation = it })
+                Switch(
+                    checked = if (isLocalProvider) localLlmPolish else cleanupDictation,
+                    onCheckedChange = { if (isLocalProvider) localLlmPolish = it else cleanupDictation = it },
+                )
             }
 
             // Auto-stop on silence (Silero VAD)
@@ -683,6 +693,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                                 defaultMode = defaultMode,
                                 deterministicCleanup = deterministicCleanup,
                                 cleanupDictation = cleanupDictation,
+                                localLlmPolish = localLlmPolish,
                                 vadAutoStop = vadAutoStop,
                             )
                         )
