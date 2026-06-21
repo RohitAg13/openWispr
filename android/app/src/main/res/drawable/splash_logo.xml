@@ -3,14 +3,25 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- White microphone, centered — drawn on the orange splash background. -->
+    <!-- Cream Aperture mark, centered for the Android-12 splash icon safe zone. -->
     <group
-        android:scaleX="2.9"
-        android:scaleY="2.9"
-        android:translateX="19.2"
-        android:translateY="20.5">
+        android:scaleX="0.58"
+        android:scaleY="0.58"
+        android:translateX="20.8"
+        android:translateY="25">
         <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11L5,11c0,3.41 2.72,6.23 6,6.72L11,21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z" />
+            android:strokeColor="#FCF8F4"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="@android:color/transparent"
+            android:pathData="M67,29 A25,25 0 1 0 67,71" />
+        <path
+            android:strokeColor="#FCF8F4"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="@android:color/transparent"
+            android:pathData="M69,50 C75,44 79,56 86,49" />
     </group>
 </vector>

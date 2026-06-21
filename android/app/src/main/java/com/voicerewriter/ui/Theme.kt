@@ -9,62 +9,61 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
- * OpenWispr brand theme — "warm sunset": coral → orange → amber, with a pink accent.
- * Centralized so every screen shares one identity (replaces the ad-hoc
- * light/darkColorScheme() calls that were scattered across activities).
+ * OpenWispr brand theme — "muted sunset" (handoff identity): amber → coral → rose,
+ * warm cream surfaces and plum ink. Centralized so every screen shares one identity.
  */
 
 // ---- brand constants (also used for gradients / the bubble) ----
-val BrandCoral = Color(0xFFFB7185)
-val BrandOrange = Color(0xFFF97316)
-val BrandAmber = Color(0xFFFBBF24)
-val BrandPink = Color(0xFFEC4899)
+val BrandAmber = Color(0xFFEDB079)
+val BrandCoral = Color(0xFFE07B52) // primary
+val BrandCoralDeep = Color(0xFFC7623C)
+val BrandRose = Color(0xFFC16560)
+val BrandPlum = Color(0xFF4A2E27)
+val MarkCream = Color(0xFFFCF8F4)
 
-/** The signature sunset gradient, used on hero headers and the record button. */
+/** The signature muted-sunset gradient (≈140°): amber → coral → rose. */
 val SunsetBrush: Brush
-    get() = Brush.linearGradient(listOf(BrandCoral, BrandOrange, BrandAmber))
-
-val SunsetBrushVivid: Brush
-    get() = Brush.linearGradient(listOf(BrandPink, BrandOrange))
+    get() = Brush.linearGradient(0f to BrandAmber, 0.52f to BrandCoral, 1f to BrandRose)
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFFEA580C),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFFFE3D3),
-    onPrimaryContainer = Color(0xFF7A2E00),
-    secondary = Color(0xFFDB2777),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFFFD9EC),
-    onSecondaryContainer = Color(0xFF7A0040),
-    tertiary = Color(0xFFB45309),
-    background = Color(0xFFFFFBF7),
-    onBackground = Color(0xFF1C1714),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF1C1714),
-    surfaceVariant = Color(0xFFF5E9E0),
-    onSurfaceVariant = Color(0xFF6B5D54),
-    outline = Color(0xFFD9C8BC),
-    outlineVariant = Color(0xFFEADCCF),
+    primary = BrandCoral,
+    onPrimary = MarkCream,
+    primaryContainer = Color(0xFFF3E6D6),       // tint_panel
+    onPrimaryContainer = BrandPlum,
+    secondary = BrandRose,
+    onSecondary = MarkCream,
+    secondaryContainer = Color(0xFFF7E1DC),
+    onSecondaryContainer = Color(0xFF5A2520),
+    tertiary = BrandAmber,
+    onTertiary = BrandPlum,
+    background = Color(0xFFF6EFE6),             // cream_bg
+    onBackground = Color(0xFF4B3A2E),           // ink
+    surface = Color(0xFFFFFDFA),               // card
+    onSurface = Color(0xFF4B3A2E),
+    surfaceVariant = Color(0xFFF3E6D6),         // tint_panel
+    onSurfaceVariant = Color(0xFF7E6B5B),       // ink_soft
+    outline = Color(0xFFE7DECF),               // hairline
+    outlineVariant = Color(0xFFE7DECF),
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFFB923C),
-    onPrimary = Color(0xFF441A00),
-    primaryContainer = Color(0xFF7A2E00),
-    onPrimaryContainer = Color(0xFFFFE3D3),
-    secondary = Color(0xFFF472B6),
-    onSecondary = Color(0xFF4A0026),
-    secondaryContainer = Color(0xFF7A0040),
-    onSecondaryContainer = Color(0xFFFFD9EC),
-    tertiary = Color(0xFFFBBF24),
-    background = Color(0xFF1C1714),
-    onBackground = Color(0xFFF5EDE6),
-    surface = Color(0xFF26201C),
-    onSurface = Color(0xFFF5EDE6),
-    surfaceVariant = Color(0xFF3A322C),
-    onSurfaceVariant = Color(0xFFC9BBB0),
-    outline = Color(0xFF5C5048),
-    outlineVariant = Color(0xFF453B34),
+    primary = Color(0xFFE68C66),               // lighter coral for contrast on plum
+    onPrimary = Color(0xFF3A1F17),
+    primaryContainer = Color(0xFF6B3A2A),
+    onPrimaryContainer = Color(0xFFF3E6D6),
+    secondary = BrandAmber,
+    onSecondary = Color(0xFF3A1F17),
+    secondaryContainer = Color(0xFF5A3A2A),
+    onSecondaryContainer = Color(0xFFF6EFE6),
+    tertiary = BrandAmber,
+    background = Color(0xFF2E1D18),
+    onBackground = Color(0xFFF6EFE6),
+    surface = Color(0xFF3A2620),
+    onSurface = Color(0xFFF6EFE6),
+    surfaceVariant = Color(0xFF4A352C),
+    onSurfaceVariant = Color(0xFFD8C4B4),
+    outline = Color(0xFF5C463B),
+    outlineVariant = Color(0xFF4A352C),
 )
 
 @Composable
@@ -74,6 +73,7 @@ fun OpenWisprTheme(
 ) {
     MaterialTheme(
         colorScheme = if (dark) DarkColors else LightColors,
+        typography = OpenWisprTypography,
         content = content,
     )
 }

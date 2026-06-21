@@ -18,7 +18,7 @@ class WaveformView(context: Context) : View(context) {
     private val barCount = 5
     private val levels = FloatArray(barCount) { 0.15f } // 0..1 per bar
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+        color = Color.parseColor("#FCF8F4") // brand cream
         style = Paint.Style.FILL
     }
     private val rect = RectF()

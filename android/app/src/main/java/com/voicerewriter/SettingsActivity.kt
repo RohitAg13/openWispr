@@ -58,16 +58,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.voicerewriter.ui.MarkCream
 import com.voicerewriter.ui.OpenWisprTheme
 import com.voicerewriter.ui.SunsetBrush
+import com.voicerewriter.ui.Wordmark
 import kotlinx.coroutines.launch
 
 class SettingsActivity : ComponentActivity() {
@@ -531,19 +531,22 @@ private fun HeroHeader() {
     Column(
         modifier = Modifier.fillMaxWidth().background(SunsetBrush).padding(24.dp, 36.dp, 24.dp, 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(Modifier.size(56.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.22f)),
-            contentAlignment = Alignment.Center) {
+        // Brand lockup: Aperture mark + "OpenWispr" wordmark.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Icon(
-                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_mic),
+                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_aperture),
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(30.dp),
+                tint = MarkCream,
+                modifier = Modifier.size(44.dp),
             )
+            Text("OpenWispr", color = MarkCream, style = Wordmark)
         }
-        Text("OpenWispr", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-        Text("Speak. It types — anywhere.", color = Color.White.copy(alpha = 0.92f),
+        Text("Speak. It types — anywhere.", color = MarkCream.copy(alpha = 0.92f),
             style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
     }
 }

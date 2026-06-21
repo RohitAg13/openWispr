@@ -1,0 +1,22 @@
+<!-- OpenWispr "Aperture" mark — the open "O" of Open. Handoff concept 01. -->
+<!-- viewBox 0 0 100 100, stroke 7, round caps/joins; baked cream stroke, recolor via tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="@color/mark_cream"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M67,29 A25,25 0 1 0 67,71" />
+    <path
+        android:strokeColor="@color/mark_cream"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M69,50 C75,44 79,56 86,49" />
+</vector>

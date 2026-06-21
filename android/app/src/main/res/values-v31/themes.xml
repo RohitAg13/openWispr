@@ -1,9 +1,9 @@
 <resources>
-    <!-- Android 12+ system splash: orange background + animated mic icon. -->
+    <!-- Android 12+ system splash: coral background + cream Aperture icon. -->
     <style name="Theme.OpenWispr.Splash" parent="Theme.OpenWispr">
-        <item name="android:windowSplashScreenBackground">@color/brand_orange</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/brand_orange</item>
-        <item name="android:windowBackground">@color/warm_white</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_bg</item>
+        <item name="android:windowBackground">@color/cream_bg</item>
     </style>
 </resources>

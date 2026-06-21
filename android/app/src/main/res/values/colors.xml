@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- OpenWispr brand: warm sunset (coral → amber → pink) -->
-    <color name="brand_orange">#F97316</color>
-    <color name="brand_orange_deep">#EA580C</color>
-    <color name="brand_amber">#FBBF24</color>
-    <color name="brand_pink">#EC4899</color>
-    <color name="brand_coral">#FB7185</color>
+    <!-- OpenWispr brand: "muted sunset" (handoff identity). Hex column is authoritative. -->
+    <color name="brand_amber">#EDB079</color>
+    <color name="brand_coral">#E07B52</color>      <!-- primary -->
+    <color name="brand_coral_deep">#C7623C</color> <!-- pressed / deep accent -->
+    <color name="brand_rose">#C16560</color>
+    <color name="brand_plum">#4A2E27</color>
 
-    <!-- Surfaces -->
-    <color name="warm_white">#FFFBF7</color>
-    <color name="warm_charcoal">#1C1714</color>
+    <!-- Surfaces & ink -->
+    <color name="cream_bg">#F6EFE6</color>
+    <color name="card">#FFFDFA</color>
+    <color name="mark_cream">#FCF8F4</color>
+    <color name="ink">#4B3A2E</color>
+    <color name="ink_soft">#7E6B5B</color>
+    <color name="hairline">#E7DECF</color>
+    <color name="tint_panel">#F3E6D6</color>
 
-    <!-- Splash background (solid, for the launch window) -->
-    <color name="splash_bg">#1C1714</color>
+    <!-- Splash background (solid coral, for the launch window) -->
+    <color name="splash_bg">#E07B52</color>
 </resources>

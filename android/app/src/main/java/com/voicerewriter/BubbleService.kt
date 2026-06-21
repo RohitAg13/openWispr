@@ -143,7 +143,7 @@ class BubbleService : Service() {
             Notification.Builder(this)
         }
         return builder
-            .setSmallIcon(R.drawable.ic_mic)
+            .setSmallIcon(R.drawable.ic_aperture)
             .setContentTitle("OpenWispr")
             .setContentText("Tap a text field to dictate · long-press to transform")
             .setOngoing(true)
@@ -163,7 +163,7 @@ class BubbleService : Service() {
             elevation = 8 * density
         }
         val icon = ImageView(this).apply {
-            setImageResource(R.drawable.ic_mic)
+            setImageResource(R.drawable.ic_aperture)
             setPadding(pad, pad, pad, pad)
         }
         val wave = WaveformView(this).apply { visibility = View.GONE }

@@ -14,15 +14,17 @@ import com.voicerewriter.textproc.CodeContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
 import com.voicerewriter.textproc.VocabCorrector
+import com.voicerewriter.ui.BrandAmber
+import com.voicerewriter.ui.BrandCoral
+import com.voicerewriter.ui.BrandRose
+import com.voicerewriter.ui.MarkCream
 import com.voicerewriter.ui.OpenWisprTheme
 import com.voicerewriter.ui.SunsetBrush
-import com.voicerewriter.ui.SunsetBrushVivid
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -81,11 +83,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Job
@@ -222,7 +227,7 @@ class RewriteActivity : ComponentActivity() {
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notif = androidx.core.app.NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_mic)
+            .setSmallIcon(R.drawable.ic_aperture)
             .setContentTitle("Dictated ✓")
             .setContentText("Got a name wrong? Tap to fix.")
             .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
@@ -466,7 +471,7 @@ class RewriteActivity : ComponentActivity() {
         BottomSheet(onScrimTap = { if (stage == Stage.RECORDING) onMicTap() else cancelAndFinish() }) {
             SheetHeader(
                 when (stage) {
-                    Stage.RECORDING -> "Listening…"
+                    Stage.RECORDING -> "Listening"
                     Stage.TRANSCRIBING -> "Transcribing"
                     Stage.CORRECTING -> "Polishing"
                     Stage.REVIEW -> "Ready"
@@ -476,7 +481,7 @@ class RewriteActivity : ComponentActivity() {
 
             when (stage) {
                 Stage.RECORDING -> {
-                    LiveWaveform(amps, Modifier.fillMaxWidth().height(72.dp))
+                    ListeningOrb(amps, Modifier.fillMaxWidth().height(132.dp))
                     Text(
                         "Speak now — I'll stop when you pause.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -490,10 +495,10 @@ class RewriteActivity : ComponentActivity() {
                     }
                 }
 
-                Stage.TRANSCRIBING -> MagicLoader("Transcribing your voice…")
+                Stage.TRANSCRIBING -> TranscribingRing("Transcribing")
 
                 Stage.CORRECTING -> {
-                    MagicLoader("Polishing…")
+                    TranscribingRing("Polishing")
                     if (output.isNotBlank()) {
                         OutputText(RewriteEngine.cleanOutput(output))
                     }
@@ -629,7 +634,7 @@ class RewriteActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().heightIn(max = 160.dp).verticalScroll(rememberScrollState()),
                 )
-                streaming && output.isBlank() -> MagicLoader("Working…")
+                streaming && output.isBlank() -> TranscribingRing("Working")
                 else -> OutputText(RewriteEngine.cleanOutput(output).ifEmpty { "…" })
             }
 
@@ -675,9 +680,14 @@ class RewriteActivity : ComponentActivity() {
 
     @Composable
     private fun SheetHeader(title: String) {
+        // Mono uppercase "eyebrow" caption (handoff label spec).
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(14.dp).clip(CircleShape).background(SunsetBrush))
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Box(Modifier.size(10.dp).clip(CircleShape).background(SunsetBrush))
+            Text(
+                title.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 
@@ -702,49 +712,96 @@ class RewriteActivity : ComponentActivity() {
         }
     }
 
+    /** Transcribing/Polishing: a rotating sunset ring around the cream Aperture mark. */
     @Composable
-    private fun MagicLoader(label: String) {
-        val t = rememberInfiniteTransition(label = "loader")
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                repeat(3) { i ->
-                    val s by t.animateFloat(
-                        initialValue = 0.5f, targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            tween(560, delayMillis = i * 130, easing = FastOutSlowInEasing),
-                            RepeatMode.Reverse,
-                        ),
-                        label = "dot$i",
-                    )
-                    Box(
-                        Modifier.size(11.dp)
-                            .graphicsLayer { scaleX = s; scaleY = s }
-                            .background(SunsetBrushVivid, CircleShape)
-                    )
+    private fun TranscribingRing(label: String) {
+        val t = rememberInfiniteTransition(label = "ring")
+        val angle by t.animateFloat(
+            initialValue = 0f, targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(1100, easing = LinearEasing)),
+            label = "spin",
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.fillMaxSize()) {
+                    rotate(angle) {
+                        val w = 4.dp.toPx()
+                        drawArc(
+                            brush = Brush.sweepGradient(
+                                listOf(BrandAmber.copy(alpha = 0f), BrandAmber, BrandCoral, BrandRose),
+                            ),
+                            startAngle = 0f,
+                            sweepAngle = 300f,
+                            useCenter = false,
+                            topLeft = Offset(w / 2f, w / 2f),
+                            size = Size(size.width - w, size.height - w),
+                            style = Stroke(width = w, cap = StrokeCap.Round),
+                        )
+                    }
                 }
+                Icon(
+                    painter = painterResource(R.drawable.ic_aperture),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp),
+                )
             }
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 
+    /** Listening: a sunset-gradient disc with live equalizer bars and outward ripple rings. */
     @Composable
-    private fun LiveWaveform(amps: List<Float>, modifier: Modifier = Modifier) {
-        Canvas(modifier) {
-            if (amps.isEmpty()) return@Canvas
-            val n = amps.size
-            val slot = size.width / n
-            val barW = (slot * 0.55f).coerceAtLeast(2f)
-            val cy = size.height / 2f
-            val maxH = size.height * 0.92f
-            for (i in 0 until n) {
-                val h = (amps[i] * maxH).coerceAtLeast(barW)
-                val x = i * slot + (slot - barW) / 2f
-                drawRoundRect(
-                    brush = SunsetBrushVivid,
-                    topLeft = Offset(x, cy - h / 2f),
-                    size = Size(barW, h),
-                    cornerRadius = CornerRadius(barW / 2f, barW / 2f),
-                )
+    private fun ListeningOrb(amps: List<Float>, modifier: Modifier = Modifier) {
+        val t = rememberInfiniteTransition(label = "orb")
+        val ripple by t.animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1800, easing = LinearEasing)),
+            label = "ripple",
+        )
+        val level = amps.takeLast(8).maxOrNull() ?: 0f
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val baseR = size.minDimension * 0.30f
+
+                // Outward ripples — "the breath becomes a sound."
+                for (k in 0..1) {
+                    val p = (ripple + k * 0.5f) % 1f
+                    val r = baseR * (1f + p * 1.7f)
+                    drawCircle(
+                        color = BrandCoral.copy(alpha = (1f - p) * 0.35f),
+                        radius = r,
+                        center = center,
+                        style = Stroke(width = 2.dp.toPx()),
+                    )
+                }
+
+                // Gradient disc, gently breathing with the live level.
+                val discR = baseR * (1f + level * 0.12f)
+                drawCircle(brush = SunsetBrush, radius = discR, center = center)
+
+                // Cream equalizer bars over the disc.
+                val bars = amps.takeLast(9)
+                if (bars.isNotEmpty()) {
+                    val span = discR * 1.25f
+                    val slot = (span * 2f) / bars.size
+                    val barW = (slot * 0.5f).coerceAtLeast(2f)
+                    bars.forEachIndexed { i, a ->
+                        val h = (a * discR * 1.6f).coerceIn(barW, discR * 1.7f)
+                        val x = center.x - span + i * slot + slot / 2f
+                        drawRoundRect(
+                            color = MarkCream,
+                            topLeft = Offset(x - barW / 2f, center.y - h / 2f),
+                            size = Size(barW, h),
+                            cornerRadius = CornerRadius(barW / 2f, barW / 2f),
+                        )
+                    }
+                }
             }
         }
     }
