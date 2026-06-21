@@ -221,7 +221,8 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // ---- Setup / permissions ----
-            SectionCard("Setup") {
+            val setupComplete = bubbleOn && a11yEnabled
+            SectionCard(if (setupComplete) "Setup" else "Finish setup", highlight = !setupComplete) {
                 StatusRow(
                     title = "Floating bubble",
                     subtitle = if (bubbleOn) "On — tap it on a text field to dictate." else "The button you tap to dictate.",
@@ -491,10 +492,17 @@ private fun HeroHeader() {
 }
 
 @Composable
-private fun SectionCard(title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+private fun SectionCard(
+    title: String,
+    highlight: Boolean = false,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = if (highlight) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface,
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

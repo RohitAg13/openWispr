@@ -82,6 +82,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -235,6 +237,19 @@ class RewriteActivity : ComponentActivity() {
         cb.setPrimaryClip(ClipData.newPlainText("rewrite", text))
     }
 
+    /**
+     * Teach the dictionary from an inline edit (wrong→right for the words the user
+     * fixed). Fire-and-forget on a worker thread so it survives this activity
+     * finishing right after insert.
+     */
+    private fun learnFromEditAsync(original: String, edited: String) {
+        if (original == edited) return
+        val ctx = applicationContext
+        Thread {
+            runCatching { kotlinx.coroutines.runBlocking { VocabRepository(ctx).learnFromEdit(original, edited) } }
+        }.start()
+    }
+
     private fun streamFor(s: Settings, prompt: String, text: String): kotlinx.coroutines.flow.Flow<String> =
         if (s.provider == "local") LocalLlmEngine.streamWithPrompt(applicationContext, s, prompt, text)
         else RewriteEngine.streamWithPrompt(s, prompt, text)
@@ -249,6 +264,7 @@ class RewriteActivity : ComponentActivity() {
     @Composable
     private fun VoiceSheet() {
         val scope = rememberCoroutineScope()
+        val haptics = LocalHapticFeedback.current
 
         var settings by remember { mutableStateOf<Settings?>(null) }
         var stage by remember { mutableStateOf(Stage.IDLE) }
@@ -308,11 +324,13 @@ class RewriteActivity : ComponentActivity() {
             streamJob = scope.launch {
                 try {
                     val vocab = VocabRepository(this@RewriteActivity).get()
+                    // Personal vocab biases decoding (B3) on both backends, then snaps
+                    // remaining near-misses afterward (B2).
+                    val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
                     val raw = if (local) {
-                        val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
                         LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!, bias)
                     } else {
-                        SttEngine.transcribe(s, wav!!).also { wav.delete() }
+                        SttEngine.transcribe(s, wav!!, bias).also { wav.delete() }
                     }
                     val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
@@ -398,6 +416,10 @@ class RewriteActivity : ComponentActivity() {
             }
         }
         LaunchedEffect(editing) { if (editing) runCatching { editFocus.requestFocus() } }
+        // Gentle cue when the result is ready to review (before it auto-inserts).
+        LaunchedEffect(stage) {
+            if (stage == Stage.REVIEW) runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+        }
         DisposableEffect(Unit) {
             onDispose {
                 BubbleService.recordingStopper = null
@@ -453,7 +475,7 @@ class RewriteActivity : ComponentActivity() {
                             TextButton(onClick = { cancelAndFinish() }) {
                                 Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
                             }
-                            TextButton(onClick = { acceptVoice(editText) }) {
+                            TextButton(onClick = { learnFromEditAsync(finalText, editText); acceptVoice(editText) }) {
                                 Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")
                             }
                         }
@@ -514,6 +536,7 @@ class RewriteActivity : ComponentActivity() {
     @Composable
     private fun ChipRewriteSheet(title: String, acceptLabel: String, onAccept: (String) -> Unit) {
         val scope = rememberCoroutineScope()
+        val haptics = LocalHapticFeedback.current
         var selectedAction by remember { mutableStateOf<String?>(null) }
         var output by remember { mutableStateOf("") }
         var streaming by remember { mutableStateOf(false) }
@@ -522,6 +545,7 @@ class RewriteActivity : ComponentActivity() {
         var streamJob by remember { mutableStateOf<Job?>(null) }
 
         fun run(actionId: String) {
+            runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
             streamJob?.cancel()
             selectedAction = actionId; output = ""; error = null; done = false; streaming = true
             streamJob = scope.launch {

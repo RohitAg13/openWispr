@@ -108,17 +108,6 @@ class FixDictationActivity : ComponentActivity() {
     }
 
     /** Add [wrong] as an alias of [right] (merging with an existing entry if present). */
-    private suspend fun learn(repo: VocabRepository, wrong: String, right: String) {
-        val list = repo.get().toMutableList()
-        val idx = list.indexOfFirst { it.canonical.equals(right, ignoreCase = true) && !it.isSnippet }
-        if (idx >= 0) {
-            val e = list[idx]
-            if (e.aliases.none { it.equals(wrong, ignoreCase = true) }) {
-                list[idx] = e.copy(aliases = e.aliases + wrong)
-            }
-        } else {
-            list.add(0, VocabEntry(right, listOf(wrong)))
-        }
-        repo.save(list)
-    }
+    private suspend fun learn(repo: VocabRepository, wrong: String, right: String) =
+        repo.learnAlias(wrong, right)
 }

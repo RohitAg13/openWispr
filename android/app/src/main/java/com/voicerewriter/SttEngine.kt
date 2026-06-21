@@ -29,8 +29,14 @@ object SttEngine {
 
     private val M4A = "audio/m4a".toMediaType()
 
-    /** Transcribe [audio] using the configured STT provider. Suspends on IO. */
-    suspend fun transcribe(settings: Settings, audio: File): String = withContext(Dispatchers.IO) {
+    /**
+     * Transcribe [audio] using the configured STT provider. Suspends on IO.
+     *
+     * [biasPrompt] is the OpenAI/Groq `prompt` field: a hint that biases decoding
+     * toward given spellings (our personal-vocab glossary), the cloud equivalent of
+     * whisper.cpp's initial_prompt. Optional; ignored when blank.
+     */
+    suspend fun transcribe(settings: Settings, audio: File, biasPrompt: String? = null): String = withContext(Dispatchers.IO) {
         if (settings.sttKey.isBlank()) {
             throw IllegalStateException("No speech-to-text key set. Open OpenWispr settings.")
         }
@@ -44,6 +50,7 @@ object SttEngine {
             .addFormDataPart("file", audio.name, audio.asRequestBody(M4A))
             .addFormDataPart("model", model)
             .addFormDataPart("response_format", "json")
+            .apply { if (!biasPrompt.isNullOrBlank()) addFormDataPart("prompt", biasPrompt) }
             .build()
 
         val request = Request.Builder()
