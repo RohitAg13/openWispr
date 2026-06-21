@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- OpenWispr brand: warm sunset (coral → amber → pink) -->
+    <color name="brand_orange">#F97316</color>
+    <color name="brand_orange_deep">#EA580C</color>
+    <color name="brand_amber">#FBBF24</color>
+    <color name="brand_pink">#EC4899</color>
+    <color name="brand_coral">#FB7185</color>
+
+    <!-- Surfaces -->
+    <color name="warm_white">#FFFBF7</color>
+    <color name="warm_charcoal">#1C1714</color>
+
+    <!-- Splash background (solid, for the launch window) -->
+    <color name="splash_bg">#1C1714</color>
+</resources>

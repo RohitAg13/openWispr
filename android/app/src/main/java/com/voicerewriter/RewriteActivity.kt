@@ -13,37 +13,53 @@ import com.voicerewriter.textproc.CodeContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
 import com.voicerewriter.textproc.VocabCorrector
+import com.voicerewriter.ui.OpenWisprTheme
+import com.voicerewriter.ui.SunsetBrush
+import com.voicerewriter.ui.SunsetBrushVivid
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import android.view.WindowManager
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,13 +67,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -67,15 +91,21 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.foundation.isSystemInDarkTheme
 
 class RewriteActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_MODE = "com.voicerewriter.MODE"
         const val EXTRA_AUTO_RECORD = "com.voicerewriter.AUTO_RECORD"
+
+        /**
+         * How long the corrected text is shown before it auto-inserts — scaled to the
+         * text length so there's always time to read it. Min 2s, up to 6s.
+         */
+        private fun editWindowMs(text: String): Long {
+            val words = text.trim().split(Regex("\\s+")).count { it.isNotEmpty() }
+            return (2000L + words * 110L).coerceIn(2000L, 6000L)
+        }
     }
 
     private lateinit var repo: SettingsRepository
@@ -83,10 +113,10 @@ class RewriteActivity : ComponentActivity() {
     private val sourceState = mutableStateOf("") // selection (PROCESS_TEXT) or clipboard text
     private var readOnly: Boolean = false
     private var processTextMode: Boolean = false // launched from the selection toolbar
-    private var voiceMode: Boolean = false        // launched from the bubble → dictation
+    private var voiceMode: Boolean = false        // launched from the bubble
     private var clipboardResolved: Boolean = false
     private var initialMode: String? = null       // mode requested by the bubble
-    private var autoRecord: Boolean = false        // start recording on open (bubble flow)
+    private var autoRecord: Boolean = false        // start recording on open (dictation)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,23 +125,32 @@ class RewriteActivity : ComponentActivity() {
 
         val processText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
         if (processText != null) {
-            // From the text-selection toolbar: chip-based rewrite, replace in place.
             processTextMode = true
             sourceState.value = processText.toString()
             readOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, false)
         } else {
-            // From the floating bubble: voice dictation / rewrite. The clipboard
-            // (used as the target in Rewrite mode) can only be read once we have
-            // window focus on Android 10+, so defer it to onWindowFocusChanged().
             voiceMode = true
             initialMode = intent.getStringExtra(EXTRA_MODE)
             autoRecord = intent.getBooleanExtra(EXTRA_AUTO_RECORD, false)
         }
 
         setContent {
-            val dark = isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
-                if (voiceMode) VoiceSheet() else RewriteSheet()
+            OpenWisprTheme {
+                when {
+                    processTextMode ->
+                        ChipRewriteSheet(
+                            title = "Rewrite",
+                            acceptLabel = if (readOnly) "Copy" else "Accept",
+                            onAccept = ::accept,
+                        )
+                    voiceMode && initialMode == Defaults.MODE_TRANSFORM ->
+                        ChipRewriteSheet(
+                            title = "Transform copied text",
+                            acceptLabel = "Insert",
+                            onAccept = ::acceptVoice,
+                        )
+                    else -> VoiceSheet()
+                }
             }
         }
     }
@@ -119,8 +158,6 @@ class RewriteActivity : ComponentActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (!hasFocus || clipboardResolved || !voiceMode) return
-        // Best-effort: stash the clipboard for Rewrite mode. Empty is fine (Dictate
-        // mode doesn't need it); we no longer auto-close on an empty clipboard.
         sourceState.value = readClipboardText()
         clipboardResolved = true
     }
@@ -140,8 +177,7 @@ class RewriteActivity : ComponentActivity() {
     /** PROCESS_TEXT path: replace the selection in place (or copy if read-only). */
     private fun accept(result: String) {
         if (!readOnly) {
-            val data = Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, result)
-            setResult(Activity.RESULT_OK, data)
+            setResult(Activity.RESULT_OK, Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, result))
         } else {
             setClipboard(result)
             Toast.makeText(this, "Copied (this field is read-only)", Toast.LENGTH_LONG).show()
@@ -150,27 +186,27 @@ class RewriteActivity : ComponentActivity() {
         finish()
     }
 
-    /**
-     * Voice path: hand the result to the accessibility service and close. The
-     * service inserts once the host app is back in front (it reports the outcome
-     * via its own toast). If the service is off, fall back to the clipboard here.
-     */
+    /** Voice path: hand the result to the accessibility service (auto-insert) and close. */
     private fun acceptVoice(result: String) {
         val enqueued = OpenWisprAccessibilityService.enqueueInsert(result)
         if (!enqueued) {
             setClipboard(result)
             Toast.makeText(this, "Copied. Enable accessibility to auto-insert.", Toast.LENGTH_LONG).show()
         }
-        // Remember it so the user can teach a name correction afterward (learn-from-edits).
         LastDictation.set(this, result)
         postFixNotification()
         setResult(Activity.RESULT_CANCELED)
         finish()
     }
 
-    /** Quiet, single, replace-in-place notification: tap to fix a mis-heard word. */
+    /** Quiet, replace-in-place notification: tap to fix a mis-heard word. */
     private fun postFixNotification() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        // On Android 13+ this silently no-ops without POST_NOTIFICATIONS — skip cleanly.
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
         val channelId = "dictation_fix"
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val ch = android.app.NotificationChannel(
@@ -183,10 +219,11 @@ class RewriteActivity : ComponentActivity() {
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notif = androidx.core.app.NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_menu_edit)
+            .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle("Dictated ✓")
             .setContentText("Got a name wrong? Tap to fix.")
             .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(pi)
             .setOnlyAlertOnce(true)
             .setAutoCancel(true)
             .build()
@@ -198,35 +235,36 @@ class RewriteActivity : ComponentActivity() {
         cb.setPrimaryClip(ClipData.newPlainText("rewrite", text))
     }
 
-    /** Rewrite via the on-device LLM or the cloud, depending on the chosen provider. */
     private fun streamFor(s: Settings, prompt: String, text: String): kotlinx.coroutines.flow.Flow<String> =
         if (s.provider == "local") LocalLlmEngine.streamWithPrompt(applicationContext, s, prompt, text)
         else RewriteEngine.streamWithPrompt(s, prompt, text)
 
-    /** Whether the chosen LLM provider is ready to run (key set, or model downloaded). */
     private fun llmReady(s: Settings): Boolean =
         if (s.provider == "local") LlmModelManager.isReady(this, s.model) else s.isConfigured
 
-    // ---------------- voice sheet ----------------
+    // ---------------- voice dictation sheet ----------------
 
-    private enum class Stage { IDLE, RECORDING, TRANSCRIBING, PROCESSING, DONE, ERROR }
+    private enum class Stage { IDLE, RECORDING, TRANSCRIBING, CORRECTING, REVIEW, ERROR }
 
     @Composable
     private fun VoiceSheet() {
         val scope = rememberCoroutineScope()
 
         var settings by remember { mutableStateOf<Settings?>(null) }
-        var mode by remember { mutableStateOf(initialMode ?: Defaults.MODE_DICTATE) }
         var stage by remember { mutableStateOf(Stage.IDLE) }
-        var transcript by remember { mutableStateOf("") }
-        var output by remember { mutableStateOf("") }
+        var transcript by remember { mutableStateOf("") }   // raw STT (shown immediately)
+        var output by remember { mutableStateOf("") }       // LLM streaming buffer
+        var finalText by remember { mutableStateOf("") }    // corrected text to insert
         var error by remember { mutableStateOf<String?>(null) }
         var streamJob by remember { mutableStateOf<Job?>(null) }
         var ampJob by remember { mutableStateOf<Job?>(null) }
         var pendingStart by remember { mutableStateOf(false) }
+        var editing by remember { mutableStateOf(false) }
+        var editText by remember { mutableStateOf("") }
+        var countdown by remember { mutableStateOf(1f) }
+        val amps = remember { mutableStateListOf<Float>() }
+        val editFocus = remember { FocusRequester() }
 
-        // Only sets a flag; an effect below performs the actual start (avoids
-        // referencing local fns that are declared later).
         val micPermission = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { granted ->
@@ -234,54 +272,31 @@ class RewriteActivity : ComponentActivity() {
             else { error = "Microphone permission denied."; stage = Stage.ERROR }
         }
 
-        // After we have a transcript: clean it up (Dictate) or apply it as an
-        // instruction to the clipboard text (Rewrite).
+        fun toReview(text: String) {
+            finalText = text; editText = text; countdown = 1f; editing = false; stage = Stage.REVIEW
+        }
+
         fun process(s: Settings, spoken: String) {
-            transcript = spoken
-            output = ""
-            error = null
-            if (mode == Defaults.MODE_REWRITE) {
-                val target = sourceState.value
-                if (target.isBlank()) {
-                    error = "Rewrite mode needs copied text. Copy something first, or switch to Dictate."
-                    stage = Stage.ERROR
-                    return
-                }
-                stage = Stage.PROCESSING
-                val flow = streamFor(s, "${Defaults.VOICE_COMMAND_PROMPT} ${spoken.trim()}", target)
-                streamJob = scope.launch { collectInto(flow, { output += it }, { e ->
-                    error = e; stage = Stage.ERROR
-                }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }
-            } else {
-                // Dictate fresh. First run the deterministic pipeline (fast, reliable,
-                // offline) — fillers, spoken punctuation, numbers, self-corrections.
-                val cleaned = if (s.deterministicCleanup) {
-                    val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
-                    TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
-                } else spoken
-                // Then optionally layer the LLM on top for further polish (off by
-                // default for on-device, where tiny models hallucinate/over-edit).
-                if (!s.llmPolishEnabled) {
-                    output = cleaned
-                    stage = Stage.DONE
-                    return
-                }
-                stage = Stage.PROCESSING
-                val flow = streamFor(s, Defaults.DICTATION_PROMPT, cleaned)
-                streamJob = scope.launch { collectInto(flow, { output += it }, { e ->
-                    error = e; stage = Stage.ERROR
-                }, { output = RewriteEngine.cleanOutput(output); stage = Stage.DONE }) }
+            transcript = spoken; output = ""; error = null
+            val cleaned = if (s.deterministicCleanup) {
+                val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
+                TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
+            } else spoken
+            if (!s.llmPolishEnabled) { toReview(cleaned); return }
+            stage = Stage.CORRECTING
+            val flow = streamFor(s, Defaults.DICTATION_PROMPT, cleaned)
+            streamJob = scope.launch {
+                collectInto(flow, { output += it }, { e -> error = e; stage = Stage.ERROR },
+                    { toReview(RewriteEngine.cleanOutput(output)) })
             }
         }
 
-        // Stop recording, revert the bubble, transcribe (local or cloud), then process.
         fun stopRecording(s: Settings) {
             if (stage != Stage.RECORDING) return
             BubbleService.recordingStopper = null
             ampJob?.cancel()
             BubbleService.instance?.showIdle()
             val local = s.sttProvider == "local"
-            // On-device wants float samples; cloud wants an uploadable WAV.
             val floats = if (local) audioRecorder.stopToFloats() else null
             val wav = if (local) null else audioRecorder.stopToWav()
             if ((local && floats == null) || (!local && wav == null)) {
@@ -292,8 +307,6 @@ class RewriteActivity : ComponentActivity() {
             stage = Stage.TRANSCRIBING
             streamJob = scope.launch {
                 try {
-                    // Personal vocabulary helps twice: it biases Whisper's decoding
-                    // (B3) and snaps any remaining near-misses afterward (B2).
                     val vocab = VocabRepository(this@RewriteActivity).get()
                     val raw = if (local) {
                         val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
@@ -310,10 +323,8 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
-        // Begin recording: switch the bubble to a live waveform and feed amplitudes.
         fun startRecording(s: Settings) {
-            error = null; transcript = ""; output = ""
-            // Silero VAD auto-stops when the speaker pauses (hands-free dictation).
+            error = null; transcript = ""; output = ""; finalText = ""; amps.clear()
             try { audioRecorder.start(vadAutoStop = s.vadAutoStop, onAutoStop = { stopRecording(s) }) }
             catch (e: Exception) { error = e.message ?: "Couldn't start the mic."; stage = Stage.ERROR; return }
             stage = Stage.RECORDING
@@ -322,8 +333,11 @@ class RewriteActivity : ComponentActivity() {
             ampJob?.cancel()
             ampJob = scope.launch {
                 while (isActive && audioRecorder.isRecording) {
-                    BubbleService.instance?.showAmplitude(audioRecorder.amplitude())
-                    delay(80)
+                    val raw = audioRecorder.amplitude()
+                    BubbleService.instance?.showAmplitude(raw)
+                    amps.add((raw / 14000f).coerceIn(0f, 1f))
+                    if (amps.size > 56) amps.removeAt(0)
+                    delay(55)
                 }
             }
         }
@@ -350,34 +364,40 @@ class RewriteActivity : ComponentActivity() {
             val s = settings ?: return
             when (stage) {
                 Stage.RECORDING -> stopRecording(s)
-                Stage.IDLE, Stage.DONE, Stage.ERROR -> ensurePermissionThenRecord(s)
-                else -> {} // busy (transcribing / processing): ignore
+                Stage.IDLE, Stage.REVIEW, Stage.ERROR -> ensurePermissionThenRecord(s)
+                else -> {}
             }
         }
 
+        fun cancelAndFinish() {
+            streamJob?.cancel(); ampJob?.cancel()
+            BubbleService.recordingStopper = null
+            BubbleService.instance?.showIdle()
+            audioRecorder.cancel()
+            setResult(Activity.RESULT_CANCELED)
+            finish()
+        }
+
         LaunchedEffect(Unit) {
-            val s = repo.get()
-            settings = s
-            if (initialMode == null) mode = s.defaultMode
+            val s = repo.get(); settings = s
             if (autoRecord) ensurePermissionThenRecord(s)
         }
-        // Start once the permission dialog returns granted.
         LaunchedEffect(pendingStart) {
             if (pendingStart) { pendingStart = false; settings?.let { startRecording(it) } }
         }
-        // While recording in the bubble flow, hide our window so only the bubble's
-        // waveform shows over the live host app (no dim).
-        val recordingHidden = stage == Stage.RECORDING && autoRecord
-        LaunchedEffect(recordingHidden) {
-            if (recordingHidden) window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            else window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        // Auto-insert after the edit window unless the user is editing.
+        LaunchedEffect(stage, editing) {
+            if (stage == Stage.REVIEW && !editing && finalText.isNotBlank()) {
+                val total = editWindowMs(finalText)
+                var e = 0L; val step = 16L
+                while (e < total && isActive) {
+                    countdown = 1f - e.toFloat() / total
+                    delay(step); e += step
+                }
+                if (isActive && stage == Stage.REVIEW && !editing) acceptVoice(finalText)
+            }
         }
-        // Voice flow auto-inserts: when the rewrite is ready, send it straight to
-        // the focused field instead of waiting for an Insert tap (Wispr-style).
-        LaunchedEffect(stage) {
-            if (stage == Stage.DONE && output.isNotBlank()) acceptVoice(output)
-        }
-        // Always release the bubble + mic if we leave mid-recording.
+        LaunchedEffect(editing) { if (editing) runCatching { editFocus.requestFocus() } }
         DisposableEffect(Unit) {
             onDispose {
                 BubbleService.recordingStopper = null
@@ -386,119 +406,89 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
-        if (recordingHidden) {
-            // No sheet: the bubble is the recording UI. Tap anywhere (or the bubble) to stop.
-            Box(modifier = Modifier.fillMaxSize().clickable { onMicTap() })
-            return
-        }
+        BottomSheet(onScrimTap = { if (stage == Stage.RECORDING) onMicTap() else cancelAndFinish() }) {
+            SheetHeader(
+                when (stage) {
+                    Stage.RECORDING -> "Listening…"
+                    Stage.TRANSCRIBING -> "Transcribing"
+                    Stage.CORRECTING -> "Polishing"
+                    Stage.REVIEW -> "Ready"
+                    else -> "OpenWispr"
+                }
+            )
 
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color.Transparent),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                tonalElevation = 6.dp,
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
+            when (stage) {
+                Stage.RECORDING -> {
+                    LiveWaveform(amps, Modifier.fillMaxWidth().height(72.dp))
                     Text(
-                        text = "OpenWispr",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        "Speak now — I'll stop when you pause.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-
-                    // Mode toggle
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = mode == Defaults.MODE_DICTATE,
-                            onClick = { if (stage != Stage.RECORDING) mode = Defaults.MODE_DICTATE },
-                            label = { Text("Dictate fresh") },
-                        )
-                        FilterChip(
-                            selected = mode == Defaults.MODE_REWRITE,
-                            onClick = { if (stage != Stage.RECORDING) mode = Defaults.MODE_REWRITE },
-                            label = { Text("Rewrite clipboard") },
-                        )
-                    }
-
-                    if (mode == Defaults.MODE_REWRITE && sourceState.value.isNotBlank()) {
-                        Text(
-                            text = "On: \"${sourceState.value.take(120)}${if (sourceState.value.length > 120) "…" else ""}\"",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
-                    // Mic button
-                    val micLabel = when (stage) {
-                        Stage.RECORDING -> "■  Stop & process"
-                        Stage.TRANSCRIBING -> "Transcribing…"
-                        Stage.PROCESSING -> "Rewriting…"
-                        else -> if (mode == Defaults.MODE_REWRITE) "🎤  Speak a command" else "🎤  Tap to speak"
-                    }
-                    Button(
-                        onClick = { onMicTap() },
-                        enabled = stage != Stage.TRANSCRIBING && stage != Stage.PROCESSING,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        if (stage == Stage.TRANSCRIBING || stage == Stage.PROCESSING) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                            Text("   $micLabel")
-                        } else {
-                            Text(micLabel)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { cancelAndFinish() }) { Text("Cancel") }
+                        TextButton(onClick = { onMicTap() }) {
+                            Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Done")
                         }
                     }
+                }
 
-                    // Output / status
-                    when {
-                        error != null -> Text(
-                            text = error!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
+                Stage.TRANSCRIBING -> MagicLoader("Transcribing your voice…")
+
+                Stage.CORRECTING -> {
+                    MagicLoader("Polishing…")
+                    if (output.isNotBlank()) {
+                        OutputText(RewriteEngine.cleanOutput(output))
+                    }
+                }
+
+                Stage.REVIEW -> {
+                    if (editing) {
+                        OutlinedTextField(
+                            value = editText,
+                            onValueChange = { editText = it },
+                            modifier = Modifier.fillMaxWidth().focusRequester(editFocus),
                         )
-                        output.isNotEmpty() -> Column(
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
-                                .verticalScroll(rememberScrollState()),
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { cancelAndFinish() }) {
+                                Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
+                            }
+                            TextButton(onClick = { acceptVoice(editText) }) {
+                                Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")
+                            }
+                        }
+                    } else {
+                        OutputText(finalText)
+                        LinearProgressIndicator(
+                            progress = { countdown },
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(3.dp)),
+                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            // Show the cleaned text so local-model repeats/tags don't flash.
-                            Text(text = RewriteEngine.cleanOutput(output), style = MaterialTheme.typography.bodyLarge)
+                            TextButton(onClick = { editing = true }) {
+                                Icon(Icons.Default.Edit, null, Modifier.size(18.dp)); Text("  Edit")
+                            }
+                            Row {
+                                TextButton(onClick = { cancelAndFinish() }) { Text("Discard") }
+                                TextButton(onClick = { acceptVoice(finalText) }) {
+                                    Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert now")
+                                }
+                            }
                         }
-                        transcript.isNotEmpty() -> Text(
-                            text = transcript,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
+                }
 
-                    // Footer
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TextButton(onClick = {
-                            streamJob?.cancel()
-                            ampJob?.cancel()
-                            BubbleService.recordingStopper = null
-                            BubbleService.instance?.showIdle()
-                            audioRecorder.cancel()
-                            setResult(Activity.RESULT_CANCELED)
-                            finish()
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("  Discard")
-                        }
-                        TextButton(
-                            enabled = stage == Stage.DONE && output.isNotBlank(),
-                            onClick = { acceptVoice(output) },
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("  Insert")
+                Stage.IDLE, Stage.ERROR -> {
+                    if (error != null) {
+                        Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { cancelAndFinish() }) { Text("Close") }
+                        TextButton(onClick = { onMicTap() }) {
+                            Icon(Icons.Default.Refresh, null, Modifier.size(18.dp)); Text("  Try again")
                         }
                     }
                 }
@@ -519,12 +509,11 @@ class RewriteActivity : ComponentActivity() {
             .collect { chunk -> onChunk(chunk) }
     }
 
-    // ---------------- PROCESS_TEXT chip sheet (unchanged) ----------------
+    // ---------------- chip rewrite sheet (selection + long-press transform) ----------------
 
     @Composable
-    private fun RewriteSheet() {
+    private fun ChipRewriteSheet(title: String, acceptLabel: String, onAccept: (String) -> Unit) {
         val scope = rememberCoroutineScope()
-
         var selectedAction by remember { mutableStateOf<String?>(null) }
         var output by remember { mutableStateOf("") }
         var streaming by remember { mutableStateOf(false) }
@@ -534,13 +523,13 @@ class RewriteActivity : ComponentActivity() {
 
         fun run(actionId: String) {
             streamJob?.cancel()
-            selectedAction = actionId
-            output = ""
-            error = null
-            done = false
-            streaming = true
+            selectedAction = actionId; output = ""; error = null; done = false; streaming = true
             streamJob = scope.launch {
-                val settings = repo.get()
+                // Anti-AI guardrails humanize prose; they fight structured output, so
+                // turn them off for Prompt Engineer (which needs its bold template).
+                val settings = repo.get().let {
+                    if (actionId == "prompt_engineer") it.copy(antiAI = false) else it
+                }
                 if (!llmReady(settings)) {
                     error = if (settings.provider == "local")
                         "On-device model not downloaded. Open OpenWispr → Save settings."
@@ -548,128 +537,150 @@ class RewriteActivity : ComponentActivity() {
                     streaming = false
                     return@launch
                 }
+                if (sourceState.value.isBlank()) {
+                    error = "Nothing to transform — copy some text first."
+                    streaming = false
+                    return@launch
+                }
                 streamFor(settings, Defaults.DEFAULT_PROMPTS.getValue(actionId), sourceState.value)
-                    .catch { e ->
-                        error = e.message ?: e.toString()
-                        streaming = false
-                    }
+                    .catch { e -> error = e.message ?: e.toString(); streaming = false }
                     .onCompletion { cause ->
-                        if (cause == null && error == null) {
-                            output = RewriteEngine.cleanOutput(output)
-                            done = true
-                        }
+                        if (cause == null && error == null) { output = RewriteEngine.cleanOutput(output); done = true }
                         streaming = false
                     }
                     .collect { chunk -> output += chunk }
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Transparent),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                tonalElevation = 6.dp,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "Rewrite",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+        BottomSheet(onScrimTap = {
+            streamJob?.cancel(); setResult(Activity.RESULT_CANCELED); finish()
+        }) {
+            SheetHeader(title)
+            ChipRow(enabled = !streaming, selected = selectedAction, onPick = ::run)
 
-                    ActionChips(
-                        selected = selectedAction,
-                        enabled = !streaming,
-                        onPick = ::run,
-                    )
+            when {
+                error != null -> Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                selectedAction == null -> Text(
+                    sourceState.value.ifEmpty { "Reading clipboard…" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 160.dp).verticalScroll(rememberScrollState()),
+                )
+                streaming && output.isBlank() -> MagicLoader("Working…")
+                else -> OutputText(RewriteEngine.cleanOutput(output).ifEmpty { "…" })
+            }
 
-                    when {
-                        error != null -> Text(
-                            text = error!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        selectedAction == null -> Text(
-                            text = sourceState.value.ifEmpty { "Reading clipboard…" },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 160.dp)
-                                .verticalScroll(rememberScrollState()),
-                        )
-                        else -> Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 240.dp)
-                                .verticalScroll(rememberScrollState()),
-                        ) {
-                            Text(
-                                text = RewriteEngine.cleanOutput(output).ifEmpty { "…" },
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                if (streaming) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                if (selectedAction != null && !streaming && error == null) {
+                    TextButton(onClick = { run(selectedAction!!) }) {
+                        Icon(Icons.Default.Refresh, null, Modifier.size(18.dp)); Text("  Redo")
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (streaming) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        }
-                        if (selectedAction != null && !streaming && error == null) {
-                            TextButton(onClick = { run(selectedAction!!) }) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Text("  Redo")
-                            }
-                        }
-                        TextButton(onClick = {
-                            streamJob?.cancel()
-                            setResult(Activity.RESULT_CANCELED)
-                            finish()
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text("  Discard")
-                        }
-                        TextButton(
-                            enabled = done && output.isNotBlank(),
-                            onClick = { accept(output) },
-                        ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Text(if (readOnly) "  Copy" else "  Accept")
-                        }
-                    }
+                }
+                TextButton(onClick = { streamJob?.cancel(); setResult(Activity.RESULT_CANCELED); finish() }) {
+                    Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
+                }
+                TextButton(enabled = done && output.isNotBlank(), onClick = { onAccept(output) }) {
+                    Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  $acceptLabel")
                 }
             }
         }
     }
 
+    // ---------------- shared UI pieces ----------------
+
+    @Composable
+    private fun BottomSheet(onScrimTap: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            // Tap above the sheet to dismiss/stop.
+            Spacer(Modifier.fillMaxSize().clickable(onClick = onScrimTap))
+            Surface(
+                modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+                tonalElevation = 8.dp,
+                shadowElevation = 16.dp,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    content = content,
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun SheetHeader(title: String) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(Modifier.size(14.dp).clip(CircleShape).background(SunsetBrush))
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        }
+    }
+
+    @Composable
+    private fun OutputText(text: String) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 260.dp).verticalScroll(rememberScrollState())) {
+            Text(text, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
-    private fun ActionChips(
-        selected: String?,
-        enabled: Boolean,
-        onPick: (String) -> Unit,
-    ) {
+    private fun ChipRow(enabled: Boolean, selected: String?, onPick: (String) -> Unit) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (action in Defaults.ACTIONS) {
                 AssistChip(
                     onClick = { if (enabled) onPick(action.id) },
                     enabled = enabled || selected == action.id,
                     label = { Text(action.title) },
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun MagicLoader(label: String) {
+        val t = rememberInfiniteTransition(label = "loader")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                repeat(3) { i ->
+                    val s by t.animateFloat(
+                        initialValue = 0.5f, targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            tween(560, delayMillis = i * 130, easing = FastOutSlowInEasing),
+                            RepeatMode.Reverse,
+                        ),
+                        label = "dot$i",
+                    )
+                    Box(
+                        Modifier.size(11.dp)
+                            .graphicsLayer { scaleX = s; scaleY = s }
+                            .background(SunsetBrushVivid, CircleShape)
+                    )
+                }
+            }
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+
+    @Composable
+    private fun LiveWaveform(amps: List<Float>, modifier: Modifier = Modifier) {
+        Canvas(modifier) {
+            if (amps.isEmpty()) return@Canvas
+            val n = amps.size
+            val slot = size.width / n
+            val barW = (slot * 0.55f).coerceAtLeast(2f)
+            val cy = size.height / 2f
+            val maxH = size.height * 0.92f
+            for (i in 0 until n) {
+                val h = (amps[i] * maxH).coerceAtLeast(barW)
+                val x = i * slot + (slot - barW) / 2f
+                drawRoundRect(
+                    brush = SunsetBrushVivid,
+                    topLeft = Offset(x, cy - h / 2f),
+                    size = Size(barW, h),
+                    cornerRadius = CornerRadius(barW / 2f, barW / 2f),
                 )
             }
         }

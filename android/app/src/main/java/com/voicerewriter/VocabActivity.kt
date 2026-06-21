@@ -55,8 +55,7 @@ class VocabActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val repo = VocabRepository(applicationContext)
         setContent {
-            val dark = isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+            com.voicerewriter.ui.OpenWisprTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     VocabScreen(repo)
                 }

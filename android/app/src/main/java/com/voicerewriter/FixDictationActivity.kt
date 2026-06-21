@@ -45,8 +45,7 @@ class FixDictationActivity : ComponentActivity() {
         val repo = VocabRepository(applicationContext)
         val text = LastDictation.get(applicationContext)
         setContent {
-            val dark = isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+            com.voicerewriter.ui.OpenWisprTheme {
                 Surface(color = MaterialTheme.colorScheme.background) { FixScreen(repo, text) }
             }
         }

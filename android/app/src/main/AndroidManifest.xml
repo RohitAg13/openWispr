@@ -17,13 +17,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Rewriter">
+        android:theme="@style/Theme.OpenWispr">
 
         <!-- Launcher: settings / voice profile / API key -->
         <activity
             android:name=".SettingsActivity"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:theme="@style/Theme.OpenWispr.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -44,7 +45,7 @@
             android:exported="false"
             android:label="Fix a word"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.Rewriter.Translucent" />
+            android:theme="@style/Theme.OpenWispr.Translucent" />
 
         <!-- The "Rewrite" entry in the text-selection floating toolbar -->
         <activity
@@ -54,7 +55,7 @@
             android:launchMode="singleTop"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.Rewriter.Translucent">
+            android:theme="@style/Theme.OpenWispr.Translucent">
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />

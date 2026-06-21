@@ -24,6 +24,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 
 /**
@@ -71,6 +72,12 @@ class BubbleService : Service() {
     private var dismissSize = 0
     private var overDismiss = false
 
+    // Field-gated visibility: when on (and accessibility is available), the bubble
+    // only appears while a text field is focused — like a contextual keyboard key.
+    @Volatile private var gateSetting = true
+    private var fieldFocused = false
+    private var recording = false
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -80,9 +87,16 @@ class BubbleService : Service() {
         } catch (e: Exception) {
             android.util.Log.e("BubbleService", "startForeground failed", e)
         }
+        gateSetting = try {
+            runBlocking { SettingsRepository(applicationContext).get().bubbleOnlyOnFields }
+        } catch (_: Exception) { true }
         addBubble()
         isRunning = true
         instance = this
+        // If gated, start hidden until the accessibility service reports a focused field.
+        applyGating(animate = false)
+        // In case a field is already focused when the bubble starts, ask for a check.
+        OpenWisprAccessibilityService.reevaluate()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
@@ -103,7 +117,7 @@ class BubbleService : Service() {
         return builder
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle("OpenWispr")
-            .setContentText("Tap to dictate · long-press to rewrite clipboard")
+            .setContentText("Tap a text field to dictate · long-press to transform")
             .setOngoing(true)
             .build()
     }
@@ -161,7 +175,7 @@ class BubbleService : Service() {
             if (!moved && recordingStopper == null) {
                 longFired = true
                 vibrate(longArrayOf(0, 28, 50, 28)) // double tick distinguishes long-press
-                launchRewrite(Defaults.MODE_REWRITE)
+                launchRewrite(Defaults.MODE_TRANSFORM, autoRecord = false)
             }
         }
 
@@ -300,18 +314,20 @@ class BubbleService : Service() {
         else launchRewrite(Defaults.MODE_DICTATE)
     }
 
-    private fun launchRewrite(mode: String) {
+    private fun launchRewrite(mode: String, autoRecord: Boolean = true) {
         startActivity(
             Intent(this, RewriteActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .putExtra(RewriteActivity.EXTRA_MODE, mode)
-                .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, true)
+                .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, autoRecord)
         )
     }
 
     // ---- called from RewriteActivity (same process / main thread) ----
 
     fun showRecording() {
+        recording = true
+        ensureVisible()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
         iconView?.visibility = View.GONE
@@ -324,11 +340,78 @@ class BubbleService : Service() {
     }
 
     fun showIdle() {
+        recording = false
         stopPulse()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background)
         waveView?.visibility = View.GONE
         iconView?.visibility = View.VISIBLE
+        applyGating(animate = true) // re-hide if gated and no field is focused
+    }
+
+    // ---- field-gated visibility (driven by the accessibility service) ----
+
+    /** Whether visibility should track focused text fields (needs accessibility on). */
+    private fun gateActive(): Boolean = gateSetting && OpenWisprAccessibilityService.isEnabled
+
+    private fun shouldShow(): Boolean = recording || fieldFocused || !gateActive()
+
+    /**
+     * Called by the accessibility service when a host app's editable field gains or
+     * loses input focus. No-op when gating is off (bubble is always visible then).
+     */
+    fun setFieldFocused(focused: Boolean) {
+        mainHandler.post {
+            fieldFocused = focused
+            // Reconcile against the *actual* shown state (incl. alpha), so a transition
+            // that left the view VISIBLE-but-transparent can't strand it hidden.
+            if (shouldShow() != isShown()) applyGating(animate = true)
+        }
+    }
+
+    /** Truly visible = on screen and not transparent (a hidden bubble can be VISIBLE w/ alpha 0). */
+    private fun isShown(): Boolean {
+        val c = container ?: return false
+        return c.visibility == View.VISIBLE && c.alpha > 0.01f
+    }
+
+    /** Re-read the gating preference and apply (e.g. after accessibility connects). */
+    fun refreshGating() {
+        gateSetting = try {
+            runBlocking { SettingsRepository(applicationContext).get().bubbleOnlyOnFields }
+        } catch (_: Exception) { gateSetting }
+        mainHandler.post { applyGating(animate = true) }
+    }
+
+    private fun ensureVisible() {
+        val c = container ?: return
+        if (c.visibility == View.VISIBLE && c.alpha == 1f) return
+        c.visibility = View.VISIBLE
+        c.animate().cancel()
+        c.alpha = 1f; c.scaleX = 1f; c.scaleY = 1f
+    }
+
+    private fun applyGating(animate: Boolean) {
+        val c = container ?: return
+        c.animate().cancel() // drop any in-flight show/hide so they can't clobber us
+        if (shouldShow()) {
+            if (c.visibility == View.VISIBLE && c.alpha >= 1f) return
+            if (c.visibility != View.VISIBLE) { c.alpha = 0f; c.scaleX = 0.6f; c.scaleY = 0.6f }
+            c.visibility = View.VISIBLE
+            if (animate && c.alpha < 1f) c.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(170).start()
+            else { c.alpha = 1f; c.scaleX = 1f; c.scaleY = 1f }
+        } else {
+            if (!isShown()) { c.visibility = View.GONE; return }
+            if (animate) {
+                c.animate().alpha(0f).scaleX(0.6f).scaleY(0.6f).setDuration(140)
+                    // Re-check intent at the end: a re-focus mid-animation must win, and
+                    // must restore full opacity (never leave VISIBLE-but-transparent).
+                    .withEndAction {
+                        if (shouldShow()) { c.alpha = 1f; c.scaleX = 1f; c.scaleY = 1f }
+                        else c.visibility = View.GONE
+                    }.start()
+            } else { c.alpha = 0f; c.visibility = View.GONE }
+        }
     }
 
     /** Gentle breathing animation while recording. */

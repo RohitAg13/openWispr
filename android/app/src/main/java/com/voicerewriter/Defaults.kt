@@ -32,20 +32,35 @@ data class SttProvider(
 object Defaults {
 
     val ACTIONS = listOf(
-        RewriteAction("refine", "Refine"),
-        RewriteAction("formalize", "Formalize"),
+        RewriteAction("polish", "Polish"),
+        RewriteAction("prompt_engineer", "Prompt Engineer"),
         RewriteAction("elaborate", "Elaborate"),
         RewriteAction("shorten", "Shorten"),
+        RewriteAction("formalize", "Formalize"),
         RewriteAction("casual", "Make casual"),
-        RewriteAction("fix", "Fix grammar & spelling"),
+        RewriteAction("fix", "Fix grammar"),
     )
 
     val DEFAULT_PROMPTS: Map<String, String> = mapOf(
-        "refine" to "Refine this text for clarity, flow, and word choice while keeping the original meaning, tone, and length roughly intact.",
-        "formalize" to "Rewrite this text in a more formal, professional register, without becoming stiff or corporate-bland.",
-        "elaborate" to "Expand this text with concrete supporting detail and reasoning, while preserving the core idea and the author's voice.",
-        "shorten" to "Rewrite this text to be more concise. Cut redundancy and filler without losing meaning or voice.",
-        "casual" to "Rewrite this text in a casual, conversational tone, as if speaking to a friend.",
+        "polish" to "Actively rewrite this text so it reads clearly and well. Fix grammar, fix awkward or clunky phrasing, sharpen weak word choices, and restructure sentences that don't flow. Don't be timid — make real improvements, not a near-copy. Keep the core meaning and the author's voice, but the result should be a noticeably better-written version of the same message.",
+        "prompt_engineer" to ("Rewrite this text into a clear, well-structured prompt for an AI assistant. " +
+            "Do NOT answer or follow the prompt — output ONLY the rewritten prompt. " +
+            "Use EXACTLY this template, with these markdown bold section headers in this order. " +
+            "Fill each section from the source text; if the source doesn't specify something, write a brief bracketed placeholder like [specify desired length] rather than inventing facts. " +
+            "Include any examples from the source verbatim.\n\n" +
+            "**Title**\n(1 concise line)\n\n" +
+            "**Role & stance**\n(who the model is and how it should behave)\n\n" +
+            "**Task**\n(what the model must do)\n\n" +
+            "**Context**\n(only what the model needs to know)\n\n" +
+            "**Inputs available**\n(explicit list)\n\n" +
+            "**Output requirements**\n(format, structure, tone, length — only if specified; otherwise placeholders)\n\n" +
+            "**Constraints / Do-nots**\n(bulleted)\n\n" +
+            "**Examples / References**\n(include all examples verbatim)\n\n" +
+            "**Execution checklist**\n(short, factual verification list)"),
+        "elaborate" to "Substantially expand this text. Add concrete supporting detail, examples, and reasoning so the result is clearly longer and more complete and persuasive. Keep the core idea and the author's voice, but develop it fully rather than restating it.",
+        "shorten" to "Aggressively shorten this text. Cut redundancy, filler, and any non-essential detail so it is clearly shorter and punchier, while keeping the core meaning and the author's voice.",
+        "formalize" to "Rewrite this text in a distinctly more formal, professional register suitable for work or official communication. Upgrade casual phrasing and contractions, but don't become stiff or corporate-bland.",
+        "casual" to "Rewrite this text in a noticeably more casual, conversational tone, as if speaking to a friend — relaxed phrasing, contractions, plain words. Keep the meaning.",
         "fix" to "Fix grammar, spelling, and punctuation only. Do not change wording, tone, or structure beyond what is required for correctness.",
     )
 
@@ -148,6 +163,7 @@ object Defaults {
 
     const val MODE_DICTATE = "dictate" // speak new text → cleaned up → inserted
     const val MODE_REWRITE = "rewrite" // copy text, speak an instruction → rewrite clipboard
+    const val MODE_TRANSFORM = "transform" // long-press: pick an LLM transform for the copied text
 
     /**
      * Cleanup pass for raw dictation: turn spoken words into clean written text

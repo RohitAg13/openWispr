@@ -32,6 +32,7 @@ data class Settings(
     val cleanupDictation: Boolean = true, // polish cloud dictation with the LLM
     val localLlmPolish: Boolean = false, // polish on-device dictation with the tiny LLM (off: small models hallucinate/over-edit)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
+    val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
 ) {
     /**
      * Whether to run the LLM polish layer on dictation, given the provider. Cloud
@@ -80,6 +81,7 @@ class SettingsRepository(private val context: Context) {
         val CLEANUP_DICTATION = booleanPreferencesKey("cleanupDictation")
         val LOCAL_LLM_POLISH = booleanPreferencesKey("localLlmPolish")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
+        val BUBBLE_ONLY_ON_FIELDS = booleanPreferencesKey("bubbleOnlyOnFields")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -101,6 +103,7 @@ class SettingsRepository(private val context: Context) {
             cleanupDictation = p[Keys.CLEANUP_DICTATION] ?: defaults.cleanupDictation,
             localLlmPolish = p[Keys.LOCAL_LLM_POLISH] ?: defaults.localLlmPolish,
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
+            bubbleOnlyOnFields = p[Keys.BUBBLE_ONLY_ON_FIELDS] ?: defaults.bubbleOnlyOnFields,
         )
     }
 
@@ -124,6 +127,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.CLEANUP_DICTATION] = s.cleanupDictation
             p[Keys.LOCAL_LLM_POLISH] = s.localLlmPolish
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
+            p[Keys.BUBBLE_ONLY_ON_FIELDS] = s.bubbleOnlyOnFields
         }
     }
 }
