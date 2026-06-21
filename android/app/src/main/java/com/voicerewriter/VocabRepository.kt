@@ -31,7 +31,11 @@ class VocabRepository(context: Context) {
                 else emptyList()
                 val expansion = o.optString("expansion").trim().ifEmpty { null }
                 val source = o.optString("source").trim().ifEmpty { "manual" }
-                VocabEntry(canonical, aliases, expansion, source)
+                val learnedArr = o.optJSONArray("learnedAliases")
+                val learned = if (learnedArr != null)
+                    (0 until learnedArr.length()).map { learnedArr.optString(it).trim() }.filter { it.isNotEmpty() }
+                else emptyList()
+                VocabEntry(canonical, aliases, expansion, source, learned)
             }
         } catch (e: Exception) {
             Log.e("VocabRepository", "failed to read $file", e); emptyList()
@@ -47,9 +51,15 @@ class VocabRepository(context: Context) {
         if (idx >= 0) {
             val e = list[idx]
             if (e.aliases.any { it.equals(w, ignoreCase = true) }) return
-            list[idx] = e.copy(aliases = e.aliases + w)
+            list[idx] = e.copy(
+                aliases = e.aliases + w,
+                learnedAliases = if (source == "learned") e.learnedAliases + w else e.learnedAliases,
+            )
         } else {
-            list.add(0, VocabEntry(r, listOf(w), source = source))
+            list.add(0, VocabEntry(
+                r, listOf(w), source = source,
+                learnedAliases = if (source == "learned") listOf(w) else emptyList(),
+            ))
         }
         save(list)
     }
@@ -83,7 +93,11 @@ class VocabRepository(context: Context) {
                 .put("canonical", e.canonical.trim())
                 .put("aliases", JSONArray(e.aliases.map { it.trim() }.filter { it.isNotEmpty() }))
                 .apply { if (!e.expansion.isNullOrBlank()) put("expansion", e.expansion.trim()) }
-                .put("source", e.source))
+                .put("source", e.source)
+                .apply {
+                    if (e.learnedAliases.isNotEmpty())
+                        put("learnedAliases", JSONArray(e.learnedAliases.map { it.trim() }.filter { it.isNotEmpty() }))
+                })
         }
         file.writeText(arr.toString())
     }

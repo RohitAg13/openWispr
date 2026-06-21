@@ -103,6 +103,10 @@ private fun notificationsEnabled(ctx: Context): Boolean =
             android.content.pm.PackageManager.PERMISSION_GRANTED
     else true
 
+private fun micEnabled(ctx: Context): Boolean =
+    ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) ==
+        android.content.pm.PackageManager.PERMISSION_GRANTED
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit) -> Unit) {
@@ -112,6 +116,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var bubbleOn by remember { mutableStateOf(BubbleService.isRunning) }
     var a11yEnabled by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
+    var micGranted by remember { mutableStateOf(false) }
 
     val overlayLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -122,6 +127,9 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     val notifLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> notifOn = granted }
+    val micLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> micGranted = granted }
     val accessibilityLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { a11yEnabled = isAccessibilityEnabled(context) }
@@ -179,6 +187,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         bubbleOnlyOnFields = s.bubbleOnlyOnFields
         a11yEnabled = isAccessibilityEnabled(context)
         notifOn = notificationsEnabled(context)
+        micGranted = micEnabled(context)
         loaded = true
     }
     LaunchedEffect(provider, model) {
@@ -221,35 +230,59 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // ---- Setup / permissions ----
-            val setupComplete = bubbleOn && a11yEnabled
-            SectionCard(if (setupComplete) "Setup" else "Finish setup", highlight = !setupComplete) {
-                StatusRow(
-                    title = "Floating bubble",
-                    subtitle = if (bubbleOn) "On — tap it on a text field to dictate." else "The button you tap to dictate.",
-                    on = bubbleOn,
-                ) {
-                    Switch(checked = bubbleOn, onCheckedChange = { want ->
-                        if (want) enableBubble() else { stopBubble(context); bubbleOn = false }
-                    })
-                }
-                StatusRow(
-                    title = "Auto-insert",
-                    subtitle = if (a11yEnabled) "On — results type into your field." else "Lets results type straight into the field.",
-                    on = a11yEnabled,
-                ) {
-                    ActionButton(if (a11yEnabled) "Manage" else "Enable") {
-                        accessibilityLauncher.launch(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    }
-                }
-                StatusRow(
-                    title = "Notifications",
-                    subtitle = if (notifOn) "On — \"fix a word\" is available after dictation." else "Lets you fix a mis-heard word afterward.",
-                    on = notifOn,
-                ) {
-                    if (!notifOn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        ActionButton("Enable") { notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }
-                    } else {
+            val setupComplete = bubbleOn && a11yEnabled && micGranted
+            SectionCard(if (setupComplete) "You're all set" else "Finish setup", highlight = !setupComplete) {
+                if (setupComplete) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.size(10.dp))
+                        Text(
+                            "Everything's ready — tap the bubble on any text field and speak.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                } else {
+                    StatusRow(
+                        title = "Floating bubble",
+                        subtitle = if (bubbleOn) "On — floats over other apps so you can dictate anywhere."
+                        else "Floats over other apps so you can dictate anywhere.",
+                        on = bubbleOn,
+                    ) {
+                        Switch(checked = bubbleOn, onCheckedChange = { want ->
+                            if (want) enableBubble() else { stopBubble(context); bubbleOn = false }
+                        })
+                    }
+                    StatusRow(
+                        title = "Microphone",
+                        subtitle = if (micGranted) "On — lets OpenWispr hear what you dictate."
+                        else "So OpenWispr can hear what you dictate.",
+                        on = micGranted,
+                    ) {
+                        if (micGranted) Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        else ActionButton("Enable") { micLauncher.launch(Manifest.permission.RECORD_AUDIO) }
+                    }
+                    StatusRow(
+                        title = "Auto-insert",
+                        subtitle = if (a11yEnabled) "On — types the cleaned text into the field you're in."
+                        else "Types the cleaned text straight into the field you're in.",
+                        on = a11yEnabled,
+                    ) {
+                        ActionButton(if (a11yEnabled) "Manage" else "Enable") {
+                            accessibilityLauncher.launch(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        }
+                    }
+                    StatusRow(
+                        title = "Notifications",
+                        subtitle = if (notifOn) "On — tells you when a name needs a quick fix."
+                        else "Tells you when a mis-heard name needs a quick fix.",
+                        on = notifOn,
+                    ) {
+                        if (!notifOn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            ActionButton("Enable") { notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }
+                        } else {
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
@@ -376,6 +409,18 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                     showDot = false,
                 ) {
                     ActionButton("Manage") { context.startActivity(Intent(context, VocabActivity::class.java)) }
+                }
+            }
+
+            // ---- Learned words ----
+            SectionCard("Learned words") {
+                StatusRow(
+                    title = "Auto-learned from your edits",
+                    subtitle = "Review and undo names OpenWispr picked up when you corrected dictation.",
+                    on = false,
+                    showDot = false,
+                ) {
+                    ActionButton("Review") { context.startActivity(Intent(context, LearnedVocabActivity::class.java)) }
                 }
             }
 

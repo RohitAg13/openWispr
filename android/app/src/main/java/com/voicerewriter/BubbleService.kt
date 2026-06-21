@@ -24,6 +24,10 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import com.arm.aichat.AiChat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 
@@ -97,6 +101,30 @@ class BubbleService : Service() {
         applyGating(animate = false)
         // In case a field is already focused when the bubble starts, ask for a check.
         OpenWisprAccessibilityService.reevaluate()
+        warmModels()
+    }
+
+    /**
+     * Best-effort cold-start warmup so the first dictation doesn't stall on model loads.
+     * Only touches on-device paths (cloud needs no warmup) and never crashes the service.
+     *  - Whisper: preloads the cached context (safe — it's reused across dictations).
+     *  - LLM: constructs the native engine singleton (loads libai-chat + native init). We
+     *    do NOT pre-load the GGUF; LocalLlmEngine reloads it fresh per call by design.
+     */
+    private fun warmModels() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val s = SettingsRepository(applicationContext).get()
+                if (s.sttProvider == "local") {
+                    LocalWhisperStt.warm(applicationContext, s.sttModel)
+                }
+                if (s.provider == "local") {
+                    AiChat.getInferenceEngine(applicationContext)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("BubbleService", "warmup skipped", e)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY

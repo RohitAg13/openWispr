@@ -56,6 +56,27 @@ object LocalWhisperStt {
         return cleanTranscript(raw)
     }
 
+    /**
+     * Preload the model context ahead of the first dictation (e.g. on service start) so
+     * the first transcription doesn't pay the createContextFromFile cost. Best-effort:
+     * returns quietly if the model isn't downloaded. Reuses the same cached ctx/loadedId
+     * as [transcribe], so a warmed context is used directly by the next call.
+     */
+    suspend fun warm(context: Context, modelId: String) {
+        val id = modelId.ifBlank { WhisperModelManager.DEFAULT_MODEL }
+        if (!WhisperModelManager.isReady(context, id)) return
+        loadLock.withLock {
+            if (ctx != null && loadedId == id) return  // already warm
+            val t0 = System.nanoTime()
+            ctx?.let { runCatching { it.release() } }
+            ctx = withContext(Dispatchers.IO) {
+                WhisperContext.createContextFromFile(WhisperModelManager.modelFile(context, id).absolutePath)
+            }
+            loadedId = id
+            Log.i("LocalWhisperStt", "warm model=$id load=${(System.nanoTime() - t0) / 1_000_000}ms")
+        }
+    }
+
     /** Strip whisper's bracketed non-speech markers (e.g. [BLANK_AUDIO], [Music]). */
     private fun cleanTranscript(s: String): String =
         s.replace(Regex("\\[[^\\]]*]"), "").trim()

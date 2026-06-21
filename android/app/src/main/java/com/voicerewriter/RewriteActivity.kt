@@ -255,6 +255,22 @@ class RewriteActivity : ComponentActivity() {
         if (s.provider == "local") LocalLlmEngine.streamWithPrompt(applicationContext, s, prompt, text)
         else RewriteEngine.streamWithPrompt(s, prompt, text)
 
+    /** Map a raw exception to plain, actionable copy for the sheet. */
+    private fun friendlyError(e: Throwable): String {
+        val msg = e.message ?: e.toString()
+        val low = msg.lowercase()
+        return when {
+            e is java.net.UnknownHostException || e is java.net.ConnectException ||
+                "unable to resolve host" in low || "failed to connect" in low ->
+                "No connection — check your network, or switch to on-device in Settings."
+            e is java.net.SocketTimeoutException || "timeout" in low || "timed out" in low ->
+                "That took too long — try again."
+            "401" in low || "403" in low || "unauthor" in low || "api key" in low || "invalid key" in low ->
+                "Check your API key in Settings."
+            else -> msg
+        }
+    }
+
     private fun llmReady(s: Settings): Boolean =
         if (s.provider == "local") LlmModelManager.isReady(this, s.model) else s.isConfigured
 
@@ -273,6 +289,7 @@ class RewriteActivity : ComponentActivity() {
         var output by remember { mutableStateOf("") }       // LLM streaming buffer
         var finalText by remember { mutableStateOf("") }    // corrected text to insert
         var error by remember { mutableStateOf<String?>(null) }
+        var notice by remember { mutableStateOf<String?>(null) }  // soft, non-blocking note in REVIEW
         var streamJob by remember { mutableStateOf<Job?>(null) }
         var ampJob by remember { mutableStateOf<Job?>(null) }
         var pendingStart by remember { mutableStateOf(false) }
@@ -290,11 +307,13 @@ class RewriteActivity : ComponentActivity() {
         }
 
         fun toReview(text: String) {
+            // A blank result (e.g. cleanup or polish ate everything) should not leave an empty sheet.
+            if (text.isBlank()) { error = "Nothing to insert — try again."; stage = Stage.ERROR; return }
             finalText = text; editText = text; countdown = 1f; editing = false; stage = Stage.REVIEW
         }
 
         fun process(s: Settings, spoken: String) {
-            transcript = spoken; output = ""; error = null
+            transcript = spoken; output = ""; error = null; notice = null
             val cleaned = if (s.deterministicCleanup) {
                 val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
@@ -307,8 +326,19 @@ class RewriteActivity : ComponentActivity() {
                 val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
                 val prompt = if (tone.isBlank()) Defaults.DICTATION_PROMPT
                     else Defaults.DICTATION_PROMPT + "\n\nTone for this app: " + tone
-                collectInto(streamFor(s, prompt, cleaned), { output += it }, { e -> error = e; stage = Stage.ERROR },
-                    { toReview(RewriteEngine.cleanOutput(output)) })
+                collectInto(
+                    streamFor(s, prompt, cleaned),
+                    { output += it },
+                    { _ ->
+                        // The polish is optional — never throw away a good transcript on its failure.
+                        notice = "Couldn't polish — using the cleaned text."
+                        toReview(cleaned)
+                    },
+                    {
+                        val polished = RewriteEngine.cleanOutput(output)
+                        toReview(if (polished.isBlank()) cleaned else polished)
+                    },
+                )
             }
         }
 
@@ -341,13 +371,13 @@ class RewriteActivity : ComponentActivity() {
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
-                    wav?.delete(); error = e.message ?: e.toString(); stage = Stage.ERROR
+                    wav?.delete(); error = friendlyError(e); stage = Stage.ERROR
                 }
             }
         }
 
         fun startRecording(s: Settings) {
-            error = null; transcript = ""; output = ""; finalText = ""; amps.clear()
+            error = null; notice = null; transcript = ""; output = ""; finalText = ""; amps.clear()
             try { audioRecorder.start(vadAutoStop = s.vadAutoStop, onAutoStop = { stopRecording(s) }) }
             catch (e: Exception) { error = e.message ?: "Couldn't start the mic."; stage = Stage.ERROR; return }
             stage = Stage.RECORDING
@@ -485,6 +515,10 @@ class RewriteActivity : ComponentActivity() {
                             }
                         }
                     } else {
+                        notice?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         OutputText(finalText)
                         LinearProgressIndicator(
                             progress = { countdown },
@@ -527,11 +561,11 @@ class RewriteActivity : ComponentActivity() {
     private suspend fun collectInto(
         flow: kotlinx.coroutines.flow.Flow<String>,
         onChunk: (String) -> Unit,
-        onError: (String) -> Unit,
+        onError: (Throwable) -> Unit,
         onDone: () -> Unit,
     ) {
         var failed = false
-        flow.catch { e -> failed = true; onError(e.message ?: e.toString()) }
+        flow.catch { e -> failed = true; onError(e) }
             .onCompletion { cause -> if (cause == null && !failed) onDone() }
             .collect { chunk -> onChunk(chunk) }
     }
@@ -572,7 +606,7 @@ class RewriteActivity : ComponentActivity() {
                     return@launch
                 }
                 streamFor(settings, Defaults.DEFAULT_PROMPTS.getValue(actionId), sourceState.value)
-                    .catch { e -> error = e.message ?: e.toString(); streaming = false }
+                    .catch { e -> error = friendlyError(e); streaming = false }
                     .onCompletion { cause ->
                         if (cause == null && error == null) { output = RewriteEngine.cleanOutput(output); done = true }
                         streaming = false

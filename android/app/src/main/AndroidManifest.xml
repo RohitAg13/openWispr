@@ -37,6 +37,10 @@
             android:exported="false"
             android:label="Personal dictionary" />
         <activity
+            android:name=".LearnedVocabActivity"
+            android:exported="false"
+            android:label="Learned words" />
+        <activity
             android:name=".ContactsImportActivity"
             android:exported="false"
             android:label="Import from contacts" />

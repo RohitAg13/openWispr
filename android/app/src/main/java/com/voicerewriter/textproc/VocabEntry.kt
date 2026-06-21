@@ -22,6 +22,12 @@ data class VocabEntry(
     val expansion: String? = null,
     /** Where this entry came from ("manual" or "contact") — affects bias priority. */
     val source: String = "manual",
+    /**
+     * Subset of [aliases] added automatically by the inline-edit learn loop
+     * ([VocabRepository.learnFromEdit]). Tracked separately so the user can review and
+     * undo just the auto-learned ones — even when merged onto a manual/contact entry.
+     */
+    val learnedAliases: List<String> = emptyList(),
 ) {
     val isSnippet: Boolean get() = !expansion.isNullOrBlank()
 
