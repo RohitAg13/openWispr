@@ -53,11 +53,12 @@ object VocabCorrector {
             // Snippets expand to their text; names correct to the canonical spelling.
             val replacement = if (e.isSnippet) e.expansion!!.trim() else e.canonical.trim()
             if (replacement.isEmpty()) continue
-            // Fuzzy matching is only safe for deliberate entries (manual / learned-from-
-            // edits). The 600+ imported contacts are noisy and collide phonetically with
-            // ordinary words (Check→Chachi, Gate→Gita), so they match EXACTLY only — they
-            // still bias Whisper's decoding via biasPrompt().
-            val fuzzy = !e.isSnippet && e.source != "contact"
+            // Fuzzy matching only applies to entries that carry an explicit mis-hearing
+            // alias (typed by the user, or recorded by learn-from-edits). A bare canonical
+            // with no alias — every contact import — matches EXACTLY only, so the 600+
+            // noisy contacts can't phonetically grab ordinary words (Check→Chachi,
+            // Gate→Gita, mishearing→Masi). Contacts still bias Whisper via biasPrompt().
+            val fuzzy = !e.isSnippet && e.aliases.isNotEmpty()
             for (phrase in e.matchPhrases()) {
                 val ptoks = phrase.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
                 if (ptoks.isNotEmpty()) targets.add(Target(replacement, ptoks, fuzzy = fuzzy))
