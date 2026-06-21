@@ -351,14 +351,18 @@ class RewriteActivity : ComponentActivity() {
 
         fun process(s: Settings, spoken: String) {
             transcript = spoken; output = ""; error = null; notice = null
-            val cleaned = if (s.deterministicCleanup) {
-                val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
-                TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
-            } else spoken
-            if (!s.llmPolishEnabled) { toReview(cleaned); return }
+            val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
+            val cleaned = if (s.deterministicCleanup)
+                TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
+            // Guards (ported from the cleanup pipeline's LocalLLMProcessor): skip the LLM where it tends to
+            // harm rather than help — disabled, code/terminal context, or very short input
+            // (the deterministic stage already handles those well, and the LLM over-edits them).
+            val wordCount = cleaned.trim().split(Regex("\\s+")).count { it.isNotBlank() }
+            if (!s.llmPolishEnabled || isCode || wordCount < 4) { toReview(cleaned); return }
             stage = Stage.CORRECTING
             // App-context: tone the polish to the focused app (formal email, casual chat).
             val category = AppContext.categoryFor(OpenWisprAccessibilityService.lastHostPackage, spoken)
+            val relaxed = RewriteEngine.hasSelfCorrection(spoken)
             streamJob = scope.launch {
                 val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
                 val prompt = if (tone.isBlank()) Defaults.DICTATION_PROMPT
@@ -372,8 +376,15 @@ class RewriteActivity : ComponentActivity() {
                         toReview(cleaned)
                     },
                     {
+                        // Content-preservation guard: if the model dropped too much or ballooned
+                        // with invented content, fall back to the deterministic text.
                         val polished = RewriteEngine.cleanOutput(output)
-                        toReview(if (polished.isBlank()) cleaned else polished)
+                        if (polished.isBlank() || !RewriteEngine.preservesContent(cleaned, polished, relaxed)) {
+                            notice = "Polish changed too much — using the cleaned text."
+                            toReview(cleaned)
+                        } else {
+                            toReview(polished)
+                        }
                     },
                 )
             }
