@@ -264,14 +264,15 @@ class RewriteActivity : ComponentActivity() {
             stage = Stage.TRANSCRIBING
             streamJob = scope.launch {
                 try {
+                    // Personal vocabulary helps twice: it biases Whisper's decoding
+                    // (B3) and snaps any remaining near-misses afterward (B2).
+                    val vocab = VocabRepository(this@RewriteActivity).get()
                     val raw = if (local) {
-                        LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!)
+                        val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
+                        LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!, bias)
                     } else {
                         SttEngine.transcribe(s, wav!!).also { wav.delete() }
                     }
-                    // Snap mis-transcribed names/terms to the personal vocabulary
-                    // before any cleanup (STT errors can't be fixed downstream).
-                    val vocab = VocabRepository(this@RewriteActivity).get()
                     val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)

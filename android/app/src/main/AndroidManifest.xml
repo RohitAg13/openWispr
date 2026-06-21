@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:allowBackup="true"
@@ -34,6 +35,10 @@
             android:name=".VocabActivity"
             android:exported="false"
             android:label="Personal dictionary" />
+        <activity
+            android:name=".ContactsImportActivity"
+            android:exported="false"
+            android:label="Import from contacts" />
 
         <!-- The "Rewrite" entry in the text-selection floating toolbar -->
         <activity

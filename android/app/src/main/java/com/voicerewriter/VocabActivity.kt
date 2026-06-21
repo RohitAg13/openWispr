@@ -2,7 +2,9 @@ package com.voicerewriter
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -35,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.voicerewriter.textproc.VocabEntry
@@ -63,12 +67,19 @@ class VocabActivity : ComponentActivity() {
     @Composable
     private fun VocabScreen(repo: VocabRepository) {
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
         val entries = remember { mutableStateListOf<VocabEntry>() }
         var canonical by remember { mutableStateOf("") }
         var aliases by remember { mutableStateOf("") }
 
-        LaunchedEffect(Unit) { entries.addAll(repo.get()) }
+        suspend fun reload() { entries.clear(); entries.addAll(repo.get()) }
+        LaunchedEffect(Unit) { reload() }
         fun persist() = scope.launch { repo.save(entries.toList()) }
+
+        // Reload after the contacts-import screen adds entries.
+        val importLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { scope.launch { reload() } }
 
         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Personal dictionary", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -101,6 +112,10 @@ class VocabActivity : ComponentActivity() {
                     },
                 ) { Icon(Icons.Default.Add, contentDescription = "Add") }
             }
+
+            TextButton(onClick = {
+                importLauncher.launch(android.content.Intent(context, ContactsImportActivity::class.java))
+            }) { Text("Import from contacts") }
 
             Divider()
 

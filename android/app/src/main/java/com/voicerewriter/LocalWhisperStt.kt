@@ -22,8 +22,11 @@ object LocalWhisperStt {
     @Volatile private var ctx: WhisperContext? = null
     @Volatile private var loadedId: String? = null
 
-    /** Transcribe [samples] (16 kHz mono, normalized -1..1). Suspends on heavy CPU work. */
-    suspend fun transcribe(context: Context, settings: Settings, samples: FloatArray): String {
+    /**
+     * Transcribe [samples] (16 kHz mono, normalized -1..1). Suspends on heavy CPU work.
+     * [biasPrompt] (optional) primes the recognizer toward the user's vocabulary.
+     */
+    suspend fun transcribe(context: Context, settings: Settings, samples: FloatArray, biasPrompt: String? = null): String {
         val id = settings.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL }
         if (!WhisperModelManager.isReady(context, id)) {
             throw IllegalStateException("On-device model not downloaded. Open Settings → Voice → Download model.")
@@ -42,7 +45,7 @@ object LocalWhisperStt {
         }
         val tLoaded = System.nanoTime()
         // transcribeData runs on whisper's own single-thread dispatcher internally.
-        val raw = whisper.transcribeData(samples, printTimestamp = false)
+        val raw = whisper.transcribeData(samples, printTimestamp = false, prompt = biasPrompt?.ifBlank { null })
         val tDone = System.nanoTime()
         Log.i(
             "LocalWhisperStt",

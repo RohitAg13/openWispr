@@ -23,6 +23,24 @@ object VocabCorrector {
     private data class Tok(val norm: String, val start: Int, val end: Int)
     private data class Hit(val start: Int, val end: Int, val replacement: String, val score: Double, val span: Int)
 
+    /**
+     * A compact glossary string to bias Whisper's decoding (initial_prompt). Only
+     * canonical spellings — never aliases (those are mishearings we don't want
+     * emitted). Capped to stay within Whisper's prompt-token budget (~224 tokens).
+     */
+    fun biasPrompt(vocab: List<VocabEntry>, maxChars: Int = 200): String {
+        if (vocab.isEmpty()) return ""
+        val sb = StringBuilder("Glossary: ")
+        for (e in vocab) {
+            val c = e.canonical.trim()
+            if (c.isEmpty()) continue
+            if (sb.length + c.length + 2 > maxChars) break
+            if (!sb.endsWith(": ")) sb.append(", ")
+            sb.append(c)
+        }
+        return if (sb.endsWith(": ")) "" else sb.append(".").toString()
+    }
+
     fun correct(text: String, vocab: List<VocabEntry>): String {
         if (text.isBlank() || vocab.isEmpty()) return text
         val toks = tokenize(text)
