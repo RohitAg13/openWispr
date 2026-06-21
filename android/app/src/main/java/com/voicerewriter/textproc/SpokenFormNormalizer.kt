@@ -18,9 +18,12 @@ object SpokenFormNormalizer {
         if (!unambiguousOnly) r = normalizeURLsAndPaths(r)   // composite structures first
         r = normalizeUnambiguous(r)                          // always safe
         r = normalizeEllipsis(r)                             // "dot dot dot" -> "..."
+        // "dash dash force" -> "--force" is unambiguous, so it runs even in code/
+        // terminal fields (where you most want CLI flags). Single-dash stays gated.
+        r = Regex("\\bdash\\s+dash\\s+(\\w+)\\b", RegexOption.IGNORE_CASE).replace(r, "--$1")
         if (!unambiguousOnly) {
             r = normalizeLabelColons(r)                      // "re colon ..." -> "Re: ..."
-            r = normalizeCommandPatterns(r)                  // "dash dash force" -> "--force"
+            r = normalizeCommandPatterns(r)                  // single-dash flags
         }
         r = cleanupSymbolSpacing(r)
         r = r.replace(Regex("\\s{2,}"), " ").trim()
@@ -184,12 +187,10 @@ object SpokenFormNormalizer {
 
     // ---- command-line ----
 
-    private fun normalizeCommandPatterns(text: String): String {
-        var r = text
-        r = Regex("\\bdash\\s+dash\\s+(\\w+)\\b", RegexOption.IGNORE_CASE).replace(r, "--$1")
-        r = Regex("\\bdash\\s+([a-zA-Z])\\b", RegexOption.IGNORE_CASE).replace(r, "-$1")
-        return r
-    }
+    private fun normalizeCommandPatterns(text: String): String =
+        // Double-dash is handled earlier (always-safe). Single-dash before one char
+        // is gated to non-code prose contexts only.
+        Regex("\\bdash\\s+([a-zA-Z])\\b", RegexOption.IGNORE_CASE).replace(text, "-$1")
 
     // ---- ellipsis ----
 

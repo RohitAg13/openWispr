@@ -154,11 +154,14 @@ object SelfCorrectionDetector {
             it.lowercase().trim(',', '.', '!', '?', ';', ':') == anchor
         }
         val kept: List<String> = if (overlapIdx >= 0) {
+            // Shared first token ("to mark" / "to john") -> replace from the anchor.
             cleanedBefore.subList(0, overlapIdx)
         } else {
-            // Length-matched: drop as many trailing words as the correction supplies.
-            val drop = after.size.coerceAtMost(cleanedBefore.size - 1).coerceAtLeast(0)
-            cleanedBefore.subList(0, cleanedBefore.size - drop)
+            // No shared anchor: assume the speaker corrected just the last token
+            // ("send it to mark, I mean john@..." -> drop only "mark"). Dropping a
+            // length-matched span here would wrongly eat the verb when the
+            // correction is long (e.g. an email or phrase).
+            cleanedBefore.subList(0, (cleanedBefore.size - 1).coerceAtLeast(0))
         }
         return (kept + after).joinToString(" ")
     }

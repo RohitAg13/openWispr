@@ -77,5 +77,14 @@
             </intent-filter>
         </receiver>
 
+        <!-- Debug eval harness: runs datasets through the real pipeline (adb-triggered) -->
+        <receiver
+            android:name=".EvalDumpReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.voicerewriter.RUN_EVAL_DUMP" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>
