@@ -2,6 +2,7 @@ package com.voicerewriter
 
 import android.content.Context
 import android.util.Log
+import com.voicerewriter.textproc.AppContext
 import com.arm.aichat.AiChat
 import com.arm.aichat.InferenceEngine
 import kotlinx.coroutines.flow.Flow
@@ -36,12 +37,24 @@ object LocalLlmEngine {
         if (!file.exists()) {
             throw IllegalStateException("On-device model not downloaded. Open Settings → On-device LLM → Download.")
         }
-        // Lean prompt + marker-free user turn: tiny models loop on the full guardrails.
-        val system = RewriteEngine.buildLocalSystemPrompt(settings)
-        var user = RewriteEngine.buildLocalUserContent(prompt, text)
-        // Qwen3 has a reasoning mode on by default; "/no_think" disables it so we get
-        // the answer directly instead of (capped) chain-of-thought.
-        if (settings.model.startsWith("qwen")) user += " /no_think"
+        val isFinetune = settings.model == LlmModelManager.FINETUNE_MODEL_ID
+        val system: String
+        val user: String
+        if (isFinetune) {
+            // The fine-tune was trained on its own SYSTEM (with /no_think) + per-app tone,
+            // and a bare transcript as the user turn. Feed exactly that — anything else
+            // (the lean prompt, a DICTATION_PROMPT prefix) is off-distribution.
+            val category = AppContext.categoryFor(OpenWisprAccessibilityService.lastHostPackage, text).key
+            system = RewriteEngine.buildFinetuneSystemPrompt(category)
+            user = text
+        } else {
+            // Lean prompt + marker-free user turn: tiny models loop on the full guardrails.
+            system = RewriteEngine.buildLocalSystemPrompt(settings)
+            // Qwen3 has a reasoning mode on by default; "/no_think" disables it so we get
+            // the answer directly instead of (capped) chain-of-thought.
+            user = RewriteEngine.buildLocalUserContent(prompt, text) +
+                if (settings.model.startsWith("qwen")) " /no_think" else ""
+        }
         val engine = AiChat.getInferenceEngine(context.applicationContext)
 
         mutex.withLock {

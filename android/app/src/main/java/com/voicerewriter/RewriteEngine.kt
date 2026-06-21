@@ -131,6 +131,32 @@ object RewriteEngine {
     fun buildLocalUserContent(prompt: String, text: String): String =
         "$prompt\n\n$text"
 
+    // ---- Fine-tuned dictation-cleanup model (openwispr-qwen3-0.6b) ----
+    // The model was trained on THIS exact system prompt + per-context tone (mirror of
+    // openwispr-finetune/common.py SYSTEM/TONE and eval/prompts.py). Keep all three in
+    // sync — drift from the training prompt makes the fine-tune (and its gate) meaningless.
+    const val FINETUNE_SYSTEM =
+        "You convert a raw speech-to-text transcript into clean written text. " +
+        "Remove filler words and false starts; resolve self-corrections, keeping only the " +
+        "speaker's final intent; fix grammar and punctuation; add capitalization, sentence " +
+        "breaks and paragraph breaks; and format dictated enumerations as a numbered list. " +
+        "Copy names, emails, URLs, numbers and code EXACTLY — never change their spelling. " +
+        "Preserve the speaker's own words, meaning and voice. Do not add content, summaries " +
+        "or commentary. Output ONLY the cleaned text. /no_think"
+
+    private val FINETUNE_TONE = mapOf(
+        "email" to "Context: a professional email or document — clear, polite, complete sentences, no slang.",
+        "chat" to "Context: a casual chat message — relaxed, conversational, contractions, concise.",
+        "social" to "Context: a casual social post — natural and a little punchy.",
+        "notes" to "Context: personal notes — keep structure (lists, short lines) tidy.",
+        "code" to "Context: code or a terminal — keep technical tokens verbatim; minimal prose edits.",
+        "generic" to "",
+    )
+
+    /** System prompt for the fine-tune: training SYSTEM folded with the app-context tone. */
+    fun buildFinetuneSystemPrompt(category: String): String =
+        FINETUNE_TONE[category]?.takeIf { it.isNotEmpty() }?.let { "$FINETUNE_SYSTEM\n$it" } ?: FINETUNE_SYSTEM
+
     /**
      * True once the generated text has started repeating its first sentence — tiny
      * models that don't emit a stop token loop on their own output. Used to halt
