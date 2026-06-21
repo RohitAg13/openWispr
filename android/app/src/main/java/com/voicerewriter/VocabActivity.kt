@@ -71,6 +71,7 @@ class VocabActivity : ComponentActivity() {
         val entries = remember { mutableStateListOf<VocabEntry>() }
         var canonical by remember { mutableStateOf("") }
         var aliases by remember { mutableStateOf("") }
+        var expansion by remember { mutableStateOf("") }
 
         suspend fun reload() { entries.clear(); entries.addAll(repo.get()) }
         LaunchedEffect(Unit) { reload() }
@@ -93,21 +94,26 @@ class VocabActivity : ComponentActivity() {
 
             OutlinedTextField(
                 value = canonical, onValueChange = { canonical = it },
-                label = { Text("Word (correct spelling)") },
+                label = { Text("Word, or phrase to expand") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = aliases, onValueChange = { aliases = it },
+                label = { Text("Aliases (optional, comma-separated)") },
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = aliases, onValueChange = { aliases = it },
-                    label = { Text("Aliases (optional, comma-separated)") },
+                    value = expansion, onValueChange = { expansion = it },
+                    label = { Text("Expands to (optional snippet, e.g. an email)") },
                     singleLine = true, modifier = Modifier.weight(1f),
                 )
                 IconButton(
                     enabled = canonical.isNotBlank(),
                     onClick = {
                         val a = aliases.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                        entries.add(0, VocabEntry(canonical.trim(), a))
-                        canonical = ""; aliases = ""
+                        entries.add(0, VocabEntry(canonical.trim(), a, expansion.trim().ifEmpty { null }))
+                        canonical = ""; aliases = ""; expansion = ""
                         persist()
                     },
                 ) { Icon(Icons.Default.Add, contentDescription = "Add") }
@@ -127,7 +133,10 @@ class VocabActivity : ComponentActivity() {
                     items(entries, key = { it.canonical + it.aliases.hashCode() }) { e ->
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(e.canonical, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    if (e.isSnippet) "${e.canonical}  ⇒  ${e.expansion}" else e.canonical,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
                                 if (e.aliases.isNotEmpty()) Text(
                                     "↳ ${e.aliases.joinToString(", ")}",
                                     style = MaterialTheme.typography.bodySmall,

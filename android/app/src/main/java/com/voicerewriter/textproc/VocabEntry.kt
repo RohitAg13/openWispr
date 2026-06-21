@@ -14,7 +14,17 @@ package com.voicerewriter.textproc
 data class VocabEntry(
     val canonical: String,
     val aliases: List<String> = emptyList(),
+    /**
+     * Optional text-expansion. When set, this is a *snippet*: speaking [canonical]
+     * (or an alias) inserts [expansion] verbatim instead — e.g. "my email" →
+     * "you@example.com", "my address" → a full address. Matched exactly only.
+     */
+    val expansion: String? = null,
+    /** Where this entry came from ("manual" or "contact") — affects bias priority. */
+    val source: String = "manual",
 ) {
+    val isSnippet: Boolean get() = !expansion.isNullOrBlank()
+
     /** All spoken forms to match against, longest (most tokens) first. */
     fun matchPhrases(): List<String> =
         (listOf(canonical) + aliases)

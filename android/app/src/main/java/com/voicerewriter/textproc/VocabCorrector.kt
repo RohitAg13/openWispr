@@ -19,7 +19,7 @@ object VocabCorrector {
     private const val FUZZY_THRESHOLD = 0.84
     private const val MIN_FUZZY_LEN = 4
 
-    private data class Target(val canonical: String, val tokens: List<String>)
+    private data class Target(val replacement: String, val tokens: List<String>, val exactOnly: Boolean)
     private data class Tok(val norm: String, val start: Int, val end: Int)
     private data class Hit(val start: Int, val end: Int, val replacement: String, val score: Double, val span: Int)
 
@@ -31,7 +31,8 @@ object VocabCorrector {
     fun biasPrompt(vocab: List<VocabEntry>, maxChars: Int = 200): String {
         if (vocab.isEmpty()) return ""
         val sb = StringBuilder("Glossary: ")
-        for (e in vocab) {
+        // Names only, manual entries first (deliberate, higher-value than 600 contacts).
+        for (e in vocab.filter { !it.isSnippet }.sortedBy { it.source != "manual" }) {
             val c = e.canonical.trim()
             if (c.isEmpty()) continue
             if (sb.length + c.length + 2 > maxChars) break
@@ -49,11 +50,12 @@ object VocabCorrector {
         // Build match targets, longest phrase first so "row hit" beats "hit".
         val targets = ArrayList<Target>()
         for (e in vocab) {
-            val canon = e.canonical.trim()
-            if (canon.isEmpty()) continue
+            // Snippets expand to their text; names correct to the canonical spelling.
+            val replacement = if (e.isSnippet) e.expansion!!.trim() else e.canonical.trim()
+            if (replacement.isEmpty()) continue
             for (phrase in e.matchPhrases()) {
                 val ptoks = phrase.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
-                if (ptoks.isNotEmpty()) targets.add(Target(canon, ptoks))
+                if (ptoks.isNotEmpty()) targets.add(Target(replacement, ptoks, exactOnly = e.isSnippet))
             }
         }
         targets.sortByDescending { it.tokens.size }
@@ -65,9 +67,9 @@ object VocabCorrector {
             while (i + span <= toks.size) {
                 val window = toks.subList(i, i + span)
                 val score = matchScore(window.map { it.norm }, t.tokens)
-                if (score >= FUZZY_THRESHOLD) {
-                    hits.add(Hit(window.first().start, window.last().end, t.canonical, score, span))
-                }
+                // Snippets only fire on an exact match (no fuzzy expansion).
+                val ok = if (t.exactOnly) score >= 0.999 else score >= FUZZY_THRESHOLD
+                if (ok) hits.add(Hit(window.first().start, window.last().end, t.replacement, score, span))
                 i++
             }
         }

@@ -143,7 +143,7 @@ class ContactsImportActivity : ComponentActivity() {
                                 val have = current.map { it.canonical.lowercase() }.toMutableSet()
                                 for ((tok, on) in checked) {
                                     if (on && tok.lowercase() !in have) {
-                                        current.add(VocabEntry(tok)); have.add(tok.lowercase())
+                                        current.add(VocabEntry(tok, source = "contact")); have.add(tok.lowercase())
                                     }
                                 }
                                 repo.save(current)

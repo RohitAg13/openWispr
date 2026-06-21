@@ -29,7 +29,9 @@ class VocabRepository(context: Context) {
                 val aliases = if (aliasArr != null)
                     (0 until aliasArr.length()).map { aliasArr.optString(it).trim() }.filter { it.isNotEmpty() }
                 else emptyList()
-                VocabEntry(canonical, aliases)
+                val expansion = o.optString("expansion").trim().ifEmpty { null }
+                val source = o.optString("source").trim().ifEmpty { "manual" }
+                VocabEntry(canonical, aliases, expansion, source)
             }
         } catch (e: Exception) {
             Log.e("VocabRepository", "failed to read $file", e); emptyList()
@@ -42,7 +44,9 @@ class VocabRepository(context: Context) {
             if (e.canonical.isBlank()) continue
             arr.put(JSONObject()
                 .put("canonical", e.canonical.trim())
-                .put("aliases", JSONArray(e.aliases.map { it.trim() }.filter { it.isNotEmpty() })))
+                .put("aliases", JSONArray(e.aliases.map { it.trim() }.filter { it.isNotEmpty() }))
+                .apply { if (!e.expansion.isNullOrBlank()) put("expansion", e.expansion.trim()) }
+                .put("source", e.source))
         }
         file.writeText(arr.toString())
     }

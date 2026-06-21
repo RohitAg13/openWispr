@@ -161,8 +161,36 @@ class RewriteActivity : ComponentActivity() {
             setClipboard(result)
             Toast.makeText(this, "Copied. Enable accessibility to auto-insert.", Toast.LENGTH_LONG).show()
         }
+        // Remember it so the user can teach a name correction afterward (learn-from-edits).
+        LastDictation.set(this, result)
+        postFixNotification()
         setResult(Activity.RESULT_CANCELED)
         finish()
+    }
+
+    /** Quiet, single, replace-in-place notification: tap to fix a mis-heard word. */
+    private fun postFixNotification() {
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val channelId = "dictation_fix"
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val ch = android.app.NotificationChannel(
+                channelId, "Dictation corrections", android.app.NotificationManager.IMPORTANCE_LOW,
+            ).apply { description = "Tap to fix a mis-heard name after dictation." }
+            nm.createNotificationChannel(ch)
+        }
+        val pi = android.app.PendingIntent.getActivity(
+            this, 0, Intent(this, FixDictationActivity::class.java),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notif = androidx.core.app.NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_menu_edit)
+            .setContentTitle("Dictated ✓")
+            .setContentText("Got a name wrong? Tap to fix.")
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
+            .setOnlyAlertOnce(true)
+            .setAutoCancel(true)
+            .build()
+        runCatching { nm.notify(42, notif) }
     }
 
     private fun setClipboard(text: String) {

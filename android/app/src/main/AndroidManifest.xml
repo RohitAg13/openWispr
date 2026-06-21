@@ -39,6 +39,12 @@
             android:name=".ContactsImportActivity"
             android:exported="false"
             android:label="Import from contacts" />
+        <activity
+            android:name=".FixDictationActivity"
+            android:exported="false"
+            android:label="Fix a word"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.Rewriter.Translucent" />
 
         <!-- The "Rewrite" entry in the text-selection floating toolbar -->
         <activity
