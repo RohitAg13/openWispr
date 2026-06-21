@@ -19,14 +19,13 @@ object NumberNormalizer {
         var i = 0
         while (i < words.size) {
             val (consumed, replacement) = tryConsumeNumber(words, i)
-            // Don't convert a lone pronoun/article "one" ("the other one", "no one",
-            // "one of them") — only as part of a larger number ("twenty one").
-            if (consumed == 1 && words[i].lowercase().trim(',', '.', '!', '?', ';', ':') == "one" &&
-                isPronounOne(result.lastOrNull(), words.getOrNull(i + 1))) {
-                result.add(words[i]); i += 1; continue
-            }
-            if (consumed > 0) {
+            if (consumed > 0 && shouldDigitize(words, i, consumed, replacement)) {
                 result.add(replacement)
+                i += consumed
+            } else if (consumed > 0) {
+                // Keep the original spelled-out words (prose convention: small
+                // standalone numbers like "one", "two", "ten", "first" stay words).
+                for (k in 0 until consumed) result.add(words[i + k])
                 i += consumed
             } else {
                 result.add(words[i])
@@ -36,15 +35,49 @@ object NumberNormalizer {
         return result.joinToString(" ")
     }
 
-    private val oneDeterminers = setOf(
-        "the", "this", "that", "other", "another", "no", "any", "each", "every",
-        "which", "some", "such", "only",
+    private fun strip(s: String?): String? =
+        s?.lowercase()?.trim(',', '.', '!', '?', ';', ':', '"', '\'', '(', ')')
+
+    /** Units/labels that signal a number is really numeric ("twenty minutes", "room four"). */
+    private val numericContext = setOf(
+        // units
+        "dollars", "dollar", "cents", "cent", "bucks", "rupees", "rupee", "euros", "euro",
+        "pounds", "pound", "kg", "kgs", "kilograms", "kilogram", "grams", "gram", "mg", "lbs",
+        "miles", "mile", "km", "kilometers", "meters", "meter", "cm", "mm",
+        "minutes", "minute", "mins", "min", "hours", "hour", "hrs", "seconds", "second", "secs",
+        "days", "day", "weeks", "week", "months", "month", "years", "year", "am", "pm", "o'clock",
+        "gb", "mb", "kb", "tb", "px", "percent", "degrees", "degree", "x",
+        // labels
+        "room", "page", "pages", "chapter", "step", "steps", "version", "floor", "level",
+        "number", "line", "lines", "apartment", "unit", "grade", "rank", "item", "items",
+        "question", "port", "figure", "table", "section", "phase", "part", "age", "id",
     )
 
-    private fun isPronounOne(prev: String?, next: String?): Boolean {
-        val p = prev?.lowercase()?.trim(',', '.', '!', '?', ';', ':', '"', '\'')
-        if (p != null && p in oneDeterminers) return true
-        return next?.lowercase()?.trim(',', '.', '!', '?', ';', ':') == "of"
+    private val pronounOneDeterminers = setOf(
+        "the", "this", "that", "other", "another", "no", "any", "each", "every",
+        "which", "some", "such", "only", "latest", "last", "next", "first", "best",
+    )
+
+    /**
+     * Whether a consumed number should become digits. Conservative to match prose:
+     * multi-token numbers and decimals always convert; a lone small number converts
+     * only when a unit/label sits next to it. Keeps "Two Tower", "Epic One",
+     * "the latest one", "Ten things" as words.
+     */
+    private fun shouldDigitize(words: List<String>, start: Int, consumed: Int, replacement: String): Boolean {
+        if (replacement.contains('.')) return true       // decimals: "3.14"
+        if (consumed >= 2) return true                    // "twenty three", "one hundred ..."
+        val prev = strip(words.getOrNull(start - 1))
+        val next = strip(words.getOrNull(start + consumed))
+        val word = strip(words[start]) ?: ""
+        // Lone "one" as pronoun/article: never digitize ("the other one", "one of them").
+        if (word == "one" && (prev in pronounOneDeterminers || next == "of")) return false
+        // Adjacent numeric context (unit/label/currency) digitizes even small numbers.
+        if (prev in numericContext || next in numericContext) return true
+        if (prev == "$" || prev == "#" || next == "%") return true
+        // Style convention: spell out one–nine, digitize ten and above.
+        val value = replacement.takeWhile { it.isDigit() }.toIntOrNull() ?: return false
+        return value >= 10
     }
 
     // ---- lookups ----
@@ -173,6 +206,9 @@ object NumberNormalizer {
 
             val oneVal = ones[word]
             if (oneVal != null) {
+                // Two bare ones/teens in a row ("ten eleven", "five six") is approximate
+                // speech, not a composite number — stop so each stays separate.
+                if (lastWasBareOnes) break
                 current += oneVal; hasNumberWord = true; lastWasBareOnes = true; consumed += 1; i += 1; continue
             }
 

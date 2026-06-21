@@ -227,7 +227,7 @@ class RewriteActivity : ComponentActivity() {
                 // Dictate fresh. First run the deterministic pipeline (fast, reliable,
                 // offline) — fillers, spoken punctuation, numbers, self-corrections.
                 val cleaned = if (s.deterministicCleanup) {
-                    val isCode = CodeContext.isCode(OpenWisprAccessibilityService.lastHostPackage)
+                    val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
                     TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode)
                 } else spoken
                 // Then optionally layer the LLM on top for further polish (off by

@@ -169,18 +169,8 @@ object SelfCorrectionDetector {
     // ---- sentence splitting ----
 
     private fun splitIntoSentences(text: String): List<String> {
-        // Keep the delimiter with each sentence; tolerate "Mr." style abbreviations
-        // loosely (this is best-effort cleanup, not grammar-perfect segmentation).
-        val out = ArrayList<String>()
-        val sb = StringBuilder()
-        for (ch in text) {
-            sb.append(ch)
-            if (ch == '.' || ch == '!' || ch == '?') {
-                out.add(sb.toString().trim())
-                sb.setLength(0)
-            }
-        }
-        if (sb.isNotBlank()) out.add(sb.toString().trim())
-        return out.filter { it.isNotEmpty() }
+        // Split only on a terminator followed by whitespace, so mid-token dots stay
+        // intact: "fast.ai", "resume.pdf", "3.14" are NOT sentence boundaries.
+        return text.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
     }
 }
