@@ -19,7 +19,7 @@ object VocabCorrector {
     private const val FUZZY_THRESHOLD = 0.84
     private const val MIN_FUZZY_LEN = 4
 
-    private data class Target(val replacement: String, val tokens: List<String>, val exactOnly: Boolean)
+    private data class Target(val replacement: String, val tokens: List<String>, val fuzzy: Boolean)
     private data class Tok(val norm: String, val start: Int, val end: Int)
     private data class Hit(val start: Int, val end: Int, val replacement: String, val score: Double, val span: Int)
 
@@ -53,9 +53,14 @@ object VocabCorrector {
             // Snippets expand to their text; names correct to the canonical spelling.
             val replacement = if (e.isSnippet) e.expansion!!.trim() else e.canonical.trim()
             if (replacement.isEmpty()) continue
+            // Fuzzy matching is only safe for deliberate entries (manual / learned-from-
+            // edits). The 600+ imported contacts are noisy and collide phonetically with
+            // ordinary words (Check→Chachi, Gate→Gita), so they match EXACTLY only — they
+            // still bias Whisper's decoding via biasPrompt().
+            val fuzzy = !e.isSnippet && e.source != "contact"
             for (phrase in e.matchPhrases()) {
                 val ptoks = phrase.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
-                if (ptoks.isNotEmpty()) targets.add(Target(replacement, ptoks, exactOnly = e.isSnippet))
+                if (ptoks.isNotEmpty()) targets.add(Target(replacement, ptoks, fuzzy = fuzzy))
             }
         }
         targets.sortByDescending { it.tokens.size }
@@ -67,8 +72,8 @@ object VocabCorrector {
             while (i + span <= toks.size) {
                 val window = toks.subList(i, i + span)
                 val score = matchScore(window.map { it.norm }, t.tokens)
-                // Snippets only fire on an exact match (no fuzzy expansion).
-                val ok = if (t.exactOnly) score >= 0.999 else score >= FUZZY_THRESHOLD
+                // Snippets and contacts fire on an exact match only; deliberate names fuzzy.
+                val ok = if (t.fuzzy) score >= FUZZY_THRESHOLD else score >= 0.999
                 if (ok) hits.add(Hit(window.first().start, window.last().end, t.replacement, score, span))
                 i++
             }
