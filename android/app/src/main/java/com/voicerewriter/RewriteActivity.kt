@@ -207,6 +207,36 @@ class RewriteActivity : ComponentActivity() {
         finish()
     }
 
+    /** Log a finished dictation to the Home feed (off-thread; no-op when history is disabled). */
+    private fun recordHistory(before: String, after: String, durationSec: Int, edited: Boolean, onDevice: Boolean) {
+        if (after.isBlank()) return
+        val pkg = OpenWisprAccessibilityService.lastHostPackage.orEmpty()
+        val label = appLabel(pkg)
+        val words = after.trim().split(Regex("\\s+")).count { it.isNotBlank() }
+        val entry = DictationEntry(
+            id = "${System.currentTimeMillis()}-${after.hashCode() and 0xffff}",
+            timestamp = System.currentTimeMillis(),
+            appPackage = pkg,
+            appLabel = label,
+            durationSec = durationSec,
+            words = words,
+            accepted = !edited,
+            onDevice = onDevice,
+            before = before,
+            after = after,
+        )
+        val ctx = applicationContext
+        Thread { runCatching { DictationHistory.record(ctx, entry) } }.start()
+    }
+
+    private fun appLabel(pkg: String): String {
+        if (pkg.isBlank()) return "Dictation"
+        return runCatching {
+            val pm = packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+        }.getOrDefault(pkg.substringAfterLast('.').replaceFirstChar { it.uppercase() })
+    }
+
     /** Quiet, replace-in-place notification: tap to fix a mis-heard word. */
     private fun postFixNotification() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
@@ -301,6 +331,8 @@ class RewriteActivity : ComponentActivity() {
         var editing by remember { mutableStateOf(false) }
         var editText by remember { mutableStateOf("") }
         var countdown by remember { mutableStateOf(1f) }
+        var recStartMs by remember { mutableStateOf(0L) }
+        var durationSec by remember { mutableStateOf(0) }
         val amps = remember { mutableStateListOf<Float>() }
         val editFocus = remember { FocusRequester() }
 
@@ -349,6 +381,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun stopRecording(s: Settings) {
             if (stage != Stage.RECORDING) return
+            durationSec = ((System.currentTimeMillis() - recStartMs) / 1000L).toInt().coerceAtLeast(1)
             BubbleService.recordingStopper = null
             ampJob?.cancel()
             BubbleService.instance?.showIdle()
@@ -383,6 +416,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun startRecording(s: Settings) {
             error = null; notice = null; transcript = ""; output = ""; finalText = ""; amps.clear()
+            recStartMs = System.currentTimeMillis()
             try { audioRecorder.start(vadAutoStop = s.vadAutoStop, onAutoStop = { stopRecording(s) }) }
             catch (e: Exception) { error = e.message ?: "Couldn't start the mic."; stage = Stage.ERROR; return }
             stage = Stage.RECORDING
@@ -452,7 +486,11 @@ class RewriteActivity : ComponentActivity() {
                     countdown = 1f - e.toFloat() / total
                     delay(step); e += step
                 }
-                if (isActive && stage == Stage.REVIEW && !editing) acceptVoice(finalText)
+                if (isActive && stage == Stage.REVIEW && !editing) {
+                    recordHistory(transcript, finalText, durationSec, edited = false,
+                        onDevice = settings?.sttProvider == "local")
+                    acceptVoice(finalText)
+                }
             }
         }
         LaunchedEffect(editing) { if (editing) runCatching { editFocus.requestFocus() } }
@@ -515,7 +553,12 @@ class RewriteActivity : ComponentActivity() {
                             TextButton(onClick = { cancelAndFinish() }) {
                                 Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
                             }
-                            TextButton(onClick = { learnFromEditAsync(finalText, editText); acceptVoice(editText) }) {
+                            TextButton(onClick = {
+                                learnFromEditAsync(finalText, editText)
+                                recordHistory(transcript, editText, durationSec, edited = true,
+                                    onDevice = settings?.sttProvider == "local")
+                                acceptVoice(editText)
+                            }) {
                                 Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")
                             }
                         }
@@ -539,8 +582,12 @@ class RewriteActivity : ComponentActivity() {
                             }
                             Row {
                                 TextButton(onClick = { cancelAndFinish() }) { Text("Discard") }
-                                TextButton(onClick = { acceptVoice(finalText) }) {
-                                    Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert now")
+                                TextButton(onClick = {
+                                    recordHistory(transcript, finalText, durationSec, edited = false,
+                                        onDevice = settings?.sttProvider == "local")
+                                    acceptVoice(finalText)
+                                }) {
+                                    Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")
                                 }
                             }
                         }
