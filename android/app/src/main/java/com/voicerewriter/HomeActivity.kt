@@ -51,7 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import android.view.HapticFeedbackConstants
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.voicerewriter.ui.BrandCoral
@@ -555,6 +557,10 @@ class HomeActivity : ComponentActivity() {
 
     @Composable
     private fun BottomBar(onTalk: () -> Unit, onSettings: () -> Unit) {
+        // Light tap feedback so the carousel feels physical. VIRTUAL_KEY is the standard
+        // "button press" haptic and respects the system's touch-feedback setting.
+        val view = LocalView.current
+        fun haptic() = view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         // Plain Box (not Surface) so the raised Talk FAB can overflow above the bar without being clipped.
         Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
@@ -564,7 +570,7 @@ class HomeActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                     // Home (active)
-                    NavItem(label = "Home", selected = true, onClick = {}) {
+                    NavItem(label = "Home", selected = true, onClick = { haptic() }) {
                         Icon(painterResource(R.drawable.ic_aperture), null,
                             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
@@ -572,7 +578,7 @@ class HomeActivity : ComponentActivity() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             Modifier.offset(y = (-18).dp).size(58.dp).clip(CircleShape).background(SunsetBrush)
-                                .clickable(onClick = onTalk),
+                                .clickable { haptic(); onTalk() },
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(painterResource(R.drawable.ic_aperture), null, tint = MarkCream,
@@ -582,7 +588,7 @@ class HomeActivity : ComponentActivity() {
                             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.offset(y = (-12).dp))
                     }
                     // Settings
-                    NavItem(label = "Settings", selected = false, onClick = onSettings) {
+                    NavItem(label = "Settings", selected = false, onClick = { haptic(); onSettings() }) {
                         Icon(painterResource(R.drawable.ic_settings_lines), null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                     }

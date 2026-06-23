@@ -45,6 +45,21 @@ class OpenWisprAccessibilityService : AccessibilityService() {
         var lastHostPackage: String? = null
             private set
 
+        /**
+         * System surfaces whose window-state changes must NOT be mistaken for the
+         * dictation target. The status bar / notification shade / nav bar all report
+         * as "com.android.systemui", and the keyboard reports as an input-method
+         * package — neither is the app the user is dictating into, so letting them
+         * overwrite [lastHostPackage] is what made history entries read "System UI".
+         */
+        private val NON_HOST_PACKAGES = setOf(
+            "com.android.systemui", "android", "com.android.launcher", "com.sec.android.app.launcher",
+        )
+
+        private fun isHostPackage(pkg: String, self: String): Boolean =
+            pkg != self && pkg !in NON_HOST_PACKAGES &&
+                !pkg.contains("inputmethod") && !pkg.contains("honeyboard")
+
         /** True when the user has enabled the service in Accessibility settings. */
         val isEnabled: Boolean get() = instance != null
 
@@ -131,7 +146,7 @@ class OpenWisprAccessibilityService : AccessibilityService() {
         // dictation pipeline can adapt normalization to code/terminal fields.
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val pkg = event.packageName?.toString()
-            if (pkg != null && pkg != packageName) lastHostPackage = pkg
+            if (pkg != null && isHostPackage(pkg, packageName)) lastHostPackage = pkg
         }
         // Drive the field-gated bubble: re-check focus on any event that can change it
         // (coalesced — content-changed can fire in bursts).

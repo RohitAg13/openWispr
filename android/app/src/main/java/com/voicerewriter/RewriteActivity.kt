@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import com.voicerewriter.textproc.AppContext
-import com.voicerewriter.textproc.CodeContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
 import com.voicerewriter.textproc.VocabCorrector
@@ -207,10 +206,18 @@ class RewriteActivity : ComponentActivity() {
         finish()
     }
 
+    /**
+     * Host app captured the moment recording starts. Read this (not the live
+     * [OpenWisprAccessibilityService.lastHostPackage]) downstream — by the time a
+     * dictation finishes, transient system windows may have moved focus, which used
+     * to mislabel entries as "System UI".
+     */
+    private var dictationHostPkg: String? = null
+
     /** Log a finished dictation to the Home feed (off-thread; no-op when history is disabled). */
     private fun recordHistory(before: String, after: String, durationSec: Int, edited: Boolean, onDevice: Boolean) {
         if (after.isBlank()) return
-        val pkg = OpenWisprAccessibilityService.lastHostPackage.orEmpty()
+        val pkg = (dictationHostPkg ?: OpenWisprAccessibilityService.lastHostPackage).orEmpty()
         val label = appLabel(pkg)
         val words = after.trim().split(Regex("\\s+")).count { it.isNotBlank() }
         val entry = DictationEntry(
@@ -227,6 +234,23 @@ class RewriteActivity : ComponentActivity() {
         )
         val ctx = applicationContext
         Thread { runCatching { DictationHistory.record(ctx, entry) } }.start()
+    }
+
+    /**
+     * In chat/messaging apps, strip the single trailing full stop Whisper tends to add to a
+     * short one-liner ("On my way." -> "On my way"). Only touches a *single-sentence* message
+     * ending in a lone "." — never "!"/"?", never an ellipsis, and never multi-sentence text
+     * (where the period is doing real work). Question/exclamation marks are left untouched.
+     */
+    private fun dropChatTerminalPeriod(text: String, category: AppContext.Category): String {
+        if (category != AppContext.Category.CHAT && category != AppContext.Category.SOCIAL) return text
+        val t = text.trimEnd()
+        if (!t.endsWith(".") || t.endsWith("..")) return text // keep ellipses
+        val body = t.dropLast(1).trimEnd()
+        if (body.isEmpty()) return text
+        // Only for a single sentence — bail if there's another terminator or a line break inside.
+        if (body.any { it == '.' || it == '!' || it == '?' || it == '\n' }) return text
+        return body
     }
 
     private fun appLabel(pkg: String): String {
@@ -351,9 +375,15 @@ class RewriteActivity : ComponentActivity() {
 
         fun process(s: Settings, spoken: String) {
             transcript = spoken; output = ""; error = null; notice = null
-            val isCode = CodeContext.useCodeMode(OpenWisprAccessibilityService.lastHostPackage, spoken)
-            val cleaned = if (s.deterministicCleanup)
+            val host = dictationHostPkg ?: OpenWisprAccessibilityService.lastHostPackage
+            // App-context up front: drives code handling, the chat-period rule, and polish tone.
+            val category = AppContext.categoryFor(host, spoken)
+            val isCode = category == AppContext.Category.CODE
+            val cleaned0 = if (s.deterministicCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
+            // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a
+            // period on a single casual message reads as terse/formal, which people don't want.
+            val cleaned = dropChatTerminalPeriod(cleaned0, category)
             // Guards (ported from the cleanup pipeline's LocalLLMProcessor): skip the LLM where it tends to
             // harm rather than help — polish off, very short input, or code/terminal context
             // (the deterministic stage already handles those; code only goes to the LLM at FULL).
@@ -362,8 +392,6 @@ class RewriteActivity : ComponentActivity() {
                 toReview(cleaned); return
             }
             stage = Stage.CORRECTING
-            // App-context: tone the polish to the focused app (formal email, casual chat).
-            val category = AppContext.categoryFor(OpenWisprAccessibilityService.lastHostPackage, spoken)
             val relaxed = RewriteEngine.hasSelfCorrection(spoken)
             streamJob = scope.launch {
                 val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
@@ -389,7 +417,7 @@ class RewriteActivity : ComponentActivity() {
                             notice = "Polish changed too much — using the cleaned text."
                             toReview(cleaned)
                         } else {
-                            toReview(polished)
+                            toReview(dropChatTerminalPeriod(polished, category))
                         }
                     },
                 )
@@ -433,6 +461,9 @@ class RewriteActivity : ComponentActivity() {
 
         fun startRecording(s: Settings) {
             error = null; notice = null; transcript = ""; output = ""; finalText = ""; amps.clear()
+            // Snapshot the target app now, while it still has focus, before our sheet or any
+            // system window can steal it (otherwise the entry gets mislabelled, e.g. "System UI").
+            dictationHostPkg = OpenWisprAccessibilityService.lastHostPackage
             recStartMs = System.currentTimeMillis()
             try { audioRecorder.start(vadAutoStop = s.vadAutoStop, onAutoStop = { stopRecording(s) }) }
             catch (e: Exception) { error = e.message ?: "Couldn't start the mic."; stage = Stage.ERROR; return }
