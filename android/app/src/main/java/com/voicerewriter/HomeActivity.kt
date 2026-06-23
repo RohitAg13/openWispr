@@ -172,13 +172,16 @@ class HomeActivity : ComponentActivity() {
                                                 reload(); showToast("Dictation deleted")
                                             }
                                         },
-                                        onSaveTeach = { from, to ->
+                                        onSaveTeach = { pairs ->
                                             scope.launch {
-                                                if (from.isNotBlank() || to.isNotBlank()) {
+                                                val valid = pairs.map { it.first.trim() to it.second.trim() }
+                                                    .filter { it.first.isNotBlank() && it.second.isNotBlank() }
+                                                if (valid.isNotEmpty()) {
                                                     withContext(Dispatchers.IO) {
-                                                        runCatching { VocabRepository(ctx).learnAlias(from.trim(), to.trim()) }
+                                                        val repo = VocabRepository(ctx)
+                                                        valid.forEach { (from, to) -> runCatching { repo.learnAlias(from, to) } }
                                                     }
-                                                    showToast("Correction saved")
+                                                    showToast(if (valid.size == 1) "Correction saved" else "${valid.size} corrections saved")
                                                 }
                                                 teachOpen = null
                                             }
@@ -337,7 +340,7 @@ class HomeActivity : ComponentActivity() {
         onCopy: () -> Unit,
         onTeach: () -> Unit,
         onDelete: () -> Unit,
-        onSaveTeach: (String, String) -> Unit,
+        onSaveTeach: (List<Pair<String, String>>) -> Unit,
         onCloseTeach: () -> Unit,
     ) {
         Surface(
@@ -443,9 +446,12 @@ class HomeActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun TeachForm(onSave: (String, String) -> Unit, onCancel: () -> Unit) {
-        var from by remember { mutableStateOf("") }
-        var to by remember { mutableStateOf("") }
+    private fun TeachForm(onSave: (List<Pair<String, String>>) -> Unit, onCancel: () -> Unit) {
+        // One or more corrections in a single pass — "When I say X, write Y" rows you can stack
+        // before saving, so fixing several mis-heard words doesn't mean reopening the form N times.
+        var pairs by remember { mutableStateOf(listOf("" to "")) }
+        fun setFrom(i: Int, v: String) { pairs = pairs.toMutableList().also { it[i] = v to it[i].second } }
+        fun setTo(i: Int, v: String) { pairs = pairs.toMutableList().also { it[i] = it[i].first to v } }
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(11.dp),
@@ -453,13 +459,27 @@ class HomeActivity : ComponentActivity() {
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
-                Eyebrow("Teach a correction", size = 10f, tracking = 0.1)
-                TeachField("When I say", from, { from = it }, "distil")
-                TeachField("Write", to, { to = it }, "DistilWhisper")
+                Eyebrow(if (pairs.size > 1) "Teach corrections" else "Teach a correction", size = 10f, tracking = 0.1)
+                pairs.forEachIndexed { i, (from, to) ->
+                    if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)))
+                    TeachField("When I say", from, { setFrom(i, it) }, "distil")
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.weight(1f)) { TeachField("Write", to, { setTo(i, it) }, "DistilWhisper") }
+                        if (pairs.size > 1) {
+                            Text("Remove", fontFamily = Mulish, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                                    .clickable { pairs = pairs.filterIndexed { idx, _ -> idx != i }.ifEmpty { listOf("" to "") } }
+                                    .padding(8.dp, 18.dp))
+                        }
+                    }
+                }
+                Text("+ Add another", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { pairs = pairs + ("" to "") }.padding(6.dp, 4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primary)
-                            .clickable { onSave(from, to) }.padding(18.dp, 9.dp),
+                            .clickable { onSave(pairs) }.padding(18.dp, 9.dp),
                     ) {
                         Text("Save", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onPrimary)

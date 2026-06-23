@@ -598,10 +598,14 @@ class RewriteActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth().focusRequester(editFocus),
                         )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { cancelAndFinish() }) {
+                            TextButton(onClick = {
+                                runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+                                cancelAndFinish()
+                            }) {
                                 Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
                             }
                             TextButton(onClick = {
+                                runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
                                 learnFromEditAsync(finalText, editText)
                                 recordHistory(transcript, editText, durationSec, edited = true,
                                     onDevice = settings?.sttProvider == "local")
@@ -625,12 +629,19 @@ class RewriteActivity : ComponentActivity() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            TextButton(onClick = { editing = true }) {
+                            TextButton(onClick = {
+                                runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+                                editing = true
+                            }) {
                                 Icon(Icons.Default.Edit, null, Modifier.size(18.dp)); Text("  Edit")
                             }
                             Row {
-                                TextButton(onClick = { cancelAndFinish() }) { Text("Discard") }
                                 TextButton(onClick = {
+                                    runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+                                    cancelAndFinish()
+                                }) { Text("Discard") }
+                                TextButton(onClick = {
+                                    runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
                                     recordHistory(transcript, finalText, durationSec, edited = false,
                                         onDevice = settings?.sttProvider == "local")
                                     acceptVoice(finalText)
