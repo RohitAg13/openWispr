@@ -30,12 +30,25 @@ wraps `NSRegularExpression` to mirror Kotlin's `Regex` so the ports track the so
 line-for-line; keep them in sync with Android (see [`../shared/prompts`](../shared/prompts)
 for the prompt/tone contract, and the Android `textproc` for the pipeline contract).
 
+### Personal vocabulary + context (done)
+
+Also in `OpenWisprCore`, ported faithfully from Android:
+- `VocabEntry` + `VocabCorrector` — snaps mis-heard names/jargon back to their canonical
+  spelling after STT (exact alias match always; Soundex + edit-distance fuzzy match for
+  entries with aliases; guarded against common words), plus `biasPrompt` (frequency-ranked
+  glossary to bias Whisper decoding — learned mishearings first).
+- `CodeContext` — decides code/terminal handling (so "dot"/"slash"/"dash" survive as words).
+- `AppContext` — classifies the focused app into a category (email/chat/social/notes/code/
+  generic) for tone, and holds the per-category `DEFAULT_TONE`.
+
+Pinned by 29 new XCTest cases (Soundex codes, fuzzy/exact matching, common-word guards,
+bias ranking, code-mode detection, category mapping). 61 tests total.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
 - **Audio + VAD** — AVAudioEngine capture + Silero VAD (auto-stop on pause).
 - **STT** — whisper.cpp on-device; cloud Whisper optional.
-- **Personal vocabulary** — port `VocabCorrector`/`VocabEntry` + Whisper bias prompt.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see
   [`../docs/personalization.md`](../docs/personalization.md)).
