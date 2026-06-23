@@ -92,9 +92,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
@@ -213,6 +215,43 @@ class RewriteActivity : ComponentActivity() {
      * to mislabel entries as "System UI".
      */
     private var dictationHostPkg: String? = null
+
+    /** App context of the in-flight dictation, captured in [process] for corpus tagging. */
+    private var dictationCategory: AppContext.Category = AppContext.Category.GENERIC
+
+    /**
+     * Save an accepted dictation to the personalization corpus (off-thread). [cleaned] is
+     * what the pipeline produced; [final] is what the user kept — equal when they didn't edit.
+     */
+    private fun recordCorpus(cleaned: String, final: String, edited: Boolean) {
+        val ctx = applicationContext
+        val cat = dictationCategory.key
+        Thread {
+            runCatching {
+                CorrectionCorpus.record(ctx, CorrectionSample(
+                    ts = System.currentTimeMillis(), category = cat,
+                    cleaned = cleaned, final = final, edited = edited,
+                ))
+            }
+        }.start()
+    }
+
+    /**
+     * Render past corrections as a compact few-shot block for the polish prompt. Each
+     * example is truncated so a couple of them can't blow the tiny model's context budget.
+     */
+    private fun fewShotBlock(samples: List<CorrectionSample>): String {
+        val usable = samples.filter { it.cleaned.isNotBlank() && it.final.isNotBlank() }
+        if (usable.isEmpty()) return ""
+        fun clip(s: String) = s.trim().let { if (it.length > 240) it.take(240) + "…" else it }
+        return buildString {
+            append("Examples of how I like my dictation cleaned (raw, then the version I keep):")
+            for (s in usable) {
+                append("\nRaw: ").append(clip(s.cleaned))
+                append("\nKept: ").append(clip(s.final))
+            }
+        }
+    }
 
     /** Log a finished dictation to the Home feed (off-thread; no-op when history is disabled). */
     private fun recordHistory(before: String, after: String, durationSec: Int, edited: Boolean, onDevice: Boolean) {
@@ -378,6 +417,7 @@ class RewriteActivity : ComponentActivity() {
             val host = dictationHostPkg ?: OpenWisprAccessibilityService.lastHostPackage
             // App-context up front: drives code handling, the chat-period rule, and polish tone.
             val category = AppContext.categoryFor(host, spoken)
+            dictationCategory = category
             val isCode = category == AppContext.Category.CODE
             val cleaned0 = if (s.deterministicCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
@@ -395,11 +435,18 @@ class RewriteActivity : ComponentActivity() {
             val relaxed = RewriteEngine.hasSelfCorrection(spoken)
             streamJob = scope.launch {
                 val tone = AppToneRepository(this@RewriteActivity).toneFor(category)
+                // L3: at Medium/Full, show the model how THIS user likes their dictation cleaned,
+                // using their closest past corrections as few-shot (skipped at Light to keep it cheap).
+                val examples = if (s.polishLevel == PolishLevel.MEDIUM || s.polishLevel == PolishLevel.FULL)
+                    withContext(Dispatchers.IO) {
+                        fewShotBlock(CorrectionCorpus.similar(applicationContext, cleaned, category.key, k = 2))
+                    } else ""
                 // The cleanup level (light/medium/full) tunes how much the model may edit.
                 val prompt = buildString {
                     append(Defaults.DICTATION_PROMPT)
                     if (s.polishLevel.instruction.isNotEmpty()) append("\n\n").append(s.polishLevel.instruction)
                     if (tone.isNotBlank()) append("\n\nTone for this app: ").append(tone)
+                    if (examples.isNotEmpty()) append("\n\n").append(examples)
                 }
                 collectInto(
                     streamFor(s, prompt, cleaned),
@@ -537,6 +584,7 @@ class RewriteActivity : ComponentActivity() {
                 if (isActive && stage == Stage.REVIEW && !editing) {
                     recordHistory(transcript, finalText, durationSec, edited = false,
                         onDevice = settings?.sttProvider == "local")
+                    recordCorpus(finalText, finalText, edited = false)
                     acceptVoice(finalText)
                 }
             }
@@ -609,6 +657,7 @@ class RewriteActivity : ComponentActivity() {
                                 learnFromEditAsync(finalText, editText)
                                 recordHistory(transcript, editText, durationSec, edited = true,
                                     onDevice = settings?.sttProvider == "local")
+                                recordCorpus(finalText, editText, edited = true)
                                 acceptVoice(editText)
                             }) {
                                 Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")
@@ -644,6 +693,7 @@ class RewriteActivity : ComponentActivity() {
                                     runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
                                     recordHistory(transcript, finalText, durationSec, edited = false,
                                         onDevice = settings?.sttProvider == "local")
+                                    recordCorpus(finalText, finalText, edited = false)
                                     acceptVoice(finalText)
                                 }) {
                                     Icon(Icons.Default.Check, null, Modifier.size(18.dp)); Text("  Insert")

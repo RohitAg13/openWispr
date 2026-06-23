@@ -31,8 +31,12 @@ object VocabCorrector {
     fun biasPrompt(vocab: List<VocabEntry>, maxChars: Int = 200): String {
         if (vocab.isEmpty()) return ""
         val sb = StringBuilder("Glossary: ")
-        // Names only, manual entries first (deliberate, higher-value than 600 contacts).
-        for (e in vocab.filter { !it.isSnippet }.sortedBy { it.source != "manual" }) {
+        // Names only. Priority for the capped budget: terms the user actually had to correct
+        // (learnedAliases — proven mishearings) first, then manual, then imported contacts.
+        val ranked = vocab.filter { !it.isSnippet }.sortedWith(
+            compareByDescending<VocabEntry> { it.learnedAliases.isNotEmpty() }.thenBy { it.source != "manual" },
+        )
+        for (e in ranked) {
             val c = e.canonical.trim()
             if (c.isEmpty()) continue
             if (sb.length + c.length + 2 > maxChars) break

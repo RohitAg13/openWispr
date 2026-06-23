@@ -80,7 +80,7 @@ class VocabRepository(context: Context) {
             val x = a[i]; val y = b[i]
             if (!x.equals(y, ignoreCase = true) && nameLike.matches(x) && nameLike.matches(y)) x to y else null
         }
-        if (subs.isEmpty() || subs.size > 3) return 0 // nothing, or a big rewrite — don't pollute
+        if (subs.isEmpty() || subs.size > 5) return 0 // nothing, or a big rewrite — don't pollute
         for ((wrong, right) in subs) learnAlias(wrong, right)
         return subs.size
     }

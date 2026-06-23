@@ -115,6 +115,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.voicerewriter.RUN_EVAL_DUMP" />
+                <action android:name="com.voicerewriter.EXPORT_CORPUS" />
             </intent-filter>
         </receiver>
 
