@@ -38,6 +38,18 @@ actually-edited rows). The model sees how *you* like dictation cleaned and match
 no retraining. Skipped at **Light** (and when polish is Off) to keep latency/context small
 on the tiny on-device model; examples are clipped to ~240 chars each.
 
+**Retrieval is lexical, not dense RAG.** `CorrectionCorpus.score` ranks by token-set
+Jaccard overlap with small additive boosts (+0.15 same category, +0.10 edited), gated at
+`MIN_JACCARD = 0.2`. This is the RAG *shape* (retrieve-then-inject) with a sparse keyword
+retriever — deliberately, because the corpus is tiny (≤500 short, literal snippets) so a
+linear Jaccard scan is microseconds and needs no on-device embedding model. Trade-off: it's
+blind to paraphrase (won't connect "gonna"→"going to" from a learned "wanna"→"want to").
+
+> **Future work (not now):** swap to dense RAG if paraphrase misses show up in real use —
+> bundle a small sentence-embedding model (ONNX/TFLite, ~20–90 MB), precompute a vector per
+> sample at `record()` time, and replace the Jaccard core in `score()` with cosine similarity
+> (keep the category/edited boosts as re-rankers). Gate on whether the model weight is worth it.
+
 ## L4 · Periodic re-fine-tune  (export live, training offline)
 
 When the corpus is large enough, retrain a genuinely better cleanup model.
