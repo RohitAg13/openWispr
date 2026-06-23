@@ -1,18 +1,50 @@
-# OpenWispr — macOS (planned)
+# OpenWispr — macOS
 
-The macOS port. Not implemented yet — this directory is a placeholder so the monorepo
-structure is in place.
+The macOS port. The foundational layer — the deterministic text-cleanup pipeline — is
+implemented and tested; the audio/STT/LLM/insert layers and the app shell are next.
 
-## Intended approach
+## What's here
 
-- **Reuse the pipeline contract, don't re-derive it.** The deterministic cleanup
-  algorithm is single-sourced for eval from the Android Kotlin in
-  `../android/app/src/main/java/com/voicerewriter/textproc`; the macOS port should mirror
-  the same stages and the prompt/tone contract in [`../shared/prompts`](../shared/prompts).
-- **Reuse the eval harness.** `../eval` scores the real pipeline; a macOS bridge analogous
-  to the Android `EvalDumpReceiver` lets the same datasets validate this port.
-- **On-device first.** Whisper (whisper.cpp) for STT and a small local model for polish,
-  mirroring the Android stack, with the macOS accessibility APIs for auto-insert.
+### `OpenWisprCore/` — deterministic pipeline (done)
 
-See the architecture and learnings in [`../docs`](../docs) and the reference
-implementation in [`../android`](../android).
+A Swift Package (Foundation-only, no deps) that is a **faithful 1:1 port of the Android
+deterministic pipeline** in `../android/.../textproc`. Same stages, same order, same
+behavior — pinned by the Android unit tests ported verbatim to XCTest (32 tests).
+
+```bash
+cd macos/OpenWisprCore
+swift build
+swift test          # 32 tests, mirrors the Android pins
+```
+
+Public API mirrors Android:
+```swift
+import OpenWisprCore
+let clean = TextProcessor.process("let's meet at 2 actually 3")   // "Let's meet at 3"
+TextProcessor.process("cd slash usr slash bin", isCodeContext: true)  // unchanged in code fields
+```
+
+Stages (in order): `EntityNormalizer` → `SelfCorrectionDetector` → `FillerWordRemover` →
+`SpokenFormNormalizer` → `NumberNormalizer` → `ListFormatter` → `Capitalizer`. `KRegex.swift`
+wraps `NSRegularExpression` to mirror Kotlin's `Regex` so the ports track the source
+line-for-line; keep them in sync with Android (see [`../shared/prompts`](../shared/prompts)
+for the prompt/tone contract, and the Android `textproc` for the pipeline contract).
+
+## Roadmap (next)
+
+Mirroring the Android stack and the the cleanup pipeline blueprint:
+- **Audio + VAD** — AVAudioEngine capture + Silero VAD (auto-stop on pause).
+- **STT** — whisper.cpp on-device; cloud Whisper optional.
+- **Personal vocabulary** — port `VocabCorrector`/`VocabEntry` + Whisper bias prompt.
+- **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
+  guards and the personalization corpus / few-shot (see
+  [`../docs/personalization.md`](../docs/personalization.md)).
+- **Auto-insert** — macOS Accessibility API (AX) to type into the focused field.
+- **App shell** — menu-bar app + overlay, brand from [`../design_assets`](../design_assets).
+- **Eval bridge** — a macOS analogue of Android's `EvalDumpReceiver` so `../eval` scores
+  this port on the same datasets.
+
+## Reference
+
+Android is the reference implementation: [`../android`](../android). Architecture and
+learnings: [`../docs`](../docs).

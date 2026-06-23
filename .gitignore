@@ -35,3 +35,8 @@ eval/datasets/local/
 **/.gradle/
 **/local.properties
 **/.cxx/
+
+# Swift Package Manager
+/.build/
+**/.build/
+.swiftpm/
