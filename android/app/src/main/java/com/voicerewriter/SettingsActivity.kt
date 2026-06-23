@@ -437,6 +437,18 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 }
             }
 
+            // ---- Style memory (correction corpus) ----
+            SectionCard("Style memory") {
+                StatusRow(
+                    title = "How you like text cleaned",
+                    subtitle = "Accepted dictations OpenWispr learns from. View, export for training, or clear.",
+                    on = false,
+                    showDot = false,
+                ) {
+                    ActionButton("View") { context.startActivity(Intent(context, StyleMemoryActivity::class.java)) }
+                }
+            }
+
             // ---- Advanced ----
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Row(

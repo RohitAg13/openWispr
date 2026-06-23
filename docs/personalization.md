@@ -40,7 +40,12 @@ on the tiny on-device model; examples are clipped to ~240 chars each.
 
 ## L4 · Periodic re-fine-tune  (export live, training offline)
 
-When the corpus is large enough, retrain a genuinely better cleanup model:
+When the corpus is large enough, retrain a genuinely better cleanup model.
+
+Export the corrected samples from the device — two ways:
+- **In-app:** Settings → **Style memory** → **View** → **Export** (shares the JSONL and
+  also writes it to the app's external files dir). **Clear all** wipes the corpus.
+- **adb** (for scripting):
 
 ```bash
 # 1. Export the corrected samples from the device

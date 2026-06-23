@@ -47,6 +47,10 @@
             android:exported="false"
             android:label="Learned words" />
         <activity
+            android:name=".StyleMemoryActivity"
+            android:exported="false"
+            android:label="Style memory" />
+        <activity
             android:name=".ContactsImportActivity"
             android:exported="false"
             android:label="Import from contacts" />
