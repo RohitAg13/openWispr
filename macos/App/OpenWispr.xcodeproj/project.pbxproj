@@ -10,6 +10,7 @@
 		128DC48D49D0F4186446610D /* AppleSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */; };
 		1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */ = {isa = PBXBuildFile; productRef = 144850BF2FCDC5E1155AA002 /* OpenWisprCore */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
+		837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76AE78CAEE8553945C7C44BF /* DictationView.swift */; };
 /* End PBXBuildFile section */
@@ -18,6 +19,7 @@
 		03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechSTT.swift; sourceTree = "<group>"; };
 		1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWisprApp.swift; sourceTree = "<group>"; };
 		3AD2F169F5B404A53861CE81 /* OpenWispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInserter.swift; sourceTree = "<group>"; };
 		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
 		76AE78CAEE8553945C7C44BF /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
@@ -50,6 +52,7 @@
 				DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
+				48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -139,6 +142,7 @@
 				C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
+				837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

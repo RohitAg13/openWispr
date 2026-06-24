@@ -87,12 +87,23 @@ Privacy & Security → Accessibility** for auto-insert.
   Microphone + Speech Recognition at first use. `whisper.cpp` will slot in behind `STT` later
   for fully-offline transcription.
 
+### Accessibility auto-insert (done)
+
+`App/Sources/TextInserter.swift`: inserts the cleaned text into the app you were using.
+Tracks the last non-OpenWispr frontmost app (via `NSWorkspace` activation notifications, so
+opening our popover doesn't steal the target), reactivates it, then inserts via the
+Accessibility API (`AXUIElementCreateSystemWide` → focused element → set `kAXSelectedTextAttribute`)
+with a **⌘V clipboard-paste fallback** (save → set → paste → restore) for apps that ignore AX
+value-setting. `DictationView` shows an **Insert** button when Accessibility is granted, or an
+**Enable auto-insert** button (triggers the system prompt) when it isn't; **Copy** always works.
+**Requires the user to grant Accessibility** (System Settings → Privacy & Security → Accessibility).
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **Auto-insert** — macOS Accessibility API (AX) to type the cleaned text into the focused
-  field (completes the core loop; replaces Copy). Requires the app to be non-sandboxed (it is).
 - **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol.
+- **Global hotkey + HUD** — trigger dictation hands-free with a non-activating overlay (so
+  focus never leaves your field), the natural complement to auto-insert.
 - **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see

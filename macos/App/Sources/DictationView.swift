@@ -21,6 +21,8 @@ final class DictationController: ObservableObject {
     @Published var raw: String = ""
     @Published var cleaned: String = ""
     @Published var amplitude: Float = 0
+    /// Set briefly after a successful insert so the UI can show "Inserted ✓".
+    @Published var didInsert: Bool = false
 
     // Inject the energy VAD + default VAD config, mirroring the capture pipeline.
     private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
@@ -28,6 +30,66 @@ final class DictationController: ObservableObject {
 
     /// Polls `audio.amplitude` for the live level bar while listening.
     private var levelTimer: Timer?
+
+    /// The most recent frontmost app that wasn't us — the field we insert back into.
+    private(set) var lastTargetApp: NSRunningApplication?
+    private var activationObserver: NSObjectProtocol?
+
+    init() {
+        startTrackingFrontmostApp()
+    }
+
+    deinit {
+        if let token = activationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(token)
+        }
+    }
+
+    /// Whether Accessibility access is currently granted (drives the Insert vs. Enable UI).
+    var canInsert: Bool { TextInserter.isTrusted }
+
+    /// Observe app activations and remember the last frontmost app that isn't OpenWispr, so
+    /// opening our popover (which activates us) never overwrites the real target.
+    private func startTrackingFrontmostApp() {
+        // Seed with the current frontmost app if it isn't us.
+        if let current = NSWorkspace.shared.frontmostApplication,
+            current.bundleIdentifier != Bundle.main.bundleIdentifier {
+            lastTargetApp = current
+        }
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let self = self else { return }
+            guard
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey]
+                    as? NSRunningApplication
+            else { return }
+            // Ignore our own app so the popover doesn't clobber the target.
+            guard app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
+            Task { @MainActor in self.lastTargetApp = app }
+        }
+    }
+
+    /// Insert the cleaned text into the remembered target app's focused field.
+    func insertCleaned() {
+        guard !cleaned.isEmpty else { return }
+        let ok = TextInserter.insert(cleaned, into: lastTargetApp)
+        if ok {
+            didInsert = true
+            // Clear the confirmation after a beat.
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                self.didInsert = false
+            }
+        }
+    }
+
+    /// Trigger the system Accessibility prompt / open the pane.
+    func requestAccessibility() {
+        TextInserter.requestAccess()
+    }
 
     var isListening: Bool { phase == .listening }
     var isBusy: Bool { phase == .listening || phase == .transcribing }
@@ -45,6 +107,7 @@ final class DictationController: ObservableObject {
     private func startListening() {
         raw = ""
         cleaned = ""
+        didInsert = false
         Task {
             // Request both permissions before the first capture.
             let mic = await AppleSpeechSTT.requestMicrophoneAccess()
@@ -145,6 +208,12 @@ struct DictationView: View {
                 Image(systemName: "mic.fill").foregroundStyle(.tint)
                 Text("OpenWispr").font(.headline)
                 Spacer()
+                Image(systemName: controller.canInsert ? "checkmark.shield.fill" : "shield.slash")
+                    .font(.caption2)
+                    .foregroundStyle(controller.canInsert ? .green : .secondary)
+                    .help(controller.canInsert
+                        ? "Accessibility granted — auto-insert enabled"
+                        : "Accessibility not granted")
                 Text("v0.1 · dictation").font(.caption2).foregroundStyle(.secondary)
             }
 
@@ -154,18 +223,55 @@ struct DictationView: View {
 
             Divider()
 
+            actionRow
+        }
+        .padding(14)
+        .frame(width: 440)
+    }
+
+    /// Insert / Copy / Quit. The primary action depends on whether Accessibility is granted.
+    @ViewBuilder
+    private var actionRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if controller.didInsert {
+                Text("Inserted ✓").font(.caption.bold()).foregroundStyle(.green)
+            } else if !controller.canInsert {
+                Text(
+                    "Grant OpenWispr access under System Settings ▸ Privacy & Security ▸ "
+                        + "Accessibility, then try Insert."
+                )
+                .font(.caption2).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
             HStack {
+                if controller.canInsert {
+                    Button {
+                        controller.insertCleaned()
+                    } label: {
+                        Label("Insert", systemImage: "text.insert")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(controller.cleaned.isEmpty)
+                } else {
+                    Button {
+                        controller.requestAccessibility()
+                    } label: {
+                        Label("Enable auto-insert", systemImage: "lock.shield")
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
                 Button("Copy") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(controller.cleaned, forType: .string)
                 }
                 .disabled(controller.cleaned.isEmpty)
+
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
             }
         }
-        .padding(14)
-        .frame(width: 440)
     }
 
     private var controlRow: some View {
