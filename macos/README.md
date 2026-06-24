@@ -98,12 +98,27 @@ value-setting. `DictationView` shows an **Insert** button when Accessibility is 
 **Enable auto-insert** button (triggers the system prompt) when it isn't; **Copy** always works.
 **Requires the user to grant Accessibility** (System Settings → Privacy & Security → Accessibility).
 
+### Global hotkey + HUD (done) — the hands-free flow
+
+Press **⌃⌥Space** from any app → a **non-activating** overlay appears (the user's text field
+keeps focus) → speak → transcribe → clean → auto-insert into that field. Files:
+- `HotKey.swift` — Carbon `RegisterEventHotKey` wrapper (system-wide, consumes the combo, **no
+  extra permission**; a static id→instance registry routes the C callback back to Swift).
+- `RecordingHUD.swift` — `NSPanel` (`.nonactivatingPanel`, floating, `orderFrontRegardless()`)
+  hosting a SwiftUI level/transcribing/inserted view with a Cancel button.
+- `DictationCoordinator.swift` — app-scope orchestrator (owns the hotkey, `AudioCapture`,
+  `AppleSpeechSTT`, HUD); hotkey toggles start/stop, VAD also auto-stops; captures the
+  frontmost app at start (the HUD never changes it) and inserts via `TextInserter`.
+Wired via an `AppDelegate` (`@NSApplicationDelegateAdaptor`). The menu-bar popover remains as
+the manual fallback. Default combo is a constant in `HotKey.swift`, easy to change.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
 - **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol.
-- **Global hotkey + HUD** — trigger dictation hands-free with a non-activating overlay (so
-  focus never leaves your field), the natural complement to auto-insert.
+- **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full) + the personalization
+  corpus / few-shot (see [`../docs/personalization.md`](../docs/personalization.md)).
+- **Silero VAD**, **settings UI** (hotkey/provider config), **app polish** (brand/HUD design).
 - **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see

@@ -217,6 +217,16 @@ struct DictationView: View {
                 Text("v0.1 · dictation").font(.caption2).foregroundStyle(.secondary)
             }
 
+            HStack(spacing: 6) {
+                Image(systemName: "command").font(.caption2)
+                Text("⌃⌥Space to dictate anywhere")
+                Text("·")
+                Text(controller.canInsert ? "auto-insert on" : "Accessibility off")
+                    .foregroundStyle(controller.canInsert ? .green : .secondary)
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+
             controlRow
 
             statusArea
