@@ -26,6 +26,9 @@
 	<!-- Shown when the app first requests the microphone. -->
 	<key>NSMicrophoneUsageDescription</key>
 	<string>OpenWispr listens to your voice to transcribe it and insert the cleaned-up text.</string>
+	<!-- Shown when the app first requests speech recognition. -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>OpenWispr uses speech recognition to turn what you say into text.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>OpenWispr contributors. MIT License.</string>
 </dict>
