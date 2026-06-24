@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */ = {isa = PBXBuildFile; productRef = 144850BF2FCDC5E1155AA002 /* OpenWisprCore */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
+		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		CD7721B2CD94A00C443A6F4B /* CleanupDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 329000FC98961D6819121464 /* CleanupDemoView.swift */; };
 /* End PBXBuildFile section */
 
@@ -17,6 +18,7 @@
 		329000FC98961D6819121464 /* CleanupDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupDemoView.swift; sourceTree = "<group>"; };
 		3AD2F169F5B404A53861CE81 /* OpenWispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
+		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +44,7 @@
 		4D58D0918AE2AAAFE6659AC4 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */,
 				329000FC98961D6819121464 /* CleanupDemoView.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 			);
@@ -129,6 +132,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */,
 				CD7721B2CD94A00C443A6F4B /* CleanupDemoView.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 			);

@@ -67,10 +67,21 @@ builds use ad-hoc signing ("Sign to Run Locally") — no Apple Developer account
 the microphone prompt on first capture, and adding OpenWispr under **System Settings →
 Privacy & Security → Accessibility** for auto-insert.
 
+### Audio capture + VAD (done; Silero pending)
+
+- `OpenWisprCore`: `VAD` protocol, `EnergyVAD` (RMS-based, no model), and `SpeechSegmenter`
+  — the auto-stop state machine + speech-region trim, a faithful port of Android's
+  `AudioRecorder.updateVad`/`stopSamples` (16 kHz, 512-sample frames, start/end probs
+  0.5/0.35, 0.8 s hangover, 0.2 s/0.3 s pad). Unit-tested (7 tests; 68 total).
+- `App/Sources/AudioCapture.swift`: `AVAudioEngine` capture → `AVAudioConverter` to 16 kHz
+  mono Float32 → 512-sample framing → VAD + segmenter, with amplitude + `onAutoStop` and a
+  trimmed-samples result. The `VAD` is injected, so **Silero VAD (ONNX) drops in later
+  behind the same protocol** without touching the segmenter or capture.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **Audio + VAD** — AVAudioEngine capture + Silero VAD (auto-stop on pause).
+- **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model (onnxruntime), same `VAD` protocol.
 - **STT** — whisper.cpp on-device; cloud Whisper optional.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see
