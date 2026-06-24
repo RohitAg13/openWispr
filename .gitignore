@@ -40,3 +40,9 @@ eval/datasets/local/
 /.build/
 **/.build/
 .swiftpm/
+
+# Xcode
+xcuserdata/
+*.xcodeproj/*.xcuserdatad/
+DerivedData/
+*.xcuserstate

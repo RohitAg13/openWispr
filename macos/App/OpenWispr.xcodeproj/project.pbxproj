@@ -1,0 +1,345 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */ = {isa = PBXBuildFile; productRef = 144850BF2FCDC5E1155AA002 /* OpenWisprCore */; };
+		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
+		CD7721B2CD94A00C443A6F4B /* CleanupDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 329000FC98961D6819121464 /* CleanupDemoView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWisprApp.swift; sourceTree = "<group>"; };
+		329000FC98961D6819121464 /* CleanupDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupDemoView.swift; sourceTree = "<group>"; };
+		3AD2F169F5B404A53861CE81 /* OpenWispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BD0371FBEFC8B04C3F291A2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3E702A790252415B1735DEFA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3AD2F169F5B404A53861CE81 /* OpenWispr.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D58D0918AE2AAAFE6659AC4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				329000FC98961D6819121464 /* CleanupDemoView.swift */,
+				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		97AA0CC089BF00729BF39EB1 = {
+			isa = PBXGroup;
+			children = (
+				C38111027C176883ED25EA53 /* Packages */,
+				4D58D0918AE2AAAFE6659AC4 /* Sources */,
+				3E702A790252415B1735DEFA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C38111027C176883ED25EA53 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				5024196DC9350854BB69F293 /* OpenWisprCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		89C22841A71CB1C71ED984DF /* OpenWispr */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A7FFEA8068C97C4D02CD2CE4 /* Build configuration list for PBXNativeTarget "OpenWispr" */;
+			buildPhases = (
+				8769A5F8B28342040917AFB5 /* Sources */,
+				BD0371FBEFC8B04C3F291A2F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenWispr;
+			packageProductDependencies = (
+				144850BF2FCDC5E1155AA002 /* OpenWisprCore */,
+			);
+			productName = OpenWispr;
+			productReference = 3AD2F169F5B404A53861CE81 /* OpenWispr.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		288489F8015DD539AECF3EC2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					89C22841A71CB1C71ED984DF = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = F523B00A64CA6918B602A2DD /* Build configuration list for PBXProject "OpenWispr" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 97AA0CC089BF00729BF39EB1;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				300CDBD800DDB292AEA5C59C /* XCLocalSwiftPackageReference "../OpenWisprCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3E702A790252415B1735DEFA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				89C22841A71CB1C71ED984DF /* OpenWispr */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8769A5F8B28342040917AFB5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CD7721B2CD94A00C443A6F4B /* CleanupDemoView.swift in Sources */,
+				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		44AEB4974779ED9AD30C92AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		607FF2E17DD113FB2B71980E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OpenWispr.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.openwispr.mac;
+				PRODUCT_NAME = OpenWispr;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DCA59C79616816B47C67C37A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OpenWispr.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.openwispr.mac;
+				PRODUCT_NAME = OpenWispr;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E7FDE0B4A1FE3B0E3DB70954 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A7FFEA8068C97C4D02CD2CE4 /* Build configuration list for PBXNativeTarget "OpenWispr" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DCA59C79616816B47C67C37A /* Debug */,
+				607FF2E17DD113FB2B71980E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F523B00A64CA6918B602A2DD /* Build configuration list for PBXProject "OpenWispr" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44AEB4974779ED9AD30C92AC /* Debug */,
+				E7FDE0B4A1FE3B0E3DB70954 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		300CDBD800DDB292AEA5C59C /* XCLocalSwiftPackageReference "../OpenWisprCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../OpenWisprCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		144850BF2FCDC5E1155AA002 /* OpenWisprCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenWisprCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 288489F8015DD539AECF3EC2 /* Project object */;
+}

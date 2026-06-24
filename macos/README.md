@@ -44,6 +44,29 @@ Also in `OpenWisprCore`, ported faithfully from Android:
 Pinned by 29 new XCTest cases (Soundex codes, fuzzy/exact matching, common-word guards,
 bias ranking, code-mode detection, category mapping). 61 tests total.
 
+### `App/` — menu-bar app shell (scaffolded)
+
+A SwiftUI menu-bar app (`MenuBarExtra`, `LSUIElement` — no Dock icon) that depends on
+`OpenWisprCore`. **Non-sandboxed** on purpose: the Accessibility API can't drive other
+apps' text fields from inside the App Sandbox (same as the cleanup pipeline). Today it shows a small live
+demo of the deterministic cleanup, proving the core is wired into the app bundle; the real
+dictation UI replaces it as the audio/STT/insert layers land.
+
+```bash
+cd macos/App
+brew install xcodegen     # once
+./generate.sh             # regenerate OpenWispr.xcodeproj from project.yml
+open OpenWispr.xcodeproj   # or: xcodebuild -scheme OpenWispr build
+```
+
+The generated `OpenWispr.xcodeproj` is committed, so you can open/build without XcodeGen;
+run `./generate.sh` only after editing `project.yml`. Bundle id `com.openwispr.mac`; local
+builds use ad-hoc signing ("Sign to Run Locally") — no Apple Developer account needed.
+
+**First run needs manual permission grants** (macOS privacy / TCC, which can't be scripted):
+the microphone prompt on first capture, and adding OpenWispr under **System Settings →
+Privacy & Security → Accessibility** for auto-insert.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:

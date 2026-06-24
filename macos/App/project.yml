@@ -1,0 +1,41 @@
+name: OpenWispr
+options:
+  bundleIdPrefix: com.openwispr
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  # NOTE: regenerate via ./generate.sh (not `xcodegen generate` directly). XcodeGen 2.45
+  # emits the Xcode-16 format (objectVersion 77); generate.sh pins it back to 56 so the
+  # project also opens in Xcode 15.x. No Xcode-16-only constructs are used.
+packages:
+  OpenWisprCore:
+    # Local Swift package with the ported deterministic pipeline + vocab/context layer.
+    path: ../OpenWisprCore
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.10"
+    # Local dev: "Sign to Run Locally" (ad-hoc) — no Apple Developer account needed.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+targets:
+  OpenWispr:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.openwispr.mac
+        PRODUCT_NAME: OpenWispr
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: OpenWispr.entitlements
+        # Non-sandboxed (like the cleanup pipeline): the Accessibility API can't drive other
+        # apps' text fields from inside the App Sandbox. Hardened runtime off for dev.
+        ENABLE_HARDENED_RUNTIME: NO
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: OpenWisprCore
+        product: OpenWisprCore
