@@ -51,9 +51,14 @@ final class DictationCoordinator {
     /// Guards `finish()` against the hotkey + VAD auto-stop both firing.
     private var isFinishing = false
 
+    /// Backstop: force-finish a session that runs too long (e.g. if VAD never detects a pause).
+    private var maxDurationTimer: Timer?
+    private let maxSessionSeconds: TimeInterval = 30
+
     init() {
         hud.state.onCancel = { [weak self] in self?.cancel() }
-        // Register the default ⌃⌥Space global hotkey; toggles a session.
+        hud.state.onStop = { [weak self] in self?.finish() }
+        // Register the default global hotkey (⌃⌥D); toggles a session.
         hotKey = HotKey { [weak self] in self?.toggle() }
     }
 
@@ -94,6 +99,7 @@ final class DictationCoordinator {
                 hud.update(.listening(level: 0))
                 hud.show()
                 startLevelTimer()
+                startMaxDurationTimer()
             } catch {
                 state = .idle
                 hud.update(.error("Couldn't start the microphone."))
@@ -195,6 +201,21 @@ final class DictationCoordinator {
     private func stopLevelTimer() {
         levelTimer?.invalidate()
         levelTimer = nil
+        maxDurationTimer?.invalidate()
+        maxDurationTimer = nil
+    }
+
+    /// Force-finish after [maxSessionSeconds] so a session can't hang if VAD never fires.
+    private func startMaxDurationTimer() {
+        maxDurationTimer?.invalidate()
+        let timer = Timer(timeInterval: maxSessionSeconds, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.state == .listening else { return }
+                self.finish()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        maxDurationTimer = timer
     }
 
     private static func message(for error: STTError) -> String {

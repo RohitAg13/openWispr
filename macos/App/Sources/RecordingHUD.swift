@@ -15,8 +15,10 @@ final class HUDState: ObservableObject {
     }
 
     @Published var phase: Phase = .listening(level: 0)
-    /// Invoked by the Cancel button; wired up by the coordinator.
+    /// Invoked by the Cancel button (discard); wired up by the coordinator.
     var onCancel: () -> Void = {}
+    /// Invoked by the Stop button (finish → transcribe → insert); wired up by the coordinator.
+    var onStop: () -> Void = {}
 }
 
 /// A floating overlay that shows dictation status **without stealing focus**.
@@ -103,6 +105,18 @@ private struct RecordingHUDView: View {
             icon
             content
             Spacer(minLength: 4)
+            if case .listening = state.phase {
+                // Primary: finish now → transcribe + insert (also bound to ⌃⌥D toggle).
+                Button {
+                    state.onStop()
+                } label: {
+                    Image(systemName: "stop.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
+                .help("Stop & insert")
+            }
             if showsCancel {
                 Button {
                     state.onCancel()
@@ -116,7 +130,7 @@ private struct RecordingHUDView: View {
             }
         }
         .padding(.horizontal, 14)
-        .frame(width: 260, height: 64)
+        .frame(width: 300, height: 64)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 

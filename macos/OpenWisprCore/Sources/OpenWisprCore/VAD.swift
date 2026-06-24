@@ -51,32 +51,59 @@ public protocol VAD {
     func process(_ frame: [Float]) -> Float
 }
 
-/// Model-free `VAD`: maps a frame's RMS energy to a pseudo-probability via a
-/// noise-floor → speech-level ramp. Deterministic and pure; lets the capture/VAD
-/// pipeline run before the Silero model is wired in.
+/// Model-free `VAD` that scores each frame by how far its RMS energy sits **above an
+/// adaptively-tracked noise floor**, rather than against fixed absolute thresholds. This
+/// makes it robust to mic gain / ambient level: an absolute-threshold VAD silently fails
+/// when the input is quiet (speech never crosses "start") or a little noisy (pauses never
+/// read as "silence") — exactly the "auto-stop never fires" bug. The floor is learned from
+/// non-speech frames only, so sustained talking doesn't inflate it. Deterministic and pure;
+/// a drop-in until the Silero model is wired in behind the same protocol.
 public final class EnergyVAD: VAD {
     public let frameSamples: Int
-    /// RMS at/below which the frame is treated as pure noise (prob 0).
-    private let noiseFloor: Float
-    /// RMS at/above which the frame is treated as full speech (prob 1).
-    private let speechLevel: Float
 
-    public init(config: VADConfig = VADConfig(), noiseFloor: Float = 0.01, speechLevel: Float = 0.08) {
+    /// Speech ramp in multiples of the current noise floor: prob 0 at [lowRatio]×, 1 at
+    /// [highRatio]×. With the segmenter's 0.5/0.35 hysteresis this means speech starts ~5×
+    /// above ambient and a pause is detected below ~4.4×.
+    private let lowRatio: Float
+    private let highRatio: Float
+    private let initialFloor: Float
+    private let minFloor: Float = 1e-4
+    private let maxFloor: Float = 0.05
+
+    private var noiseFloor: Float
+
+    public init(
+        config: VADConfig = VADConfig(),
+        lowRatio: Float = 2.5,
+        highRatio: Float = 8.0,
+        initialFloor: Float = 0.003
+    ) {
         self.frameSamples = config.frameSamples
-        self.noiseFloor = noiseFloor
-        self.speechLevel = speechLevel
+        self.lowRatio = lowRatio
+        self.highRatio = highRatio
+        self.initialFloor = initialFloor
+        self.noiseFloor = initialFloor
     }
 
-    public func reset() {}
+    public func reset() { noiseFloor = initialFloor }
 
     public func process(_ frame: [Float]) -> Float {
         if frame.isEmpty { return 0 }
         var sumSq: Float = 0
         for s in frame { sumSq += s * s }
         let rms = (sumSq / Float(frame.count)).squareRoot()
-        let span = speechLevel - noiseFloor
-        guard span > 0 else { return rms >= speechLevel ? 1 : 0 }
-        let p = (rms - noiseFloor) / span
+
+        let ratio = rms / noiseFloor
+        // Learn the floor from non-speech frames: drop quickly toward quiet, drift up slowly
+        // for mild ambient, and never let clearly-speech frames (>3× floor) raise it.
+        if rms < noiseFloor {
+            noiseFloor = noiseFloor * 0.9 + rms * 0.1
+        } else if ratio < 3 {
+            noiseFloor = noiseFloor * 0.99 + rms * 0.01
+        }
+        noiseFloor = min(max(noiseFloor, minFloor), maxFloor)
+
+        let p = (ratio - lowRatio) / (highRatio - lowRatio)
         return min(1, max(0, p))
     }
 }
