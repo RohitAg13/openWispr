@@ -23,6 +23,9 @@ final class DictationController: ObservableObject {
     @Published var amplitude: Float = 0
     /// Set briefly after a successful insert so the UI can show "Inserted ✓".
     @Published var didInsert: Bool = false
+    /// Whether Accessibility is granted. Polled (AXIsProcessTrusted isn't observable), so the
+    /// label flips to "on" right after the user grants it — no app restart, no stale UI.
+    @Published var accessibilityGranted: Bool = TextInserter.isTrusted
 
     // Inject the energy VAD + default VAD config, mirroring the capture pipeline.
     private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
@@ -30,6 +33,8 @@ final class DictationController: ObservableObject {
 
     /// Polls `audio.amplitude` for the live level bar while listening.
     private var levelTimer: Timer?
+    /// Polls Accessibility-trust so the status updates after the user grants it.
+    private var trustTimer: Timer?
 
     /// The most recent frontmost app that wasn't us — the field we insert back into.
     private(set) var lastTargetApp: NSRunningApplication?
@@ -37,16 +42,30 @@ final class DictationController: ObservableObject {
 
     init() {
         startTrackingFrontmostApp()
+        // Re-check trust every ~1.2s so granting Accessibility flips the UI without a restart.
+        let t = Timer(timeInterval: 1.2, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in self.refreshAccessibility() }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        trustTimer = t
     }
 
     deinit {
         if let token = activationObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(token)
         }
+        trustTimer?.invalidate()
     }
 
     /// Whether Accessibility access is currently granted (drives the Insert vs. Enable UI).
-    var canInsert: Bool { TextInserter.isTrusted }
+    var canInsert: Bool { accessibilityGranted }
+
+    /// Re-read AXIsProcessTrusted and publish it if it changed.
+    func refreshAccessibility() {
+        let v = TextInserter.isTrusted
+        if v != accessibilityGranted { accessibilityGranted = v }
+    }
 
     /// Observe app activations and remember the last frontmost app that isn't OpenWispr, so
     /// opening our popover (which activates us) never overwrites the real target.
@@ -219,7 +238,7 @@ struct DictationView: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "command").font(.caption2)
-                Text("⌃⌥Space to dictate anywhere")
+                Text("⌃⌥D to dictate anywhere")
                 Text("·")
                 Text(controller.canInsert ? "auto-insert on" : "Accessibility off")
                     .foregroundStyle(controller.canInsert ? .green : .secondary)
@@ -237,6 +256,7 @@ struct DictationView: View {
         }
         .padding(14)
         .frame(width: 440)
+        .onAppear { controller.refreshAccessibility() }
     }
 
     /// Insert / Copy / Quit. The primary action depends on whether Accessibility is granted.

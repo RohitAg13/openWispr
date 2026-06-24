@@ -17,9 +17,11 @@ import Foundation
 /// here. Registration failures are logged and no-op'd so the app never crashes.
 final class HotKey {
 
-    /// The app's default dictation combo: ⌃⌥Space (control+option+space).
+    /// The app's default dictation combo: ⌃⌥D (control+option+D).
+    /// NOTE: avoid ⌃Space / ⌃⌥Space — macOS reserves those for input-source switching, so
+    /// RegisterEventHotKey loses to the system and the hotkey silently never fires.
     /// Change here to re-map the global hotkey everywhere.
-    static let defaultKeyCode: UInt32 = UInt32(kVK_Space) // 49
+    static let defaultKeyCode: UInt32 = UInt32(kVK_ANSI_D) // 2
     static let defaultModifiers: UInt32 = UInt32(controlKey | optionKey)
 
     // MARK: - Static dispatch registry
