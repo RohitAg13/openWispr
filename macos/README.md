@@ -78,16 +78,26 @@ Privacy & Security → Accessibility** for auto-insert.
   trimmed-samples result. The `VAD` is injected, so **Silero VAD (ONNX) drops in later
   behind the same protocol** without touching the segmenter or capture.
 
+### STT + end-to-end dictation (done; Apple Speech first provider)
+
+- `OpenWisprCore`: `STT` protocol + `STTError` — the Foundation-only seam.
+- `App`: `AppleSpeechSTT` (Apple Speech framework, on-device when supported — no library to
+  vendor) and a real `DictationView`/`DictationController`: **Listen → AudioCapture (VAD
+  auto-stop) → transcribe → `TextProcessor` cleanup → show raw/cleaned + Copy**. Requests
+  Microphone + Speech Recognition at first use. `whisper.cpp` will slot in behind `STT` later
+  for fully-offline transcription.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model (onnxruntime), same `VAD` protocol.
-- **STT** — whisper.cpp on-device; cloud Whisper optional.
+- **Auto-insert** — macOS Accessibility API (AX) to type the cleaned text into the focused
+  field (completes the core loop; replaces Copy). Requires the app to be non-sandboxed (it is).
+- **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol.
+- **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see
   [`../docs/personalization.md`](../docs/personalization.md)).
-- **Auto-insert** — macOS Accessibility API (AX) to type into the focused field.
-- **App shell** — menu-bar app + overlay, brand from [`../design_assets`](../design_assets).
+- **App polish** — overlay/HUD, brand from [`../design_assets`](../design_assets).
 - **Eval bridge** — a macOS analogue of Android's `EvalDumpReceiver` so `../eval` scores
   this port on the same datasets.
 
