@@ -42,8 +42,9 @@ enum PolishLevel: String, CaseIterable {
         }
     }
 
-    /// Whether this level is functional now. Only `.off` is until the LLM lands.
-    var isAvailable: Bool { self == .off }
+    /// Whether this level is selectable. All levels are wired now (the LLM-backed ones still
+    /// need their model downloaded — the Settings UI prompts for that).
+    var isAvailable: Bool { true }
 }
 
 /// Microphone VAD sensitivity preset. Maps to the energy-VAD ramp ratios; higher
@@ -88,6 +89,7 @@ final class AppSettings: ObservableObject {
         static let sttProvider = "sttProvider"
         static let whisperModel = "whisperModel"
         static let polishLevel = "polishLevel"
+        static let llmModel = "llmModel"
         static let vadSensitivity = "vadSensitivity"
     }
 
@@ -113,6 +115,11 @@ final class AppSettings: ObservableObject {
 
     @Published var polishLevel: PolishLevel {
         didSet { defaults.set(polishLevel.rawValue, forKey: Key.polishLevel) }
+    }
+
+    /// Which on-device LLM the polish step uses. Only relevant when `polishLevel != .off`.
+    @Published var llmModel: LlmModel {
+        didSet { defaults.set(llmModel.rawValue, forKey: Key.llmModel) }
     }
 
     @Published var vadSensitivity: VADSensitivity {
@@ -142,6 +149,8 @@ final class AppSettings: ObservableObject {
             .flatMap(WhisperModel.init(rawValue:)) ?? .base
         polishLevel = defaults.string(forKey: Key.polishLevel)
             .flatMap(PolishLevel.init(rawValue:)) ?? .off
+        llmModel = defaults.string(forKey: Key.llmModel)
+            .flatMap(LlmModel.init(rawValue:)) ?? .qwen15
         vadSensitivity = defaults.string(forKey: Key.vadSensitivity)
             .flatMap(VADSensitivity.init(rawValue:)) ?? .medium
     }

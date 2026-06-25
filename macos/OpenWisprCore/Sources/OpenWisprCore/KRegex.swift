@@ -77,6 +77,35 @@ struct KRegex {
         return Match(groupValues: groups, start: whole.location, end: whole.location + whole.length)
     }
 
+    /// First match, or `nil` (like Kotlin `regex.find(input)`).
+    func find(_ input: String) -> Match? {
+        let ns = input as NSString
+        guard let m = regex.firstMatch(
+            in: input, options: [], range: NSRange(location: 0, length: ns.length)
+        ) else { return nil }
+        return makeMatch(m, ns)
+    }
+
+    /// Split on the regex, mirroring Kotlin `regex.split(input)`. Kotlin keeps a trailing
+    /// empty string when the input ends with a delimiter (unlike `components`), so this does
+    /// too — callers that don't want empties filter them.
+    func split(_ input: String) -> [String] {
+        let ns = input as NSString
+        let matches = regex.matches(in: input, options: [], range: NSRange(location: 0, length: ns.length))
+        if matches.isEmpty { return [input] }
+        var parts: [String] = []
+        var cursor = 0
+        for m in matches {
+            let r = m.range
+            // Zero-width matches can't advance the cursor; skip them to mirror Kotlin.
+            if r.length == 0 { continue }
+            parts.append(ns.substring(with: NSRange(location: cursor, length: r.location - cursor)))
+            cursor = r.location + r.length
+        }
+        parts.append(ns.substring(with: NSRange(location: cursor, length: ns.length - cursor)))
+        return parts
+    }
+
     /// Mirrors Kotlin `Regex.escape(...)`.
     static func escape(_ literal: String) -> String {
         NSRegularExpression.escapedPattern(for: literal)

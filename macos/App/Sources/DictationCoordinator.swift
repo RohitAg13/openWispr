@@ -199,13 +199,9 @@ final class DictationCoordinator {
             do {
                 let raw = try await stt.transcribe(samples, sampleRate: 16000)
                 let cleaned = TextProcessor.process(raw)
-                // Read the user's polish preference now so step 3 can branch on it. For
-                // non-`.off` levels there's no LLM yet, so we behave as `.off` (and those
-                // levels are disabled in the UI anyway).
-                let polish = settings.polishLevel
-                _ = polish
-                // TODO(step 3): apply LLM polish for .light/.medium/.full
-                deliver(cleaned)
+                // Optional on-device LLM polish on top of the deterministic cleanup.
+                let polished = await applyPolish(cleaned)
+                deliver(polished)
             } catch let error as STTError {
                 state = .idle
                 hud.update(.error(Self.message(for: error)))
@@ -216,6 +212,23 @@ final class DictationCoordinator {
                 autoHide(after: 2.0)
             }
         }
+    }
+
+    /// Run the on-device LLM polish over the deterministic-cleaned text, if the user enabled a
+    /// polish level and its model is downloaded. Falls back to the input on any miss (no model,
+    /// load failure, or an over-edit guard trip — handled inside `LocalLLMEngine`). The focused
+    /// app sets the tone category.
+    private func applyPolish(_ text: String) async -> String {
+        let level = settings.polishLevel
+        guard level != .off else { return text }
+        let manager = LlmModelManager.shared
+        let model = settings.llmModel
+        guard manager.isDownloaded(model) else { return text }
+        let category = AppContext.categoryFor(targetApp?.bundleIdentifier, text)
+        return await LocalLLMEngine.shared.polish(
+            text, level: level, category: category,
+            modelPath: manager.fileURL(for: model).path
+        )
     }
 
     /// Insert (when trusted) or copy (when not), then auto-hide and return to idle.

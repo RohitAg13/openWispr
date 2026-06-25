@@ -142,20 +142,43 @@ the popover's "Settings…" button) backed by a persisted `AppSettings.shared` (
   guards bare keys; the coordinator re-registers the Carbon hotkey live via Combine.
 - **Mic sensitivity** (Low/Med/High) — maps to `EnergyVAD` ratios; the capture's VAD is
   rebuilt between sessions.
-- **STT provider** + **Cleanup/polish level** selectors — persisted; Apple Speech / `.off`
-  functional now, Whisper + Light/Medium/Full scaffolded for the next steps.
+- **STT provider** + **Cleanup/polish level** selectors — persisted; each with an inline
+  model picker + download/remove/progress row when its on-device engine is selected.
+
+### LLM polish — on-device rewrite (done)
+
+An optional on-device LLM rewrites the deterministic-cleaned transcript, graded by the
+**Cleanup/polish** setting (`Off` / `Light` / `Medium` / `Full`). Runs [llama.cpp](https://github.com/ggml-org/llama.cpp)
+via the vendored `llama.xcframework`. Files:
+- **`LlamaFramework/`** — local Swift package wrapping `llama.xcframework` via a remote
+  `binaryTarget` (pinned to `b9786` + checksum), same pattern as `WhisperFramework`. ~200 MB
+  fetched/cached by SwiftPM, not committed.
+- **`OpenWisprCore`** (pure, tested): `PolishLevel` + `LlmPolish` (per-level system prompt —
+  a lean descendant of Android's `buildLocalSystemPrompt` — folding in `AppContext` per-app
+  tone for `medium`/`full`), and `PolishGuards` (the over-edit guards ported from Android
+  `RewriteEngine`: `hasSelfCorrection`, `preservesContent`, `looksRepeating`,
+  `collapseRepetition`, `cleanOutput`). Pinned by 21 new XCTests (89 total).
+- **`App/Sources/LlamaContext.swift`** — `actor` port of the official `llama.swiftui`
+  `LibLlama.swift`, adapted for one-shot chat completion: chat-template formatting via
+  `llama_chat_apply_template` (ChatML fallback), greedy sampling, early stop on repetition.
+- **`App/Sources/LocalLLMEngine.swift`** — warm-loads the model, builds prompts from the core,
+  generates, post-processes with `PolishGuards.cleanOutput`, and **rejects an over-edited
+  rewrite** (content-preservation guard) — falling back to the deterministic cleanup so the
+  user always gets at least that.
+- **`App/Sources/LlmModel.swift`** — `LlmModel` (Qwen2.5 `0.5B`/`1.5B` Instruct, q4_k_m GGUF) +
+  `LlmModelManager`: stores weights under `~/Library/Application Support/OpenWispr/llm/`,
+  downloads once from Hugging Face (streamed, atomic, progress).
+- **`DictationCoordinator`** applies polish after cleanup when a level is set and the model is
+  downloaded; the focused app sets the tone category.
+
+The macOS deployment target is **13.3** (both vendored xcframeworks' macOS slice min-OS).
 
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **LLM polish** — on-device cleanup levels (Off/Light/Medium/Full) + the personalization
-  corpus / few-shot (see [`../docs/personalization.md`](../docs/personalization.md)); wire to
-  the polish-level setting.
-- **Silero VAD**, **app/HUD brand polish** (from [`../design_assets`](../design_assets)).
+- **Personalization** — the corpus / few-shot bias (L1–L3, see
+  [`../docs/personalization.md`](../docs/personalization.md)) feeding the polish prompt.
 - **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
-- **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
-  guards and the personalization corpus / few-shot (see
-  [`../docs/personalization.md`](../docs/personalization.md)).
 - **App polish** — overlay/HUD, brand from [`../design_assets`](../design_assets).
 - **Eval bridge** — a macOS analogue of Android's `EvalDumpReceiver` so `../eval` scores
   this port on the same datasets.

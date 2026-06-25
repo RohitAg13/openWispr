@@ -60,7 +60,7 @@ final class RecordingHUD {
         hosting.translatesAutoresizingMaskIntoConstraints = true
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 260, height: 64),
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 72),
             styleMask: [.nonactivatingPanel, .hudWindow, .utilityWindow],
             backing: .buffered,
             defer: false
@@ -95,14 +95,15 @@ final class RecordingHUD {
     }
 }
 
-/// Compact SwiftUI content for the overlay. Mirrors the popover's visual language
-/// (mic glyph + level bar while listening, spinner while transcribing).
+/// Compact SwiftUI content for the overlay, styled to the OpenWispr brand design:
+/// a dark warm gradient pill with the gradient "orb" + live waveform while listening,
+/// and brand-colored status states for transcribing / inserted / error.
 private struct RecordingHUDView: View {
     @ObservedObject var state: HUDState
 
     var body: some View {
         HStack(spacing: 12) {
-            icon
+            leading
             content
             Spacer(minLength: 4)
             if case .listening = state.phase {
@@ -110,9 +111,11 @@ private struct RecordingHUDView: View {
                 Button {
                     state.onStop()
                 } label: {
-                    Image(systemName: "stop.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.tint)
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(OW.text)
+                        .frame(width: 28, height: 28)
+                        .background(OW.onDark, in: Circle())
                 }
                 .buttonStyle(.plain)
                 .help("Stop & insert")
@@ -121,17 +124,24 @@ private struct RecordingHUDView: View {
                 Button {
                     state.onCancel()
                 } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.secondary)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(OW.onDarkDim)
+                        .frame(width: 26, height: 26)
+                        .background(.white.opacity(0.08), in: Circle())
                 }
                 .buttonStyle(.plain)
                 .help("Cancel")
             }
         }
         .padding(.horizontal, 14)
-        .frame(width: 300, height: 64)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .frame(width: 320, height: 72)
+        .background(OW.overlayGradient, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(.white.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.35), radius: 18, x: 0, y: 8)
     }
 
     private var showsCancel: Bool {
@@ -142,52 +152,81 @@ private struct RecordingHUDView: View {
     }
 
     @ViewBuilder
-    private var icon: some View {
+    private var leading: some View {
         switch state.phase {
-        case .listening:
-            Image(systemName: "mic.fill").foregroundStyle(.red)
+        case .listening(let level):
+            ZStack {
+                Circle().fill(OW.orbGradientBright)
+                Waveform(level: level)
+            }
+            .frame(width: 40, height: 40)
+            .shadow(color: OW.coral.opacity(0.5), radius: 8, x: 0, y: 4)
         case .transcribing:
-            ProgressView().controlSize(.small)
+            ProgressView().controlSize(.small).tint(OW.onDark)
+                .frame(width: 40)
         case .inserted:
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 22)).foregroundStyle(OW.onDark)
+                .frame(width: 40)
         case .message:
-            Image(systemName: "doc.on.clipboard").foregroundStyle(.secondary)
+            Image(systemName: "doc.on.clipboard")
+                .font(.system(size: 18)).foregroundStyle(OW.onDarkDim)
+                .frame(width: 40)
         case .error:
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18)).foregroundStyle(OW.onDarkDim)
+                .frame(width: 40)
         }
     }
 
     @ViewBuilder
     private var content: some View {
         switch state.phase {
-        case .listening(let level):
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Listening…").font(.caption.bold()).foregroundStyle(.secondary)
-                levelBar(level: level)
+        case .listening:
+            VStack(alignment: .leading, spacing: 4) {
+                MonoLabel(text: "Listening", color: OW.onDarkDim, size: 10, tracking: 1.6)
+                Text("On-device · nothing uploaded")
+                    .font(OW.ui(11))
+                    .foregroundStyle(OW.onDark.opacity(0.7))
             }
         case .transcribing:
-            Text("Transcribing…").font(.caption).foregroundStyle(.secondary)
+            MonoLabel(text: "Transcribing", color: OW.onDarkDim, size: 11, tracking: 1.6)
         case .inserted:
-            Text("Inserted ✓").font(.caption.bold()).foregroundStyle(.green)
+            Text("Inserted into the active app")
+                .font(OW.ui(13, weight: .semibold))
+                .foregroundStyle(OW.onDark)
         case .message(let text):
-            Text(text).font(.caption).foregroundStyle(.secondary)
+            Text(text).font(OW.ui(12)).foregroundStyle(OW.onDark)
                 .lineLimit(2).fixedSize(horizontal: false, vertical: true)
         case .error(let text):
-            Text(text).font(.caption).foregroundStyle(.red)
+            Text(text).font(OW.ui(12)).foregroundStyle(OW.onDark)
                 .lineLimit(2).fixedSize(horizontal: false, vertical: true)
         }
     }
+}
 
-    private func levelBar(level: Float) -> some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3).fill(.quaternary)
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(.red)
-                    .frame(width: max(2, geo.size.width * CGFloat(min(level * 2.5, 1))))
+/// The five-bar animated waveform from the design's listening orb. The center bars
+/// react to the live mic `level`; all bars idle-breathe so it never looks frozen.
+private struct Waveform: View {
+    var level: Float
+    @State private var phase: CGFloat = 0
+
+    // Base heights (relative) mirroring the design's 24/40/50/34/22 pattern.
+    private let bases: [CGFloat] = [0.42, 0.7, 0.9, 0.6, 0.38]
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 3) {
+                ForEach(0..<bases.count, id: \.self) { i in
+                    let wobble = (sin(t * 6 + Double(i) * 0.7) + 1) / 2 // 0…1
+                    let lvl = CGFloat(min(level * 2.5, 1))
+                    let h = (bases[i] * (0.45 + 0.55 * CGFloat(wobble))) * (0.6 + 0.4 * lvl)
+                    Capsule()
+                        .fill(.white)
+                        .frame(width: 3, height: max(4, 22 * h))
+                }
             }
         }
-        .frame(width: 130, height: 6)
-        .animation(.linear(duration: 0.05), value: level)
     }
 }
