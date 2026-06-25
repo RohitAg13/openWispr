@@ -164,6 +164,89 @@ struct OWOrb: View {
     }
 }
 
+// MARK: - Brand dropdown (replaces the native blue NSPopUpButton)
+
+/// A paper-styled dropdown matching the design — a `Menu` with a chip label + coral chevron,
+/// instead of SwiftUI's native menu `Picker` (which renders as a system-blue pop-up button
+/// that clashes with the warm theme). Generic over any `Hashable` value.
+struct OWMenuPicker<T: Hashable>: View {
+    @Binding var selection: T
+    let options: [(value: T, label: String)]
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.value) { opt in
+                Button {
+                    selection = opt.value
+                } label: {
+                    if opt.value == selection {
+                        Label(opt.label, systemImage: "checkmark")
+                    } else {
+                        Text(opt.label)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(currentLabel)
+                    .font(OW.ui(13, weight: .medium))
+                    .foregroundStyle(OW.text)
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(OW.coral)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(OW.chip, in: RoundedRectangle(cornerRadius: OW.rChip))
+            .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
+    private var currentLabel: String {
+        options.first { $0.value == selection }?.label ?? ""
+    }
+}
+
+// MARK: - Brand segmented control (replaces the native .segmented Picker)
+
+/// A paper-styled segmented control — a pill track of buttons, coral for the selected one.
+/// Generic over any `Hashable` value.
+struct OWSegmented<T: Hashable>: View {
+    @Binding var selection: T
+    let options: [(value: T, label: String)]
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(options, id: \.value) { opt in
+                let isSelected = opt.value == selection
+                Button {
+                    selection = opt.value
+                } label: {
+                    Text(opt.label)
+                        .font(OW.ui(12, weight: isSelected ? .semibold : .medium))
+                        .foregroundStyle(isSelected ? Color.white : OW.textDim)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(
+                            isSelected ? AnyShapeStyle(OW.coral) : AnyShapeStyle(Color.clear),
+                            in: RoundedRectangle(cornerRadius: OW.rChip - 3)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(OW.track, in: RoundedRectangle(cornerRadius: OW.rChip))
+        .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+    }
+}
+
 // MARK: - Hex color helper
 
 extension Color {

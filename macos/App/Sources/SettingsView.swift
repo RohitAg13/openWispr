@@ -47,17 +47,12 @@ struct SettingsView: View {
                 settingsGroup(header: "Speech-to-text") {
                     VStack(alignment: .leading, spacing: 10) {
                         settingRow("Engine") {
-                            Picker("", selection: $settings.sttProvider) {
-                                ForEach(STTProvider.allCases, id: \.self) { provider in
-                                    Text(provider.isAvailable
-                                        ? provider.label
-                                        : "\(provider.label) (coming soon)")
-                                        .tag(provider)
+                            OWMenuPicker(
+                                selection: $settings.sttProvider,
+                                options: STTProvider.allCases.map {
+                                    ($0, $0.isAvailable ? $0.label : "\($0.label) (soon)")
                                 }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .fixedSize()
+                            )
                         }
 
                         if settings.sttProvider == .whisper {
@@ -73,14 +68,10 @@ struct SettingsView: View {
                 settingsGroup(header: "Cleanup / polish") {
                     VStack(alignment: .leading, spacing: 10) {
                         settingRow("Polish") {
-                            Picker("", selection: $settings.polishLevel) {
-                                ForEach(PolishLevel.allCases, id: \.self) { level in
-                                    Text(level.label).tag(level)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .fixedSize()
+                            OWMenuPicker(
+                                selection: $settings.polishLevel,
+                                options: PolishLevel.allCases.map { ($0, $0.label) }
+                            )
                         }
 
                         if settings.polishLevel == .off {
@@ -97,13 +88,10 @@ struct SettingsView: View {
                 // MARK: Mic sensitivity
                 settingsGroup(header: "Mic sensitivity") {
                     VStack(alignment: .leading, spacing: 10) {
-                        Picker("", selection: $settings.vadSensitivity) {
-                            ForEach(VADSensitivity.allCases, id: \.self) { level in
-                                Text(level.label).tag(level)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
+                        OWSegmented(
+                            selection: $settings.vadSensitivity,
+                            options: VADSensitivity.allCases.map { ($0, $0.label) }
+                        )
                         rowNote("Higher = stops sooner on pauses.")
                     }
                     .padding(14)
@@ -164,14 +152,10 @@ struct SettingsView: View {
     @ViewBuilder
     private var whisperModelControls: some View {
         settingRow("Model") {
-            Picker("", selection: $settings.whisperModel) {
-                ForEach(WhisperModel.allCases) { model in
-                    Text("\(model.label) · \(model.approxSize)").tag(model)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .fixedSize()
+            OWMenuPicker(
+                selection: $settings.whisperModel,
+                options: WhisperModel.allCases.map { ($0, "\($0.label) · \($0.approxSize)") }
+            )
             .disabled(models.isDownloading)
         }
 
@@ -221,14 +205,10 @@ struct SettingsView: View {
     @ViewBuilder
     private var llmModelControls: some View {
         settingRow("Model") {
-            Picker("", selection: $settings.llmModel) {
-                ForEach(LlmModel.allCases) { model in
-                    Text("\(model.label) · \(model.approxSize)").tag(model)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .fixedSize()
+            OWMenuPicker(
+                selection: $settings.llmModel,
+                options: LlmModel.allCases.map { ($0, "\($0.label) · \($0.approxSize)") }
+            )
             .disabled(llmModels.isDownloading)
         }
 
