@@ -20,8 +20,10 @@
 		78E2CA50E630ED2A8182A0E2 /* WhisperModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B19D8A624CAF050B187238A /* WhisperModel.swift */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
 		837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */; };
+		951B3986DD855937EAEB3D41 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D827068F08399C4BBE6B8E14 /* RootView.swift */; };
 		955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */; };
 		960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */; };
+		9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7478C1EA9682B72F53EB0E31 /* HomeView.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
 		D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2791865DF65073E3B5E7363 /* RecordingHUD.swift */; };
@@ -44,12 +46,14 @@
 		5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6994CE01136A2B690BB52D3B /* LlmModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlmModel.swift; sourceTree = "<group>"; };
 		6FD83732B416F83A22F9F882 /* LlamaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaContext.swift; sourceTree = "<group>"; };
+		7478C1EA9682B72F53EB0E31 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		76AE78CAEE8553945C7C44BF /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
 		7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperSTT.swift; sourceTree = "<group>"; };
 		83F7A241C06B014563A413FD /* LocalLLMEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngine.swift; sourceTree = "<group>"; };
 		8D58E56F2D386A113D12352B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		AB950BDB7B85E7982EEBA9C3 /* WhisperFramework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WhisperFramework; path = ../WhisperFramework; sourceTree = SOURCE_ROOT; };
 		C2791865DF65073E3B5E7363 /* RecordingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingHUD.swift; sourceTree = "<group>"; };
+		D827068F08399C4BBE6B8E14 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
 		EF81E4A2F234EA887979354C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
@@ -86,6 +90,7 @@
 				EF81E4A2F234EA887979354C /* DesignTokens.swift */,
 				5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
+				7478C1EA9682B72F53EB0E31 /* HomeView.swift */,
 				3D7C8EE5B1CD881D96AF429D /* HotKey.swift */,
 				27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */,
 				6FD83732B416F83A22F9F882 /* LlamaContext.swift */,
@@ -93,6 +98,7 @@
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
+				D827068F08399C4BBE6B8E14 /* RootView.swift */,
 				5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */,
 				E3F2CA4BD75D571287E0329E /* STTFactory.swift */,
 				48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */,
@@ -195,6 +201,7 @@
 				15C10874605E939512C7A8B8 /* DesignTokens.swift in Sources */,
 				960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
+				9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */,
 				CF0936F2F734305831815C23 /* HotKey.swift in Sources */,
 				955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */,
 				1AA45ACABE366CEE2DC552ED /* LlamaContext.swift in Sources */,
@@ -202,6 +209,7 @@
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
+				951B3986DD855937EAEB3D41 /* RootView.swift in Sources */,
 				0C46E60281CEEC51228E45EE /* STTFactory.swift in Sources */,
 				3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */,
 				837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */,

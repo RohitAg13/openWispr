@@ -26,6 +26,9 @@ final class DictationController: ObservableObject {
     /// Whether Accessibility is granted. Polled (AXIsProcessTrusted isn't observable), so the
     /// label flips to "on" right after the user grants it — no app restart, no stale UI.
     @Published var accessibilityGranted: Bool = TextInserter.isTrusted
+    /// In-memory history of completed dictations (most recent first). No persistence yet —
+    /// resets on relaunch. Drives the Home screen's "Recent dictations" list.
+    @Published var recents: [String] = []
 
     // Inject the energy VAD + default VAD config, mirroring the capture pipeline.
     private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
@@ -180,6 +183,10 @@ final class DictationController: ObservableObject {
                 raw = rawText
                 cleaned = cleanedText
                 phase = .done
+                if !cleanedText.isEmpty {
+                    recents.insert(cleanedText, at: 0)
+                    if recents.count > 50 { recents.removeLast(recents.count - 50) }
+                }
             } catch let error as STTError {
                 phase = .error(Self.message(for: error))
             } catch {
