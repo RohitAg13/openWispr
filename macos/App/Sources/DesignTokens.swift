@@ -202,7 +202,10 @@ struct OWMenuPicker<T: Hashable>: View {
             .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
             .contentShape(Rectangle())
         }
-        .menuStyle(.borderlessButton)
+        // `.button` menu style + plain button renders our custom label reliably (the
+        // `.borderlessButton` style drew nothing here); we draw our own chevron.
+        .menuStyle(.button)
+        .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
     }

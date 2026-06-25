@@ -36,6 +36,7 @@ struct OpenWisprApp: App {
         Window("OpenWispr Settings", id: "settings") {
             SettingsView(settings: .shared)
         }
-        .windowResizability(.contentSize)
+        .defaultSize(width: 720, height: 760)
+        .windowResizability(.contentMinSize)
     }
 }

@@ -101,10 +101,13 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 8)
             }
-            .padding(20)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 28)
+            // Keep the content a comfortable, readable column even when the window is wide.
+            .frame(maxWidth: 620)
+            .frame(maxWidth: .infinity)
         }
-        .frame(width: 380)
-        .frame(minHeight: 420)
+        .frame(minWidth: 480, minHeight: 540)
         .background(OW.bg)
     }
 
