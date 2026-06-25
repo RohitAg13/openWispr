@@ -15,11 +15,12 @@ enum STTProvider: String, CaseIterable {
         }
     }
 
-    /// Whether this provider is functional now. Drives the picker's disabled state.
+    /// Whether this provider is selectable. Whisper is now wired up — but it still needs its
+    /// model downloaded before a session can use it (the Settings UI prompts for that).
     var isAvailable: Bool {
         switch self {
         case .appleSpeech: return true
-        case .whisper:     return false
+        case .whisper:     return true
         }
     }
 }
@@ -85,6 +86,7 @@ final class AppSettings: ObservableObject {
         static let hotKeyCode = "hotKeyCode"
         static let hotKeyModifiers = "hotKeyModifiers"
         static let sttProvider = "sttProvider"
+        static let whisperModel = "whisperModel"
         static let polishLevel = "polishLevel"
         static let vadSensitivity = "vadSensitivity"
     }
@@ -101,6 +103,12 @@ final class AppSettings: ObservableObject {
 
     @Published var sttProvider: STTProvider {
         didSet { defaults.set(sttProvider.rawValue, forKey: Key.sttProvider) }
+    }
+
+    /// Which whisper.cpp model the Whisper engine uses. Only relevant when
+    /// `sttProvider == .whisper`.
+    @Published var whisperModel: WhisperModel {
+        didSet { defaults.set(whisperModel.rawValue, forKey: Key.whisperModel) }
     }
 
     @Published var polishLevel: PolishLevel {
@@ -130,6 +138,8 @@ final class AppSettings: ObservableObject {
 
         sttProvider = defaults.string(forKey: Key.sttProvider)
             .flatMap(STTProvider.init(rawValue:)) ?? .appleSpeech
+        whisperModel = defaults.string(forKey: Key.whisperModel)
+            .flatMap(WhisperModel.init(rawValue:)) ?? .base
         polishLevel = defaults.string(forKey: Key.polishLevel)
             .flatMap(PolishLevel.init(rawValue:)) ?? .off
         vadSensitivity = defaults.string(forKey: Key.vadSensitivity)

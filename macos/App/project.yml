@@ -2,7 +2,8 @@ name: OpenWispr
 options:
   bundleIdPrefix: com.openwispr
   deploymentTarget:
-    macOS: "13.0"
+    # 13.3 is the min-OS of the vendored whisper.xcframework's macOS slice.
+    macOS: "13.3"
   createIntermediateGroups: true
   # NOTE: regenerate via ./generate.sh (not `xcodegen generate` directly). XcodeGen 2.45
   # emits the Xcode-16 format (objectVersion 77); generate.sh pins it back to 56 so the
@@ -11,6 +12,10 @@ packages:
   OpenWisprCore:
     # Local Swift package with the ported deterministic pipeline + vocab/context layer.
     path: ../OpenWisprCore
+  WhisperFramework:
+    # Local Swift package wrapping the whisper.cpp xcframework (remote binaryTarget — the
+    # ~50 MB binary is fetched & cached by SwiftPM, not committed).
+    path: ../WhisperFramework
 settings:
   base:
     MARKETING_VERSION: "0.1.0"
@@ -39,3 +44,5 @@ targets:
     dependencies:
       - package: OpenWisprCore
         product: OpenWisprCore
+      - package: WhisperFramework
+        product: WhisperFramework

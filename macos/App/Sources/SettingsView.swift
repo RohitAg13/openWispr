@@ -4,6 +4,7 @@ import SwiftUI
 /// persists immediately and the coordinator (observing the same store) applies it live.
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject private var models = WhisperModelManager.shared
 
     var body: some View {
         Form {
@@ -44,8 +45,17 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.menu)
+
+                if settings.sttProvider == .whisper {
+                    whisperModelControls
+                }
             } header: {
                 Text("Speech-to-text")
+            } footer: {
+                if settings.sttProvider == .whisper {
+                    Text("Whisper runs fully on-device and offline. The model downloads once.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
             }
 
             // MARK: Cleanup / polish
@@ -88,5 +98,56 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
         }
+    }
+
+    /// Whisper model picker + download/remove controls. `models.revision` is read implicitly via
+    /// `isDownloaded`, so the row updates as soon as a download finishes or a model is removed.
+    @ViewBuilder
+    private var whisperModelControls: some View {
+        Picker("Model", selection: $settings.whisperModel) {
+            ForEach(WhisperModel.allCases) { model in
+                Text("\(model.label) · \(model.approxSize)").tag(model)
+            }
+        }
+        .pickerStyle(.menu)
+        .disabled(models.isDownloading)
+
+        let model = settings.whisperModel
+        let downloading = models.downloadingModel == model
+
+        HStack(spacing: 8) {
+            if downloading {
+                ProgressView(value: models.downloadProgress ?? 0)
+                    .frame(maxWidth: .infinity)
+                Text(progressLabel)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                Button("Cancel") { models.cancelDownload() }
+            } else if models.isDownloaded(model) {
+                Label("Downloaded", systemImage: "checkmark.circle.fill")
+                    .font(.caption).foregroundStyle(.green)
+                Spacer()
+                Button("Remove") { models.delete(model) }
+            } else {
+                Label("Not downloaded", systemImage: "arrow.down.circle")
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Download \(model.approxSize)") {
+                    Task { await models.download(model) }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(models.isDownloading)
+            }
+        }
+
+        if let error = models.lastError {
+            Text(error).font(.caption2).foregroundStyle(.red)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var progressLabel: String {
+        let pct = Int((models.downloadProgress ?? 0) * 100)
+        return "\(pct)%"
     }
 }

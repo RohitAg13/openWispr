@@ -29,7 +29,6 @@ final class DictationController: ObservableObject {
 
     // Inject the energy VAD + default VAD config, mirroring the capture pipeline.
     private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
-    private let stt = AppleSpeechSTT()
 
     /// Polls `audio.amplitude` for the live level bar while listening.
     private var levelTimer: Timer?
@@ -128,15 +127,24 @@ final class DictationController: ObservableObject {
         cleaned = ""
         didInsert = false
         Task {
-            // Request both permissions before the first capture.
+            // Mic is always required; Speech only for the Apple provider (or Whisper fallback).
             let mic = await AppleSpeechSTT.requestMicrophoneAccess()
-            let speech = await AppleSpeechSTT.requestAuthorization()
-            guard mic && speech else {
+            guard mic else {
                 phase = .error(
-                    "Microphone and Speech Recognition access are needed. Enable them in "
-                        + "System Settings ▸ Privacy & Security, then try again."
+                    "Microphone access is needed. Enable it in System Settings ▸ "
+                        + "Privacy & Security ▸ Microphone, then try again."
                 )
                 return
+            }
+            if STTFactory.usesAppleSpeech() {
+                let speech = await AppleSpeechSTT.requestAuthorization()
+                guard speech else {
+                    phase = .error(
+                        "Speech Recognition access is needed for Apple Speech. Enable it in "
+                            + "System Settings ▸ Privacy & Security, then try again."
+                    )
+                    return
+                }
             }
 
             do {
@@ -163,6 +171,7 @@ final class DictationController: ObservableObject {
         }
 
         phase = .transcribing
+        let stt = STTFactory.make()
         Task {
             do {
                 let rawText = try await stt.transcribe(samples, sampleRate: 16000)

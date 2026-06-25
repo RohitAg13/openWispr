@@ -84,8 +84,30 @@ Privacy & Security → Accessibility** for auto-insert.
 - `App`: `AppleSpeechSTT` (Apple Speech framework, on-device when supported — no library to
   vendor) and a real `DictationView`/`DictationController`: **Listen → AudioCapture (VAD
   auto-stop) → transcribe → `TextProcessor` cleanup → show raw/cleaned + Copy**. Requests
-  Microphone + Speech Recognition at first use. `whisper.cpp` will slot in behind `STT` later
-  for fully-offline transcription.
+  Microphone (always) + Speech Recognition (Apple provider only) at first use.
+
+### whisper.cpp STT — fully offline (done)
+
+A second `STT` provider, `WhisperSTT`, runs [whisper.cpp](https://github.com/ggml-org/whisper.cpp)
+fully on-device/offline. Files:
+- **`WhisperFramework/`** — a local Swift package that wraps the official
+  `whisper.xcframework` via a **remote `binaryTarget`** (url + checksum, pinned to `v1.9.1`).
+  SwiftPM downloads & caches the ~50 MB binary; nothing is committed. It re-exports the C
+  `whisper` module so the app does one `import WhisperFramework`. Kept separate from
+  `OpenWisprCore` so the core's CLI `swift test` (which can't link xcframeworks) stays pure.
+- **`App/Sources/WhisperSTT.swift`** — an `actor`-wrapped provider (whisper's context isn't
+  thread-safe). Feeds the 16 kHz mono Float32 samples `AudioCapture` already produces straight
+  into `whisper_full` (no resampling), keeps the model warm across takes, English-pinned.
+- **`App/Sources/WhisperModel.swift`** — `WhisperModel` (`tiny.en`/`base.en`/`small.en`) +
+  `WhisperModelManager`: stores ggml weights under `~/Library/Application Support/OpenWispr/
+  models/`, downloads the selected model once from Hugging Face (streamed, atomic, with
+  progress), and reports availability.
+- **`STTFactory`** routes both dictation flows to the chosen engine, warm-caching the Whisper
+  context; if Whisper is selected but its model isn't downloaded, it falls back to Apple Speech
+  so dictation still works (Settings prompts the download).
+- **Settings** gains a model picker + download/remove/progress UI under *Speech-to-text*.
+
+The macOS deployment target is **13.3** (the whisper.xcframework macOS slice's min-OS).
 
 ### Accessibility auto-insert (done)
 
@@ -126,8 +148,6 @@ the popover's "Settings…" button) backed by a persisted `AppSettings.shared` (
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol
-  (wire to the STT-provider setting).
 - **LLM polish** — on-device cleanup levels (Off/Light/Medium/Full) + the personalization
   corpus / few-shot (see [`../docs/personalization.md`](../docs/personalization.md)); wire to
   the polish-level setting.

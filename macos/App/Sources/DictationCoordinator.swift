@@ -43,7 +43,7 @@ final class DictationCoordinator {
     private let settings = AppSettings.shared
     /// `var` (not `let`) so we can rebuild it when VAD sensitivity changes between sessions.
     private var audio: AudioCapture
-    private let stt = AppleSpeechSTT()
+    /// Resolved per-session from settings (Apple Speech or warm-cached Whisper).
     private let hud = RecordingHUD()
     private var hotKey: HotKey?
     private var cancellables: Set<AnyCancellable> = []
@@ -138,12 +138,22 @@ final class DictationCoordinator {
 
         Task { @MainActor in
             let mic = await AppleSpeechSTT.requestMicrophoneAccess()
-            let speech = await AppleSpeechSTT.requestAuthorization()
-            guard mic && speech else {
-                hud.update(.error("Enable Microphone + Speech in System Settings."))
+            guard mic else {
+                hud.update(.error("Enable Microphone in System Settings."))
                 hud.show()
                 autoHide(after: 2.5)
                 return
+            }
+            // Speech permission is only needed for the Apple Speech provider (incl. the
+            // Whisper-model-not-downloaded fallback). Whisper itself needs only the mic.
+            if STTFactory.usesAppleSpeech() {
+                let speech = await AppleSpeechSTT.requestAuthorization()
+                guard speech else {
+                    hud.update(.error("Enable Speech Recognition in System Settings."))
+                    hud.show()
+                    autoHide(after: 2.5)
+                    return
+                }
             }
 
             do {
@@ -184,6 +194,7 @@ final class DictationCoordinator {
         state = .transcribing
         hud.update(.transcribing)
 
+        let stt = STTFactory.make()
         Task { @MainActor in
             do {
                 let raw = try await stt.transcribe(samples, sampleRate: 16000)
