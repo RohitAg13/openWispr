@@ -112,13 +112,26 @@ keeps focus) → speak → transcribe → clean → auto-insert into that field.
 Wired via an `AppDelegate` (`@NSApplicationDelegateAdaptor`). The menu-bar popover remains as
 the manual fallback. Default combo is a constant in `HotKey.swift`, easy to change.
 
+### Settings (done)
+
+`App/Sources/{AppSettings,HotKeyRecorder,SettingsView}.swift`: a Settings window (opened from
+the popover's "Settings…" button) backed by a persisted `AppSettings.shared` (UserDefaults).
+- **Rebindable global hotkey** — a `HotKeyRecorder` captures a key combo (NSEvent→Carbon),
+  guards bare keys; the coordinator re-registers the Carbon hotkey live via Combine.
+- **Mic sensitivity** (Low/Med/High) — maps to `EnergyVAD` ratios; the capture's VAD is
+  rebuilt between sessions.
+- **STT provider** + **Cleanup/polish level** selectors — persisted; Apple Speech / `.off`
+  functional now, Whisper + Light/Medium/Full scaffolded for the next steps.
+
 ## Roadmap (next)
 
 Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol.
-- **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full) + the personalization
-  corpus / few-shot (see [`../docs/personalization.md`](../docs/personalization.md)).
-- **Silero VAD**, **settings UI** (hotkey/provider config), **app polish** (brand/HUD design).
+- **whisper.cpp STT** — fully-offline on-device transcription behind the `STT` protocol
+  (wire to the STT-provider setting).
+- **LLM polish** — on-device cleanup levels (Off/Light/Medium/Full) + the personalization
+  corpus / few-shot (see [`../docs/personalization.md`](../docs/personalization.md)); wire to
+  the polish-level setting.
+- **Silero VAD**, **app/HUD brand polish** (from [`../design_assets`](../design_assets)).
 - **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
 - **LLM polish** — llama.cpp on-device (Off/Light/Medium/Full), with the same over-edit
   guards and the personalization corpus / few-shot (see

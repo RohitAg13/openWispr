@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import OpenWisprCore
 import SwiftUI
 
@@ -37,10 +38,15 @@ final class DictationCoordinator {
         case transcribing
     }
 
-    private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
+    /// Shared, persisted settings. The hotkey + VAD sensitivity are read from here and
+    /// re-applied live via the Combine subscriptions below.
+    private let settings = AppSettings.shared
+    /// `var` (not `let`) so we can rebuild it when VAD sensitivity changes between sessions.
+    private var audio: AudioCapture
     private let stt = AppleSpeechSTT()
     private let hud = RecordingHUD()
     private var hotKey: HotKey?
+    private var cancellables: Set<AnyCancellable> = []
 
     private var state: State = .idle
     /// The app/field we'll insert back into — captured at session start. The HUD is
@@ -56,10 +62,61 @@ final class DictationCoordinator {
     private let maxSessionSeconds: TimeInterval = 30
 
     init() {
+        // Build the capture with the persisted VAD sensitivity.
+        let ratios = settings.vadRatios
+        audio = AudioCapture(
+            vad: EnergyVAD(config: VADConfig(), lowRatio: ratios.low, highRatio: ratios.high),
+            config: VADConfig()
+        )
+
         hud.state.onCancel = { [weak self] in self?.cancel() }
         hud.state.onStop = { [weak self] in self?.finish() }
-        // Register the default global hotkey (⌃⌥D); toggles a session.
-        hotKey = HotKey { [weak self] in self?.toggle() }
+
+        // Register the global hotkey from the user's binding; toggles a session.
+        registerHotKey()
+        observeSettings()
+    }
+
+    // MARK: - Live settings (Combine)
+
+    /// Re-register the hotkey whenever the binding changes, and rebuild the VAD when
+    /// sensitivity changes (only while idle — never mid-session).
+    private func observeSettings() {
+        // Re-register on either keycode or modifier change. `dropFirst` skips the initial
+        // value publish so we don't immediately re-register what `init` already set.
+        Publishers.CombineLatest(settings.$hotKeyCode, settings.$hotKeyModifiers)
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _, _ in self?.registerHotKey() }
+            .store(in: &cancellables)
+
+        settings.$vadSensitivity
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] sensitivity in self?.rebuildVAD(for: sensitivity) }
+            .store(in: &cancellables)
+    }
+
+    /// Drop the old `HotKey` (its `deinit` unregisters the Carbon hotkey) and register a
+    /// fresh one from the current binding.
+    private func registerHotKey() {
+        hotKey = nil
+        hotKey = HotKey(
+            keyCode: settings.hotKeyCode,
+            modifiers: settings.hotKeyModifiers
+        ) { [weak self] in self?.toggle() }
+    }
+
+    /// Rebuild `audio` from the new sensitivity ratios. Only safe while idle — swapping the
+    /// capture mid-session would discard in-flight samples, so if we're listening we skip;
+    /// the next session picks up the new VAD because `start()` reuses this `audio`.
+    private func rebuildVAD(for sensitivity: VADSensitivity) {
+        guard state == .idle else { return }
+        let ratios = sensitivity.ratios
+        audio = AudioCapture(
+            vad: EnergyVAD(config: VADConfig(), lowRatio: ratios.low, highRatio: ratios.high),
+            config: VADConfig()
+        )
     }
 
     // MARK: - Hotkey entry point
@@ -131,6 +188,12 @@ final class DictationCoordinator {
             do {
                 let raw = try await stt.transcribe(samples, sampleRate: 16000)
                 let cleaned = TextProcessor.process(raw)
+                // Read the user's polish preference now so step 3 can branch on it. For
+                // non-`.off` levels there's no LLM yet, so we behave as `.off` (and those
+                // levels are disabled in the UI anyway).
+                let polish = settings.polishLevel
+                _ = polish
+                // TODO(step 3): apply LLM polish for .light/.medium/.full
                 deliver(cleaned)
             } catch let error as STTError {
                 state = .idle

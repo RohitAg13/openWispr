@@ -29,5 +29,13 @@ struct OpenWisprApp: App {
             DictationView()
         }
         .menuBarExtraStyle(.window)
+
+        // A real window (macOS 13 `Window` scene) for settings. Opened on demand from the
+        // popover via `openWindow(id:)`; an LSUIElement app has no Dock/menu so this is the
+        // only entry point. Single instance — re-opening just brings it forward.
+        Window("OpenWispr Settings", id: "settings") {
+            SettingsView(settings: .shared)
+        }
+        .windowResizability(.contentSize)
     }
 }

@@ -9,8 +9,11 @@
 /* Begin PBXBuildFile section */
 		128DC48D49D0F4186446610D /* AppleSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */; };
 		1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */ = {isa = PBXBuildFile; productRef = 144850BF2FCDC5E1155AA002 /* OpenWisprCore */; };
+		3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */; };
+		3FDDC578961C8AA92CD90476 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D58E56F2D386A113D12352B /* AppSettings.swift */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
 		837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */; };
+		955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */; };
 		960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
@@ -21,12 +24,15 @@
 /* Begin PBXFileReference section */
 		03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechSTT.swift; sourceTree = "<group>"; };
 		1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWisprApp.swift; sourceTree = "<group>"; };
+		27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyRecorder.swift; sourceTree = "<group>"; };
 		3AD2F169F5B404A53861CE81 /* OpenWispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D7C8EE5B1CD881D96AF429D /* HotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKey.swift; sourceTree = "<group>"; };
 		48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInserter.swift; sourceTree = "<group>"; };
 		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
 		5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationCoordinator.swift; sourceTree = "<group>"; };
+		5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		76AE78CAEE8553945C7C44BF /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
+		8D58E56F2D386A113D12352B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		C2791865DF65073E3B5E7363 /* RecordingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingHUD.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -55,12 +61,15 @@
 			isa = PBXGroup;
 			children = (
 				03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */,
+				8D58E56F2D386A113D12352B /* AppSettings.swift */,
 				DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */,
 				5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
 				3D7C8EE5B1CD881D96AF429D /* HotKey.swift */,
+				27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
+				5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */,
 				48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */,
 			);
 			path = Sources;
@@ -147,13 +156,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3FDDC578961C8AA92CD90476 /* AppSettings.swift in Sources */,
 				128DC48D49D0F4186446610D /* AppleSpeechSTT.swift in Sources */,
 				C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */,
 				960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
 				CF0936F2F734305831815C23 /* HotKey.swift in Sources */,
+				955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
+				3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */,
 				837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

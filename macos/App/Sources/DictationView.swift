@@ -220,6 +220,7 @@ final class DictationController: ObservableObject {
 /// and the raw + cleaned transcripts with Copy / Quit once done.
 struct DictationView: View {
     @StateObject private var controller = DictationController()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -238,7 +239,7 @@ struct DictationView: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "command").font(.caption2)
-                Text("⌃⌥Z to dictate anywhere")
+                Text("\(AppSettings.shared.hotKeyDisplay) to dictate anywhere")
                 Text("·")
                 Text(controller.canInsert ? "auto-insert on" : "Accessibility off")
                     .foregroundStyle(controller.canInsert ? .green : .secondary)
@@ -299,6 +300,10 @@ struct DictationView: View {
                 .disabled(controller.cleaned.isEmpty)
 
                 Spacer()
+                Button("Settings…") {
+                    openWindow(id: "settings")
+                    NSApp.activate(ignoringOtherApps: true)
+                }
                 Button("Quit") { NSApp.terminate(nil) }
             }
         }
