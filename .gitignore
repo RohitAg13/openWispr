@@ -46,3 +46,8 @@ xcuserdata/
 *.xcodeproj/*.xcuserdatad/
 DerivedData/
 *.xcuserstate
+
+# macOS packaging artifacts (Release build + .dmg output)
+macos/App/build-release/
+macos/dist/
+*.dmg

@@ -79,6 +79,17 @@ the microphone prompt on first capture, and adding OpenWispr under **System Sett
 Privacy & Security → Accessibility** for auto-insert. With stable signing you grant
 Accessibility **once** and it sticks across future rebuilds.
 
+### Packaging a `.dmg`
+
+**`scripts/package-dmg.sh`** builds a Release `OpenWispr.app` and wraps it in a
+drag-to-install disk image (`macos/dist/OpenWispr-<version>.dmg`), signed with the local
+self-signed identity. STT/LLM models download at runtime, so the image is small (~7 MB). A
+self-signed image runs locally but is **not notarized** — on someone else's Mac, Gatekeeper
+blocks it until they right-click → Open (or `xattr -dr com.apple.quarantine`). Real
+distribution needs an Apple **Developer ID Application** cert + notarization (a paid Apple
+Developer account); the script does it automatically when `DEVELOPER_ID_APP` + `NOTARY_PROFILE`
+are set (see the comments at the bottom of the script).
+
 ### Audio capture + VAD (done; Silero pending)
 
 - `OpenWisprCore`: `VAD` protocol, `EnergyVAD` (RMS-based, no model), and `SpeechSegmenter`
