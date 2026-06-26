@@ -35,6 +35,7 @@ targets:
     platform: macOS
     sources:
       - path: Sources
+      - path: Resources   # bundled ggml-silero-v5.1.2.bin (neural VAD model)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.openwispr.mac

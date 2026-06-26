@@ -72,6 +72,17 @@ enum VADSensitivity: String, CaseIterable {
         case .high:   return (1.8, 6)
         }
     }
+
+    /// Silero VAD speech start/end probability thresholds for this preset. Higher sensitivity =
+    /// lower end-threshold, so a pause reads as silence sooner (stops sooner). Defaults
+    /// (medium) match the segmenter's 0.5 / 0.35 hysteresis.
+    var sileroProbs: (start: Float, end: Float) {
+        switch self {
+        case .low:    return (0.60, 0.45)
+        case .medium: return (0.50, 0.35)
+        case .high:   return (0.45, 0.28)
+        }
+    }
 }
 
 /// Persisted, observable app settings. Single shared instance; `@Published` properties

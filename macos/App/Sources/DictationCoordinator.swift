@@ -62,12 +62,9 @@ final class DictationCoordinator {
     private let maxSessionSeconds: TimeInterval = 30
 
     init() {
-        // Build the capture with the persisted VAD sensitivity.
-        let ratios = settings.vadRatios
-        audio = AudioCapture(
-            vad: EnergyVAD(config: VADConfig(), lowRatio: ratios.low, highRatio: ratios.high),
-            config: VADConfig()
-        )
+        // Build the capture with the persisted VAD sensitivity (Silero, energy fallback).
+        let built = VADFactory.make(sensitivity: settings.vadSensitivity)
+        audio = AudioCapture(vad: built.vad, config: built.config)
 
         hud.state.onCancel = { [weak self] in self?.cancel() }
         hud.state.onStop = { [weak self] in self?.finish() }
@@ -112,11 +109,8 @@ final class DictationCoordinator {
     /// the next session picks up the new VAD because `start()` reuses this `audio`.
     private func rebuildVAD(for sensitivity: VADSensitivity) {
         guard state == .idle else { return }
-        let ratios = sensitivity.ratios
-        audio = AudioCapture(
-            vad: EnergyVAD(config: VADConfig(), lowRatio: ratios.low, highRatio: ratios.high),
-            config: VADConfig()
-        )
+        let built = VADFactory.make(sensitivity: sensitivity)
+        audio = AudioCapture(vad: built.vad, config: built.config)
     }
 
     // MARK: - Hotkey entry point
@@ -227,7 +221,8 @@ final class DictationCoordinator {
         let category = AppContext.categoryFor(targetApp?.bundleIdentifier, text)
         return await LocalLLMEngine.shared.polish(
             text, level: level, category: category,
-            modelPath: manager.fileURL(for: model).path
+            modelPath: manager.fileURL(for: model).path,
+            isFinetune: model.isFinetune
         )
     }
 

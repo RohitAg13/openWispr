@@ -64,4 +64,37 @@ public enum LlmPolish {
     /// The user-turn content. Marker-free (markers make tiny local models loop), mirroring
     /// Android's `buildLocalUserContent` with an empty action prompt.
     public static func userContent(_ text: String) -> String { text }
+
+    // MARK: - Fine-tuned dictation-cleanup model (openwispr-cleanup-qwen3-0.6b)
+
+    /// The fine-tune (`openwispr-finetune`) was trained on THIS exact system prompt + per-app
+    /// tone, with a bare transcript as the user turn — a mirror of Android `RewriteEngine`'s
+    /// `FINETUNE_SYSTEM`/`FINETUNE_TONE` (and `openwispr-finetune/common.py`). Keep all of them
+    /// in sync: drift from the training prompt makes the fine-tune meaningless. `/no_think`
+    /// disables Qwen3's reasoning so we get the answer directly.
+    public static let finetuneSystem =
+        "You convert a raw speech-to-text transcript into clean written text. " +
+        "Remove filler words and false starts; resolve self-corrections, keeping only the " +
+        "speaker's final intent; fix grammar and punctuation; add capitalization, sentence " +
+        "breaks and paragraph breaks; and format dictated enumerations as a numbered list. " +
+        "Copy names, emails, URLs, numbers and code EXACTLY — never change their spelling. " +
+        "Preserve the speaker's own words, meaning and voice. Do not add content, summaries " +
+        "or commentary. Output ONLY the cleaned text. /no_think"
+
+    private static let finetuneTone: [AppContext.Category: String] = [
+        .email: "Context: a professional email or document — clear, polite, complete sentences, no slang.",
+        .chat: "Context: a casual chat message — relaxed, conversational, contractions, concise.",
+        .social: "Context: a casual social post — natural and a little punchy.",
+        .notes: "Context: personal notes — keep structure (lists, short lines) tidy.",
+        .code: "Context: code or a terminal — keep technical tokens verbatim; minimal prose edits.",
+        .generic: "",
+    ]
+
+    /// System prompt for the fine-tune: the training SYSTEM folded with the app-context tone.
+    public static func finetuneSystemPrompt(category: AppContext.Category) -> String {
+        if let tone = finetuneTone[category], !tone.isEmpty {
+            return "\(finetuneSystem)\n\(tone)"
+        }
+        return finetuneSystem
+    }
 }

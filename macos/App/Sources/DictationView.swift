@@ -30,8 +30,11 @@ final class DictationController: ObservableObject {
     /// resets on relaunch. Drives the Home screen's "Recent dictations" list.
     @Published var recents: [String] = []
 
-    // Inject the energy VAD + default VAD config, mirroring the capture pipeline.
-    private let audio = AudioCapture(vad: EnergyVAD(), config: VADConfig())
+    // Silero VAD (energy fallback) at the persisted sensitivity, mirroring the capture pipeline.
+    private let audio: AudioCapture = {
+        let built = VADFactory.make(sensitivity: AppSettings.shared.vadSensitivity)
+        return AudioCapture(vad: built.vad, config: built.config)
+    }()
 
     /// Polls `audio.amplitude` for the live level bar while listening.
     private var levelTimer: Timer?

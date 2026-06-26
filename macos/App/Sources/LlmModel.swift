@@ -6,34 +6,51 @@ import Foundation
 enum LlmModel: String, CaseIterable, Identifiable {
     case qwen05 = "qwen2.5-0.5b-instruct"
     case qwen15 = "qwen2.5-1.5b-instruct"
+    /// OpenWispr's own fine-tune for dictation cleanup (Qwen3-0.6B), trained on the
+    /// `LlmPolish.finetuneSystem` prompt + per-app tone. Uses its own prompt path.
+    case openwisprCleanup = "openwispr-cleanup-qwen3-0.6b"
 
     var id: String { rawValue }
 
-    /// The GGUF filename (q4_k_m quant) on disk / on Hugging Face.
-    var fileName: String { "\(rawValue)-q4_k_m.gguf" }
+    /// Whether this is the OpenWispr fine-tune (drives the prompt path in `LocalLLMEngine`).
+    var isFinetune: Bool { self == .openwisprCleanup }
+
+    /// The GGUF filename on disk / on Hugging Face.
+    var fileName: String {
+        switch self {
+        case .qwen05, .qwen15: return "\(rawValue)-q4_k_m.gguf"
+        case .openwisprCleanup: return "qwen3-0.6b.Q4_K_M.gguf"
+        }
+    }
 
     var approxSize: String {
         switch self {
-        case .qwen05: return "~491 MB"
-        case .qwen15: return "~1.1 GB"
+        case .qwen05:          return "~491 MB"
+        case .qwen15:          return "~1.1 GB"
+        case .openwisprCleanup: return "~396 MB"
         }
     }
 
     var label: String {
         switch self {
-        case .qwen05: return "Qwen2.5 0.5B (fastest)"
-        case .qwen15: return "Qwen2.5 1.5B (recommended)"
+        case .qwen05:          return "Qwen2.5 0.5B (fastest)"
+        case .qwen15:          return "Qwen2.5 1.5B (recommended)"
+        case .openwisprCleanup: return "OpenWispr Cleanup (fine-tuned)"
         }
     }
 
-    /// Official Qwen GGUF repo. `resolve/main` streams the raw file.
+    /// `resolve/main` streams the raw GGUF.
     var downloadURL: URL {
-        let repo: String
+        let path: String
         switch self {
-        case .qwen05: repo = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
-        case .qwen15: repo = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+        case .qwen05:
+            path = "Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/\(fileName)"
+        case .qwen15:
+            path = "Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/\(fileName)"
+        case .openwisprCleanup:
+            path = "rohitag13/openwispr-cleanup-qwen3-0.6b-GGUF/resolve/main/\(fileName)"
         }
-        return URL(string: "https://huggingface.co/\(repo)/resolve/main/\(fileName)?download=true")!
+        return URL(string: "https://huggingface.co/\(path)?download=true")!
     }
 }
 
