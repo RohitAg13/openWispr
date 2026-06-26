@@ -26,9 +26,9 @@ final class DictationController: ObservableObject {
     /// Whether Accessibility is granted. Polled (AXIsProcessTrusted isn't observable), so the
     /// label flips to "on" right after the user grants it — no app restart, no stale UI.
     @Published var accessibilityGranted: Bool = TextInserter.isTrusted
-    /// In-memory history of completed dictations (most recent first). No persistence yet —
-    /// resets on relaunch. Drives the Home screen's "Recent dictations" list.
-    @Published var recents: [String] = []
+    /// The id of the history record for the current result, so an inline edit (learn-from-edit)
+    /// updates the same row. The persisted list lives in `DictationHistoryStore.shared`.
+    private var currentRecordID: UUID?
 
     // MARK: - Learn-from-edit (additive)
 
@@ -152,10 +152,11 @@ final class DictationController: ObservableObject {
             VocabStore.shared.learnAlias(wrong: pair.wrong, right: pair.right)
         }
 
-        // Adopt the edit so Insert/Copy operate on the corrected text.
+        // Adopt the edit so Insert/Copy operate on the corrected text, and update the
+        // matching history row.
         cleaned = edited
-        if let i = recents.firstIndex(of: original) {
-            recents[i] = edited
+        if let id = currentRecordID {
+            DictationHistoryStore.shared.update(id: id, text: edited)
         }
 
         didTeach = true
@@ -239,10 +240,7 @@ final class DictationController: ObservableObject {
                 cleaned = cleanedText
                 editableCleaned = cleanedText
                 phase = .done
-                if !cleanedText.isEmpty {
-                    recents.insert(cleanedText, at: 0)
-                    if recents.count > 50 { recents.removeLast(recents.count - 50) }
-                }
+                currentRecordID = DictationHistoryStore.shared.add(cleanedText)
             } catch let error as STTError {
                 phase = .error(Self.message(for: error))
             } catch {

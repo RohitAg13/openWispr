@@ -13,6 +13,7 @@ import SwiftUI
 struct HomeView: View {
     @ObservedObject var controller: DictationController
     @ObservedObject private var settings = AppSettings.shared
+    @ObservedObject private var history = DictationHistoryStore.shared
 
     var body: some View {
         ScrollView {
@@ -289,9 +290,16 @@ struct HomeView: View {
 
     private var recentsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            MonoLabel(text: "Recent dictations", color: OW.textDim, size: 11, tracking: 1.4)
+            HStack {
+                MonoLabel(text: "Recent dictations", color: OW.textDim, size: 11, tracking: 1.4)
+                Spacer()
+                if !history.records.isEmpty {
+                    Button("Clear") { history.clear() }
+                        .buttonStyle(OWSecondaryButtonStyle())
+                }
+            }
 
-            if controller.recents.isEmpty {
+            if history.records.isEmpty {
                 Text("Your recent dictations will appear here.")
                     .font(OW.ui(13))
                     .foregroundStyle(OW.textFaint)
@@ -301,23 +309,28 @@ struct HomeView: View {
                     .overlay(RoundedRectangle(cornerRadius: OW.rCard).strokeBorder(OW.border, lineWidth: 1))
             } else {
                 VStack(spacing: 10) {
-                    ForEach(Array(controller.recents.enumerated()), id: \.offset) { _, item in
-                        recentRow(item)
+                    ForEach(history.records) { record in
+                        recentRow(record)
                     }
                 }
             }
         }
     }
 
-    private func recentRow(_ text: String) -> some View {
+    private func recentRow(_ record: DictationRecord) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(text)
-                .font(OW.ui(13))
-                .foregroundStyle(OW.text)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.text)
+                    .font(OW.ui(13))
+                    .foregroundStyle(OW.text)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(Self.relativeTime(record.ts))
+                    .font(OW.mono(10))
+                    .foregroundStyle(OW.textFaint)
+            }
             Button {
-                copy(text)
+                copy(record.text)
             } label: {
                 Image(systemName: "doc.on.doc")
                     .font(.system(size: 12))
@@ -328,10 +341,38 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .help("Copy")
+            Button {
+                history.remove(id: record.id)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 12))
+                    .foregroundStyle(OW.textDim)
+                    .frame(width: 28, height: 28)
+                    .background(OW.chip, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(OW.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .help("Delete")
         }
         .padding(14)
         .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rCard))
         .overlay(RoundedRectangle(cornerRadius: OW.rCard).strokeBorder(OW.border, lineWidth: 1))
+    }
+
+    /// Compact relative timestamp ("just now", "5m ago", "3h ago", or a short date).
+    private static func relativeTime(_ ts: Double) -> String {
+        let now = Date().timeIntervalSince1970
+        let delta = max(0, now - ts)
+        switch delta {
+        case ..<60: return "just now"
+        case ..<3600: return "\(Int(delta / 60))m ago"
+        case ..<86400: return "\(Int(delta / 3600))h ago"
+        case ..<604800: return "\(Int(delta / 86400))d ago"
+        default:
+            let f = DateFormatter()
+            f.dateFormat = "MMM d"
+            return f.string(from: Date(timeIntervalSince1970: ts))
+        }
     }
 
     // MARK: - Helpers

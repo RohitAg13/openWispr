@@ -23,6 +23,7 @@
 		78E2CA50E630ED2A8182A0E2 /* WhisperModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B19D8A624CAF050B187238A /* WhisperModel.swift */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
 		837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */; };
+		91D543311076B601F0D30C86 /* DictationHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */; };
 		951B3986DD855937EAEB3D41 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D827068F08399C4BBE6B8E14 /* RootView.swift */; };
 		955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */; };
 		960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */; };
@@ -66,6 +67,7 @@
 		C2791865DF65073E3B5E7363 /* RecordingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingHUD.swift; sourceTree = "<group>"; };
 		C6955227F30F04FA604BF89A /* PersonalizationStores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationStores.swift; sourceTree = "<group>"; };
 		D827068F08399C4BBE6B8E14 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
 		EF81E4A2F234EA887979354C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */,
 				EF81E4A2F234EA887979354C /* DesignTokens.swift */,
 				5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */,
+				D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
 				7478C1EA9682B72F53EB0E31 /* HomeView.swift */,
 				3D7C8EE5B1CD881D96AF429D /* HotKey.swift */,
@@ -238,6 +241,7 @@
 				C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */,
 				15C10874605E939512C7A8B8 /* DesignTokens.swift in Sources */,
 				960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */,
+				91D543311076B601F0D30C86 /* DictationHistoryStore.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
 				9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */,
 				CF0936F2F734305831815C23 /* HotKey.swift in Sources */,

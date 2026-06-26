@@ -249,6 +249,9 @@ final class DictationCoordinator {
             return
         }
 
+        // Record the hands-free dictation in the shared history (same list as Home).
+        DictationHistoryStore.shared.add(cleaned)
+
         if TextInserter.isTrusted {
             TextInserter.insert(cleaned, into: targetApp)
             hud.update(.inserted)
