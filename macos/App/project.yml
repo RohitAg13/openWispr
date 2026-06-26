@@ -25,9 +25,12 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.10"
-    # Local dev: "Sign to Run Locally" (ad-hoc) — no Apple Developer account needed.
+    # Stable self-signed identity so the app's code identity (and its Accessibility /
+    # Microphone grants) survive rebuilds — unlike ad-hoc ("-"), which changes every build.
+    # Run `scripts/setup-signing.sh` once to create it; falls back gracefully if absent only
+    # by re-setting this to "-". No Apple Developer account needed.
     CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_IDENTITY: "OpenWispr Self-Signed"
     DEVELOPMENT_TEAM: ""
 targets:
   OpenWispr:

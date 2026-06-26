@@ -60,12 +60,24 @@ open OpenWispr.xcodeproj   # or: xcodebuild -scheme OpenWispr build
 ```
 
 The generated `OpenWispr.xcodeproj` is committed, so you can open/build without XcodeGen;
-run `./generate.sh` only after editing `project.yml`. Bundle id `com.openwispr.mac`; local
-builds use ad-hoc signing ("Sign to Run Locally") — no Apple Developer account needed.
+run `./generate.sh` only after editing `project.yml`. Bundle id `com.openwispr.mac`.
+
+### Stable local signing (one-time)
+
+Run **`scripts/setup-signing.sh`** once. It creates a self-signed *code-signing* identity
+("OpenWispr Self-Signed") in a dedicated keychain and points `project.yml`'s
+`CODE_SIGN_IDENTITY` at it. Why: with ad-hoc signing the app's code identity changes on every
+build, so macOS forgets the **Accessibility** grant and you'd re-add it each time. A stable
+identity gives a stable Designated Requirement (`identifier "com.openwispr.mac" and certificate
+leaf = …`), so the grant persists across rebuilds. Fully non-interactive (the dedicated
+keychain's password is set by the script, so `codesign` never prompts), no Apple Developer
+account. Undo with `scripts/setup-signing.sh --remove` (then set `CODE_SIGN_IDENTITY` back to
+`"-"`).
 
 **First run needs manual permission grants** (macOS privacy / TCC, which can't be scripted):
 the microphone prompt on first capture, and adding OpenWispr under **System Settings →
-Privacy & Security → Accessibility** for auto-insert.
+Privacy & Security → Accessibility** for auto-insert. With stable signing you grant
+Accessibility **once** and it sticks across future rebuilds.
 
 ### Audio capture + VAD (done; Silero pending)
 
