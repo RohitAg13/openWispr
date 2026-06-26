@@ -97,6 +97,16 @@ struct SettingsView: View {
                     .padding(14)
                 }
 
+                // MARK: Personal dictionary
+                settingsGroup(header: "Personal dictionary") {
+                    PersonalDictionaryView()
+                }
+
+                // MARK: Style memory
+                settingsGroup(header: "Style memory") {
+                    StyleMemoryView()
+                }
+
                 rowNote("Changes apply immediately — the new hotkey works right away.")
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 8)

@@ -165,7 +165,7 @@ struct HomeView: View {
         case .done:
             card {
                 VStack(alignment: .leading, spacing: 14) {
-                    transcript(label: "Cleaned", text: controller.cleaned, mono: false, faint: false)
+                    editableTranscript
                     if !controller.raw.isEmpty, controller.raw != controller.cleaned {
                         Rectangle().fill(OW.divider).frame(height: 1)
                         transcript(label: "Raw", text: controller.raw, mono: true, faint: true)
@@ -198,6 +198,32 @@ struct HomeView: View {
         }
     }
 
+    /// The cleaned result, editable so the user can correct it and teach OpenWispr.
+    private var editableTranscript: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                MonoLabel(text: "Cleaned", color: OW.textDim, size: 9, tracking: 1.4)
+                Text("· editable")
+                    .font(OW.ui(10))
+                    .foregroundStyle(OW.textFaint)
+                Spacer()
+                if controller.didTeach {
+                    Label("Learned", systemImage: "checkmark.circle.fill")
+                        .font(OW.ui(11, weight: .semibold))
+                        .foregroundStyle(OW.success)
+                }
+            }
+            TextEditor(text: $controller.editableCleaned)
+                .font(OW.ui(15))
+                .foregroundStyle(OW.text)
+                .scrollContentBackground(.hidden)
+                .frame(minHeight: 54, maxHeight: 180)
+                .padding(8)
+                .background(OW.bgSunk, in: RoundedRectangle(cornerRadius: OW.rChip))
+                .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+        }
+    }
+
     @ViewBuilder
     private var accessibilityNote: some View {
         if controller.didInsert {
@@ -226,12 +252,13 @@ struct HomeView: View {
         HStack(spacing: 8) {
             if controller.canInsert {
                 Button {
+                    controller.teach()
                     controller.insertCleaned()
                 } label: {
                     Label("Insert", systemImage: "text.insert")
                 }
                 .buttonStyle(OWPrimaryButtonStyle())
-                .disabled(controller.cleaned.isEmpty)
+                .disabled(controller.editableCleaned.isEmpty)
             } else {
                 Button {
                     controller.requestAccessibility()
@@ -241,9 +268,18 @@ struct HomeView: View {
                 .buttonStyle(OWPrimaryButtonStyle())
             }
 
-            Button("Copy") { copy(controller.cleaned) }
+            if controller.hasEdits {
+                Button {
+                    controller.teach()
+                } label: {
+                    Label("Save & teach", systemImage: "graduationcap")
+                }
                 .buttonStyle(OWSecondaryButtonStyle())
-                .disabled(controller.cleaned.isEmpty)
+            }
+
+            Button("Copy") { copy(controller.editableCleaned) }
+                .buttonStyle(OWSecondaryButtonStyle())
+                .disabled(controller.editableCleaned.isEmpty)
 
             Spacer()
         }

@@ -30,6 +30,14 @@ final class DictationController: ObservableObject {
     /// resets on relaunch. Drives the Home screen's "Recent dictations" list.
     @Published var recents: [String] = []
 
+    // MARK: - Learn-from-edit (additive)
+
+    /// The user-editable copy of `cleaned` shown in the Home transcript card, so they can
+    /// correct it and "Save & teach". Seeded from `cleaned` when a result lands.
+    @Published var editableCleaned: String = ""
+    /// Set briefly after a successful teach so the UI can show "Learned ✓".
+    @Published var didTeach: Bool = false
+
     // Silero VAD (energy fallback) at the persisted sensitivity, mirroring the capture pipeline.
     private let audio: AudioCapture = {
         let built = VADFactory.make(sensitivity: AppSettings.shared.vadSensitivity)
@@ -115,6 +123,48 @@ final class DictationController: ObservableObject {
         TextInserter.requestAccess()
     }
 
+    /// Whether the user's edited copy differs from what the pipeline produced — the
+    /// signal that there's something worth teaching.
+    var hasEdits: Bool {
+        editableCleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+            != cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// "Save & teach": record the correction in the style corpus and learn any
+    /// term-level aliases from the edit so future dictations improve. Additive — leaves
+    /// the existing dictation flow untouched. Adopts the edited text as the new `cleaned`
+    /// so Insert/Copy use it.
+    func teach() {
+        let original = cleaned
+        let edited = editableCleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !edited.isEmpty, edited != original.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+
+        let cat = AppContext.categoryFor(lastTargetApp?.bundleIdentifier, edited).key
+        CorpusStore.shared.record(
+            cleaned: original,
+            kept: edited,
+            category: cat,
+            edited: true,
+            at: Date().timeIntervalSince1970
+        )
+
+        for pair in CorrectionCorpus.learnFromEditPairs(original: original, edited: edited) {
+            VocabStore.shared.learnAlias(wrong: pair.wrong, right: pair.right)
+        }
+
+        // Adopt the edit so Insert/Copy operate on the corrected text.
+        cleaned = edited
+        if let i = recents.firstIndex(of: original) {
+            recents[i] = edited
+        }
+
+        didTeach = true
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_800_000_000)
+            self.didTeach = false
+        }
+    }
+
     var isListening: Bool { phase == .listening }
     var isBusy: Bool { phase == .listening || phase == .transcribing }
 
@@ -131,7 +181,9 @@ final class DictationController: ObservableObject {
     private func startListening() {
         raw = ""
         cleaned = ""
+        editableCleaned = ""
         didInsert = false
+        didTeach = false
         Task {
             // Mic is always required; Speech only for the Apple provider (or Whisper fallback).
             let mic = await AppleSpeechSTT.requestMicrophoneAccess()
@@ -185,6 +237,7 @@ final class DictationController: ObservableObject {
                 let cleanedText = TextProcessor.process(rawText)
                 raw = rawText
                 cleaned = cleanedText
+                editableCleaned = cleanedText
                 phase = .done
                 if !cleanedText.isEmpty {
                     recents.insert(cleanedText, at: 0)

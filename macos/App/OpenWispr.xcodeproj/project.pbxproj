@@ -33,6 +33,8 @@
 		D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2791865DF65073E3B5E7363 /* RecordingHUD.swift */; };
 		DF8AABD765D213F0AD587DB9 /* WhisperFramework in Frameworks */ = {isa = PBXBuildFile; productRef = D8615A45FBDB52F322616ED1 /* WhisperFramework */; };
 		E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6994CE01136A2B690BB52D3B /* LlmModel.swift */; };
+		EF648D5DF1514550D65165DE /* PersonalDictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */; };
+		F4163A095C3F2953A65FB882 /* StyleMemoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */; };
 		F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76AE78CAEE8553945C7C44BF /* DictationView.swift */; };
 /* End PBXBuildFile section */
 
@@ -46,10 +48,12 @@
 		3B19D8A624CAF050B187238A /* WhisperModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperModel.swift; sourceTree = "<group>"; };
 		3D7C8EE5B1CD881D96AF429D /* HotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKey.swift; sourceTree = "<group>"; };
 		41289BBCDAB952C0AA44E620 /* SileroVAD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SileroVAD.swift; sourceTree = "<group>"; };
+		443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalDictionaryView.swift; sourceTree = "<group>"; };
 		48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInserter.swift; sourceTree = "<group>"; };
 		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
 		5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationCoordinator.swift; sourceTree = "<group>"; };
 		5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleMemoryView.swift; sourceTree = "<group>"; };
 		6994CE01136A2B690BB52D3B /* LlmModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlmModel.swift; sourceTree = "<group>"; };
 		6FD83732B416F83A22F9F882 /* LlamaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaContext.swift; sourceTree = "<group>"; };
 		7478C1EA9682B72F53EB0E31 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -113,12 +117,14 @@
 				6994CE01136A2B690BB52D3B /* LlmModel.swift */,
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
+				443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */,
 				C6955227F30F04FA604BF89A /* PersonalizationStores.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
 				D827068F08399C4BBE6B8E14 /* RootView.swift */,
 				5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */,
 				41289BBCDAB952C0AA44E620 /* SileroVAD.swift */,
 				E3F2CA4BD75D571287E0329E /* STTFactory.swift */,
+				5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */,
 				48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */,
 				04C4B9AA37D433AAE380041B /* VADFactory.swift */,
 				3B19D8A624CAF050B187238A /* WhisperModel.swift */,
@@ -240,12 +246,14 @@
 				E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */,
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
+				EF648D5DF1514550D65165DE /* PersonalDictionaryView.swift in Sources */,
 				AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
 				951B3986DD855937EAEB3D41 /* RootView.swift in Sources */,
 				0C46E60281CEEC51228E45EE /* STTFactory.swift in Sources */,
 				3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */,
 				336E0137F2BD5C80BEC3CAF7 /* SileroVAD.swift in Sources */,
+				F4163A095C3F2953A65FB882 /* StyleMemoryView.swift in Sources */,
 				837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */,
 				12C77C17FEF02DC0A3DD3C84 /* VADFactory.swift in Sources */,
 				78E2CA50E630ED2A8182A0E2 /* WhisperModel.swift in Sources */,
