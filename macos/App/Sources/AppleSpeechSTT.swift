@@ -13,6 +13,10 @@ import Speech
 final class AppleSpeechSTT: STT {
 
     func transcribe(_ samples: [Float], sampleRate: Int) async throws -> String {
+        try await transcribe(samples, sampleRate: sampleRate, bias: [])
+    }
+
+    func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String {
         guard !samples.isEmpty else { throw STTError.noSpeechDetected }
 
         // Default-locale recognizer; nil/unavailable means we can't transcribe right now.
@@ -40,6 +44,9 @@ final class AppleSpeechSTT: STT {
         // On-device keeps audio local and works offline; not every locale/device supports it.
         request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
         request.shouldReportPartialResults = false
+        // Personal-vocab terms nudge recognition toward the user's names/jargon.
+        let hints = bias.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        if !hints.isEmpty { request.contextualStrings = Array(hints.prefix(100)) }
         request.append(buffer)
         request.endAudio()
 

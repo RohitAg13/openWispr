@@ -27,16 +27,35 @@ final class WhisperSTT: STT {
     }
 
     func transcribe(_ samples: [Float], sampleRate: Int) async throws -> String {
+        try await transcribe(samples, sampleRate: sampleRate, bias: [])
+    }
+
+    func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String {
         guard !samples.isEmpty else { throw STTError.noSpeechDetected }
         // whisper requires 16 kHz mono. AudioCapture already delivers that; guard anyway so a
         // future caller can't silently feed the wrong rate.
         guard sampleRate == 16_000 else {
             throw STTError.failed("Whisper needs 16 kHz audio (got \(sampleRate) Hz).")
         }
-        let text = try await engine.transcribe(samples)
+        // Personal-vocab terms become a short `initial_prompt` glossary to bias decoding.
+        let prompt = Self.initialPrompt(from: bias)
+        let text = try await engine.transcribe(samples, initialPrompt: prompt)
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { throw STTError.noSpeechDetected }
         return trimmed
+    }
+
+    /// A compact glossary prompt from the bias terms (capped so it can't crowd the context).
+    private static func initialPrompt(from bias: [String]) -> String? {
+        let terms = bias.map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard !terms.isEmpty else { return nil }
+        var glossary = "Glossary: "
+        for term in terms {
+            if glossary.count + term.count + 2 > 220 { break }
+            glossary += term + ", "
+        }
+        return glossary
     }
 
     /// Serializes every whisper C call (the context is single-threaded) and owns the model's
@@ -73,7 +92,7 @@ final class WhisperSTT: STT {
             ctx = loaded
         }
 
-        func transcribe(_ samples: [Float]) throws -> String {
+        func transcribe(_ samples: [Float], initialPrompt: String? = nil) throws -> String {
             try loadIfNeeded()
             guard let ctx else { throw STTError.unavailable }
 
@@ -90,11 +109,21 @@ final class WhisperSTT: STT {
             // English-only models; pinning the language skips detection and is faster/steadier.
             let lang = "en"
 
-            let status = lang.withCString { langPtr -> Int32 in
+            // Keep the language + optional glossary C strings alive across the whisper_full call.
+            let status: Int32 = lang.withCString { langPtr in
                 params.language = langPtr
-                return samples.withUnsafeBufferPointer { buf in
-                    whisper_full(ctx, params, buf.baseAddress, Int32(buf.count))
+                func run() -> Int32 {
+                    samples.withUnsafeBufferPointer { buf in
+                        whisper_full(ctx, params, buf.baseAddress, Int32(buf.count))
+                    }
                 }
+                if let initialPrompt, !initialPrompt.isEmpty {
+                    return initialPrompt.withCString { promptPtr in
+                        params.initial_prompt = promptPtr
+                        return run()
+                    }
+                }
+                return run()
             }
             guard status == 0 else {
                 throw STTError.failed("Whisper transcription failed (code \(status)).")

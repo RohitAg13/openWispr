@@ -29,7 +29,8 @@ final class LocalLLMEngine {
         level: PolishLevel,
         category: AppContext.Category,
         modelPath: String,
-        isFinetune: Bool = false
+        isFinetune: Bool = false,
+        fewShot: String = ""
     ) async -> String {
         // Map the app's settings enum onto the pure core level used by the prompt builder.
         let coreLevel = OpenWisprCore.PolishLevel(rawValue: level.rawValue) ?? .off
@@ -41,9 +42,11 @@ final class LocalLLMEngine {
 
         // The fine-tune was trained on its own SYSTEM (+ per-app tone) and a bare transcript;
         // feed exactly that — the leveled polish prompt is off-distribution for it.
-        let system = isFinetune
+        var system = isFinetune
             ? LlmPolish.finetuneSystemPrompt(category: category)
             : LlmPolish.systemPrompt(level: coreLevel, category: category)
+        // L3: closest past corrections as few-shot, so the model cleans the way this user likes.
+        if !fewShot.isEmpty { system += "\n\n" + fewShot }
         let user = LlmPolish.userContent(trimmed)
         let raw = await ctx.complete(system: system, user: user, maxTokens: predictLength(for: trimmed))
 

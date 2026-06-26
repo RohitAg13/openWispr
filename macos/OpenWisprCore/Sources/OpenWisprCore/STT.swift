@@ -9,6 +9,17 @@ import Foundation
 public protocol STT {
     /// Transcribe mono Float32 samples (normalized -1…1) at `sampleRate` Hz. Returns plain text.
     func transcribe(_ samples: [Float], sampleRate: Int) async throws -> String
+
+    /// Transcribe with personal-vocabulary `bias` terms (names/jargon) to nudge decoding toward
+    /// the user's words. Default ignores the bias and calls the plain form; providers that can
+    /// use it (Whisper `initial_prompt`, Apple Speech `contextualStrings`) override this.
+    func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String
+}
+
+public extension STT {
+    func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String {
+        try await transcribe(samples, sampleRate: sampleRate)
+    }
 }
 
 /// Errors a `STT` provider may surface.

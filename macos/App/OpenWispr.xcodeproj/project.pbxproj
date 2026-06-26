@@ -27,6 +27,7 @@
 		955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */; };
 		960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */; };
 		9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7478C1EA9682B72F53EB0E31 /* HomeView.swift */; };
+		AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6955227F30F04FA604BF89A /* PersonalizationStores.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
 		D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2791865DF65073E3B5E7363 /* RecordingHUD.swift */; };
@@ -59,6 +60,7 @@
 		928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-silero-v5.1.2.bin"; sourceTree = "<group>"; };
 		AB950BDB7B85E7982EEBA9C3 /* WhisperFramework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WhisperFramework; path = ../WhisperFramework; sourceTree = SOURCE_ROOT; };
 		C2791865DF65073E3B5E7363 /* RecordingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingHUD.swift; sourceTree = "<group>"; };
+		C6955227F30F04FA604BF89A /* PersonalizationStores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationStores.swift; sourceTree = "<group>"; };
 		D827068F08399C4BBE6B8E14 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 				6994CE01136A2B690BB52D3B /* LlmModel.swift */,
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
+				C6955227F30F04FA604BF89A /* PersonalizationStores.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
 				D827068F08399C4BBE6B8E14 /* RootView.swift */,
 				5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */,
@@ -237,6 +240,7 @@
 				E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */,
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
+				AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
 				951B3986DD855937EAEB3D41 /* RootView.swift in Sources */,
 				0C46E60281CEEC51228E45EE /* STTFactory.swift in Sources */,

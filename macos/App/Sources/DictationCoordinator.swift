@@ -189,12 +189,22 @@ final class DictationCoordinator {
         hud.update(.transcribing)
 
         let stt = STTFactory.make()
+        // Personalization L1: bias STT toward the user's vocab, then snap mis-hearings back.
+        let bias = VocabStore.shared.biasTerms
+        let vocab = VocabStore.shared.entries
         Task { @MainActor in
             do {
-                let raw = try await stt.transcribe(samples, sampleRate: 16000)
-                let cleaned = TextProcessor.process(raw)
-                // Optional on-device LLM polish on top of the deterministic cleanup.
-                let polished = await applyPolish(cleaned)
+                let raw = try await stt.transcribe(samples, sampleRate: 16000, bias: bias)
+                let corrected = VocabCorrector.correct(raw, vocab)
+                let cleaned = TextProcessor.process(corrected)
+                let category = AppContext.categoryFor(targetApp?.bundleIdentifier, cleaned)
+                // Optional on-device LLM polish (+ L3 corpus few-shot) on top of cleanup.
+                let polished = await applyPolish(cleaned, category: category)
+                // Record the accepted dictation as personalization fuel (L2 corpus).
+                CorpusStore.shared.record(
+                    cleaned: polished, kept: polished, category: category.key,
+                    edited: false, at: Date().timeIntervalSince1970
+                )
                 deliver(polished)
             } catch let error as STTError {
                 state = .idle
@@ -212,17 +222,21 @@ final class DictationCoordinator {
     /// polish level and its model is downloaded. Falls back to the input on any miss (no model,
     /// load failure, or an over-edit guard trip — handled inside `LocalLLMEngine`). The focused
     /// app sets the tone category.
-    private func applyPolish(_ text: String) async -> String {
+    private func applyPolish(_ text: String, category: AppContext.Category) async -> String {
         let level = settings.polishLevel
         guard level != .off else { return text }
         let manager = LlmModelManager.shared
         let model = settings.llmModel
         guard manager.isDownloaded(model) else { return text }
-        let category = AppContext.categoryFor(targetApp?.bundleIdentifier, text)
+        // L3: inject the closest past corrections as few-shot examples.
+        let fewShot = CorrectionCorpus.fewShotBlock(
+            CorpusStore.shared.similar(query: text, category: category.key, k: 2)
+        )
         return await LocalLLMEngine.shared.polish(
             text, level: level, category: category,
             modelPath: manager.fileURL(for: model).path,
-            isFinetune: model.isFinetune
+            isFinetune: model.isFinetune,
+            fewShot: fewShot
         )
     }
 

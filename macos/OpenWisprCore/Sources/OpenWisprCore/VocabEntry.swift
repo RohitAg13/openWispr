@@ -9,7 +9,7 @@ import Foundation
 ///   Fuzzy/phonetic matching also catches unlisted mishearings.
 ///
 /// Faithful port of the Kotlin `VocabEntry` data class (value-type semantics).
-public struct VocabEntry: Equatable {
+public struct VocabEntry: Equatable, Codable {
     public let canonical: String
     public let aliases: [String]
     /// Optional text-expansion. When set, this is a *snippet*: speaking `canonical`
