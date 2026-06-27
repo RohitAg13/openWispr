@@ -18,8 +18,14 @@ DERIVED="$APPDIR/build-release"
 
 mkdir -p "$OUT"
 echo "[1/3] Building Release..."
+# Signing identity: defaults to the local self-signed identity, but CI (which has no keychain
+# identity) overrides SIGN_IDENTITY="-" for ad-hoc signing. Ad-hoc still produces a runnable
+# .app; it's just not notarized (see NOTARIZATION below).
+SIGN_IDENTITY="${SIGN_IDENTITY:-OpenWispr Self-Signed}"
 xcodebuild -project "$APPDIR/OpenWispr.xcodeproj" -scheme OpenWispr \
-    -configuration Release -derivedDataPath "$DERIVED" clean build >/dev/null
+    -configuration Release -derivedDataPath "$DERIVED" \
+    CODE_SIGN_IDENTITY="$SIGN_IDENTITY" CODE_SIGN_STYLE=Manual \
+    clean build >/dev/null
 
 APP="$DERIVED/Build/Products/Release/OpenWispr.app"
 if [ ! -d "$APP" ]; then

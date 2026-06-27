@@ -16,6 +16,21 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing is driven by environment variables so the keystore never lives in the
+    // repo — CI decodes it from a secret and exports these. Locally (vars unset) the release
+    // build is simply left unsigned; debug builds use the standard debug keystore as always.
+    val releaseKeystore = System.getenv("OPENWISPR_KEYSTORE_FILE")
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("OPENWISPR_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("OPENWISPR_KEY_ALIAS")
+                keyPassword = System.getenv("OPENWISPR_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -23,6 +38,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

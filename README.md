@@ -39,6 +39,16 @@ Both native apps share one deterministic-cleanup pipeline contract (the Android 
 package is ported 1:1 to Swift in `macos/OpenWisprCore`) and one prompt/tone contract
 (see [`shared/prompts/`](shared/prompts/)), so behavior stays in sync across platforms.
 
+## Download
+
+Grab the latest build from the [**Releases**](../../releases) page:
+
+- **Android** — download the `.apk` and sideload it (enable "Install unknown apps" for your
+  browser or files app, then open it). arm64 devices only.
+- **macOS** — download the `.dmg`, drag OpenWispr to Applications. The app is self-signed (not
+  notarized yet), so on first launch right-click it → **Open** once to clear Gatekeeper (or run
+  `xattr -dr com.apple.quarantine /Applications/OpenWispr.app`).
+
 ## How it works
 
 ```
