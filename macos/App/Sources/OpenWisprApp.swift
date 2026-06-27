@@ -18,6 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // @MainActor coordinator; we're on the main thread in this delegate callback.
         MainActor.assumeIsolated {
+            #if DEBUG
+            // Headless Tier-2 benchmark mode: run the datasets through the real pipeline and exit,
+            // never surfacing UI. Debug-only; release builds don't compile the bench bridge.
+            if let inv = BenchDump.parse(CommandLine.arguments) {
+                Task { await BenchDump.run(inv); NSApp.terminate(nil) }
+                return
+            }
+            #endif
             // The hotkey/coordinator and the main window controller exist for the whole session
             // regardless — but on first run we show guided setup first and the main window only
             // once it's done, so a new user isn't dropped into a Home screen that can't dictate.

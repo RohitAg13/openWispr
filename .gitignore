@@ -46,3 +46,6 @@ macos/App/build-release/
 macos/App/build-eval/
 macos/dist/
 *.dmg
+
+# Tier-2 benchmark debug build (research branch)
+macos/App/build-bench/
