@@ -49,5 +49,6 @@ DerivedData/
 
 # macOS packaging artifacts (Release build + .dmg output)
 macos/App/build-release/
+macos/App/build-eval/
 macos/dist/
 *.dmg
