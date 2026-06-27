@@ -28,7 +28,11 @@ final class SileroVAD: VAD {
     init?(modelPath: String, frameSamples: Int = 512) {
         self.frameSamples = frameSamples
         var params = whisper_vad_default_context_params()
-        params.use_gpu = true
+        // Run the VAD on CPU. The Metal backend aborts (ggml_abort → SIGABRT, not a nil return,
+        // so the EnergyVAD fallback can't catch it) while scheduling this tiny model's graph on
+        // some GPUs (seen on M2 / macOS 14.5). The Silero model is an ~865 KB LSTM stepping 512
+        // samples at a time — CPU is more than fast enough and it sidesteps the crash entirely.
+        params.use_gpu = false
         let ctx = modelPath.withCString { whisper_vad_init_from_file_with_params($0, params) }
         guard let ctx else { return nil }
         self.vctx = ctx
