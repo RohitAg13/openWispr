@@ -82,6 +82,13 @@ actor LlamaContext {
         }
         if promptTokens.isEmpty { return "" }
 
+        // Reset the KV cache so this completion starts at position 0. The context is reused warm
+        // across takes (model cached in `LocalLLMEngine`); without this, the previous run's tokens
+        // remain in the cache and `llama_decode` rejects the new prompt with non-consecutive
+        // positions ("the tokens ... have inconsistent sequence positions"), so every completion
+        // after the first would fail and silently fall back to the un-polished text.
+        llama_memory_clear(llama_get_memory(context), true)
+
         // Decode the prompt in one batch; only the last token needs logits.
         clearBatch()
         for (i, tok) in promptTokens.enumerated() {
