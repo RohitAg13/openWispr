@@ -13,6 +13,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: DictationCoordinator?
     private var mainWindowController: MainWindowController?
+    private var onboardingController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // @MainActor coordinator; we're on the main thread in this delegate callback.
@@ -29,19 +30,74 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
+            // The hotkey/coordinator and the main window controller exist for the whole session
+            // regardless — but on first run we show guided setup first and the main window only
+            // once it's done, so a new user isn't dropped into a Home screen that can't dictate.
             coordinator = DictationCoordinator()
             let controller = MainWindowController()
             mainWindowController = controller
             OpenWisprWindows.mainWindowController = controller
-            // Show the main "Home" window at launch.
-            controller.showAndFocus()
+            OpenWisprWindows.replayOnboarding = { [weak self] in self?.showOnboarding() }
+
+            // `--onboarding` forces the guided setup (for previewing / re-running it).
+            let forceOnboarding = CommandLine.arguments.contains("--onboarding")
+            if AppSettings.shared.hasCompletedOnboarding && !forceOnboarding {
+                controller.showAndFocus()
+            } else {
+                showOnboarding()
+            }
         }
     }
+
+    /// Present first-run onboarding; on completion, persist the flag and surface the main window.
+    @MainActor private func showOnboarding() {
+        let onboarding = OnboardingWindowController { [weak self] in
+            AppSettings.shared.hasCompletedOnboarding = true
+            self?.onboardingController?.close()
+            self?.onboardingController = nil
+            self?.mainWindowController?.showAndFocus()
+        }
+        onboardingController = onboarding
+        onboarding.showAndFocus()
+    }
+}
+
+/// Hosts the first-run `OnboardingView` in a centered, fixed-size window. Like the main window
+/// it's an AppKit `NSWindow` (an accessory app has no scene to open at launch).
+@MainActor
+final class OnboardingWindowController {
+    private let window: NSWindow
+
+    init(onFinish: @escaping () -> Void) {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 560),
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Welcome to OpenWispr"
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.contentView = NSHostingView(rootView: OnboardingView(settings: .shared, onFinish: onFinish))
+        self.window = window
+    }
+
+    func showAndFocus() {
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+    }
+
+    func close() { window.close() }
 }
 
 /// Entry points for opening/focusing the main window from anywhere (launch, menu bar).
 enum OpenWisprWindows {
     @MainActor static weak var mainWindowController: MainWindowController?
+    /// Set by `AppDelegate` so Settings can re-run the first-run onboarding flow.
+    @MainActor static var replayOnboarding: (() -> Void)?
 
     @MainActor static func openMain() {
         mainWindowController?.showAndFocus()

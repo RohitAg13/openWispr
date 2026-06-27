@@ -107,6 +107,19 @@ struct SettingsView: View {
                     StyleMemoryView()
                 }
 
+                // MARK: Setup
+                settingsGroup(header: "Setup") {
+                    HStack {
+                        Text("Re-run the first-run setup walkthrough.")
+                            .font(OW.ui(13))
+                            .foregroundStyle(OW.textDim)
+                        Spacer()
+                        Button("Replay setup") { OpenWisprWindows.replayOnboarding?() }
+                            .buttonStyle(OWSecondaryButtonStyle())
+                    }
+                    .padding(14)
+                }
+
                 rowNote("Changes apply immediately — the new hotkey works right away.")
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 8)

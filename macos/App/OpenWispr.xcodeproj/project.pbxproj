@@ -21,6 +21,7 @@
 		4085C32016FC574C2CD66C12 /* EvalDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853E79D1F78FD2C6520A3970 /* EvalDump.swift */; };
 		5FAF1F31DC1DAD60EA84AEDB /* WhisperSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */; };
 		610E71F926A1145E62EE0D78 /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */; };
+		675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */; };
 		78E2CA50E630ED2A8182A0E2 /* WhisperModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B19D8A624CAF050B187238A /* WhisperModel.swift */; };
 		79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */; };
 		837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */; };
@@ -73,6 +74,7 @@
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
 		EF81E4A2F234EA887979354C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +124,7 @@
 				6FD83732B416F83A22F9F882 /* LlamaContext.swift */,
 				6994CE01136A2B690BB52D3B /* LlmModel.swift */,
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
+				F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 				443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */,
 				C6955227F30F04FA604BF89A /* PersonalizationStores.swift */,
@@ -253,6 +256,7 @@
 				1AA45ACABE366CEE2DC552ED /* LlamaContext.swift in Sources */,
 				E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */,
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
+				675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 				EF648D5DF1514550D65165DE /* PersonalDictionaryView.swift in Sources */,
 				AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */,

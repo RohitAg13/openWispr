@@ -102,6 +102,7 @@ final class AppSettings: ObservableObject {
         static let polishLevel = "polishLevel"
         static let llmModel = "llmModel"
         static let vadSensitivity = "vadSensitivity"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
     // MARK: - Persisted properties
@@ -137,6 +138,12 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(vadSensitivity.rawValue, forKey: Key.vadSensitivity) }
     }
 
+    /// Whether the first-run onboarding flow has been completed. Drives whether the app shows
+    /// the guided setup (permissions, engine, shortcut) or the main window at launch.
+    @Published var hasCompletedOnboarding: Bool {
+        didSet { defaults.set(hasCompletedOnboarding, forKey: Key.hasCompletedOnboarding) }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -164,6 +171,7 @@ final class AppSettings: ObservableObject {
             .flatMap(LlmModel.init(rawValue:)) ?? .qwen15
         vadSensitivity = defaults.string(forKey: Key.vadSensitivity)
             .flatMap(VADSensitivity.init(rawValue:)) ?? .medium
+        hasCompletedOnboarding = defaults.bool(forKey: Key.hasCompletedOnboarding)
     }
 
     // MARK: - Helpers
