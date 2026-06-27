@@ -113,5 +113,24 @@
             </intent-filter>
         </receiver>
 
+        <!-- Tier-3 on-device benchmark bridge (research harness; adb-driven). -->
+        <receiver
+            android:name=".EvalReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.voicerewriter.RUN_EVAL_DUMP" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Foreground runner for the benchmark so the LLM-heavy sweep survives LMK. -->
+        <service
+            android:name=".EvalService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="ondevice_benchmark" />
+        </service>
+
     </application>
 </manifest>
