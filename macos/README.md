@@ -48,9 +48,9 @@ bias ranking, code-mode detection, category mapping). 61 tests total.
 
 A SwiftUI menu-bar app (`MenuBarExtra`, `LSUIElement` — no Dock icon) that depends on
 `OpenWisprCore`. **Non-sandboxed** on purpose: the Accessibility API can't drive other
-apps' text fields from inside the App Sandbox (same as the cleanup pipeline). Today it shows a small live
-demo of the deterministic cleanup, proving the core is wired into the app bundle; the real
-dictation UI replaces it as the audio/STT/insert layers land.
+apps' text fields from inside the App Sandbox. It hosts the full dictation flow — audio
+capture, STT, deterministic cleanup, optional on-device LLM polish, and Accessibility
+auto-insert.
 
 ```bash
 cd macos/App
@@ -196,15 +196,12 @@ via the vendored `llama.xcframework`. Files:
 
 The macOS deployment target is **13.3** (both vendored xcframeworks' macOS slice min-OS).
 
-## Roadmap (next)
+## Status
 
-Mirroring the Android stack and the the cleanup pipeline blueprint:
-- **Personalization** — the corpus / few-shot bias (L1–L3, see
-  [`../docs/personalization.md`](../docs/personalization.md)) feeding the polish prompt.
-- **Silero VAD** — replace `EnergyVAD` with the ONNX Silero v5 model, same `VAD` protocol.
-- **App polish** — overlay/HUD, brand from [`../design_assets`](../design_assets).
-- **Eval bridge** — a macOS analogue of Android's `EvalDumpReceiver` so `../eval` scores
-  this port on the same datasets.
+The macOS app implements the full dictation flow: Apple Speech + whisper.cpp STT, Silero VAD,
+the deterministic cleanup pipeline (`OpenWisprCore`), optional on-device LLM polish, the
+personalization layers (L1–L3, see [`../docs/personalization.md`](../docs/personalization.md)),
+dictation history, and first-run onboarding.
 
 ## Reference
 

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Converts spoken number words into digit form. Port of the cleanup pipeline's NumberNormalizer.
+/// Converts spoken number words into digit form. Swift port of the Android `NumberNormalizer`.
 enum NumberNormalizer {
 
     static func normalize(_ text: String) -> String {

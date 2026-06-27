@@ -2,8 +2,7 @@ package com.voicerewriter.textproc
 
 /**
  * Resolves spoken self-corrections, keeping only the corrected version. A
- * conservative Kotlin subset of the cleanup pipeline's SelfCorrectionDetector
- * (github.com/openwispr) — it ports the two high-value, low-risk
+ * conservative detector that keeps only the two high-value, low-risk
  * behaviors and deliberately errs toward leaving text unchanged when unsure:
  *
  *  1. **Standalone restarts** ("scratch that", "actually no", "never mind") that
@@ -11,7 +10,7 @@ package com.voicerewriter.textproc
  *  2. **Inline repairs** ("send it to mark, I mean john") splice the correction
  *     over the erroneous fragment using first-token overlap.
  *
- * The full the cleanup pipeline detector has far more nuance (weak-overlap copula checks,
+ * A fuller detector could add more nuance (weak-overlap copula checks,
  * idiom handling, per-marker punctuation gating); we keep the safe core.
  */
 object SelfCorrectionDetector {

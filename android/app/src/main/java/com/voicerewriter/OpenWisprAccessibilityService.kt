@@ -31,7 +31,7 @@ import android.view.accessibility.AccessibilityWindowInfo
 class OpenWisprAccessibilityService : AccessibilityService() {
 
     companion object {
-        private const val TAG = "RewriterA11y"
+        private const val TAG = "OpenWisprA11y"
 
         @Volatile
         private var instance: OpenWisprAccessibilityService? = null

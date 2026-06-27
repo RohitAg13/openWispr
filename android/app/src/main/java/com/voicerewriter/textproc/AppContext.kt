@@ -7,7 +7,6 @@ package com.voicerewriter.textproc
  * broader category used to tune the optional LLM-polish prompt.
  *
  * The package map is partial/substring-based for robustness across OEM variants.
- * Validated against this user's real usage in docs/wispr-learnings.md.
  */
 object AppContext {
 

@@ -54,20 +54,10 @@ blind to paraphrase (won't connect "gonna"→"going to" from a learned "wanna"�
 
 When the corpus is large enough, retrain a genuinely better cleanup model.
 
-Export the corrected samples from the device — two ways:
-- **In-app:** Settings → **Style memory** → **View** → **Export** (shares the JSONL and
-  also writes it to the app's external files dir). **Clear all** wipes the corpus.
-- **adb** (for scripting):
-
-```bash
-# 1. Export the corrected samples from the device
-adb shell am broadcast -a com.voicerewriter.EXPORT_CORPUS -n com.voicerewriter/.EvalDumpReceiver
-adb pull /sdcard/Android/data/com.voicerewriter/files/corpus/finetune.jsonl
-
-# 2. Train in the SEPARATE repo (never in this one), then re-gate before shipping
-#    openwispr-finetune: prepare_data.py merges this with the base dataset → Unsloth LoRA → GGUF
-#    eval/run_eval.py --gate finetuned:<gguf> --judge   # must PASS before the app points at it
-```
+Export the corrected samples from the device: Settings → **Style memory** → **View** →
+**Export** shares the JSONL (and writes it to the app's external files dir); **Clear all**
+wipes the corpus. Training happens in the separate `openwispr-finetune` repo (never in this
+one), and the resulting GGUF is published for the app to download.
 
 `CorrectionCorpus.exportJsonl` emits only **edited** rows as `{context, input, output}`
 (`context` = app category, `input` = pipeline output, `output` = what you kept). Verbatim
@@ -75,7 +65,7 @@ accepts are excluded — they'd just teach the model to echo itself.
 
 > Privacy: the export contains your dictation text. It's written to the app's external
 > files dir only on explicit broadcast, and the personal mined corpus must never be
-> committed (same rule as the Wispr data: gitignored, separate repo).
+> committed — keep it gitignored and out of this repo.
 
 ## Where each layer lives
 
@@ -84,4 +74,4 @@ accepts are excluded — they'd just teach the model to echo itself.
 | L1 | `VocabRepository.kt` (`learnFromEdit`, `learnAlias`), `textproc/VocabCorrector.kt` (`correct`, `biasPrompt`) |
 | L2 | `CorrectionCorpus.kt` (`record`), wired at the 3 accept points in `RewriteActivity.kt` |
 | L3 | `CorrectionCorpus.similar`/`rank`/`score`, `RewriteActivity.fewShotBlock` + prompt assembly in `process()` |
-| L4 | `CorrectionCorpus.exportJsonl`, `EvalDumpReceiver` `EXPORT_CORPUS` action; training in `openwispr-finetune` |
+| L4 | `CorrectionCorpus.exportJsonl` (in-app export); training in `openwispr-finetune` |

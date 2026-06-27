@@ -2,7 +2,7 @@ package com.voicerewriter.textproc
 
 import android.util.Log
 
-/** Config for the deterministic pipeline. Inspired by the cleanup pipeline's TextProcessingConfig. */
+/** Config for the deterministic pipeline. */
 data class TextProcessingConfig(
     val selfCorrectionEnabled: Boolean = true,
     val fillerRemovalEnabled: Boolean = true,
@@ -33,8 +33,7 @@ data class TextProcessingResult(val output: String, val stages: List<StageResult
 
 /**
  * Orchestrates the deterministic, zero-latency cleanup pipeline that runs on a raw
- * Whisper transcript before (and independently of) any LLM. Kotlin port of the cleanup pipeline's
- * TextProcessor (github.com/openwispr). Order matters:
+ * Whisper transcript before (and independently of) any LLM. Order matters:
  *
  *   1. self-correction  (runs first, before filler removal eats correction markers)
  *   2. filler removal

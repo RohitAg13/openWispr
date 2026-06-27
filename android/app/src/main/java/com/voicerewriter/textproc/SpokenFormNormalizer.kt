@@ -1,8 +1,8 @@
 package com.voicerewriter.textproc
 
 /**
- * Converts spoken punctuation and symbol names to their written forms. Kotlin
- * port of the cleanup pipeline's SpokenFormNormalizer (github.com/openwispr).
+ * Converts spoken punctuation and symbol names to their written forms. Part of the
+ * deterministic cleanup pipeline.
  *
  * Handles unambiguous patterns ("question mark" -> "?") always, and context-
  * dependent ones (URLs, paths, email, command flags, label colons) only when

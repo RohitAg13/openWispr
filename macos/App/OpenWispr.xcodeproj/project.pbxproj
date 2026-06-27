@@ -18,7 +18,6 @@
 		34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F7A241C06B014563A413FD /* LocalLLMEngine.swift */; };
 		3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */; };
 		3FDDC578961C8AA92CD90476 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D58E56F2D386A113D12352B /* AppSettings.swift */; };
-		4085C32016FC574C2CD66C12 /* EvalDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853E79D1F78FD2C6520A3970 /* EvalDump.swift */; };
 		5FAF1F31DC1DAD60EA84AEDB /* WhisperSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */; };
 		610E71F926A1145E62EE0D78 /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */; };
 		675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */; };
@@ -63,7 +62,6 @@
 		76AE78CAEE8553945C7C44BF /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
 		7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperSTT.swift; sourceTree = "<group>"; };
 		83F7A241C06B014563A413FD /* LocalLLMEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngine.swift; sourceTree = "<group>"; };
-		853E79D1F78FD2C6520A3970 /* EvalDump.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalDump.swift; sourceTree = "<group>"; };
 		8D58E56F2D386A113D12352B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-silero-v5.1.2.bin"; sourceTree = "<group>"; };
 		AB950BDB7B85E7982EEBA9C3 /* WhisperFramework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WhisperFramework; path = ../WhisperFramework; sourceTree = SOURCE_ROOT; };
@@ -117,7 +115,6 @@
 				5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */,
 				D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
-				853E79D1F78FD2C6520A3970 /* EvalDump.swift */,
 				7478C1EA9682B72F53EB0E31 /* HomeView.swift */,
 				3D7C8EE5B1CD881D96AF429D /* HotKey.swift */,
 				27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */,
@@ -249,7 +246,6 @@
 				960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */,
 				91D543311076B601F0D30C86 /* DictationHistoryStore.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
-				4085C32016FC574C2CD66C12 /* EvalDump.swift in Sources */,
 				9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */,
 				CF0936F2F734305831815C23 /* HotKey.swift in Sources */,
 				955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */,

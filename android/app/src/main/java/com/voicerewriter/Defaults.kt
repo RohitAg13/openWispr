@@ -1,9 +1,7 @@
 package com.voicerewriter
 
 /**
- * Direct port of the extension's defaults.js — actions, prompts and providers.
- * Keeping the ids/strings identical means the Android app produces the same
- * rewrites as the Chrome extension for the same settings.
+ * The default actions, prompts, and providers used by the rewrite / dictation flow.
  */
 
 data class RewriteAction(val id: String, val title: String)

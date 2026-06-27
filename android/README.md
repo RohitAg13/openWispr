@@ -1,12 +1,12 @@
 # OpenWispr — Android
 
-A Wispr Flow-style voice tool plus the original text-rewrite flow, native on
+A Wispr Flow-style voice tool with a text-rewrite flow, native on
 Android. **Tap the floating bubble → speak → the cleaned-up / rewritten text is
 typed straight into the field you're in.** Or select text in any app → tap
 **Rewrite** in the selection toolbar → pick an action → the rewrite replaces the
 selection in place.
 
-It reuses the extension's exact prompts, voice profile, anti-AI guardrails, and
+It ships a tuned set of prompts, a voice profile, anti-AI guardrails, and
 OpenAI-compatible gateway logic (Vercel AI Gateway / OpenRouter / Anthropic /
 custom). Both stages can run **fully on-device**: speech-to-text via whisper.cpp and the
 rewrite/cleanup via llama.cpp (a small local model) — or via the cloud
@@ -131,7 +131,7 @@ adb shell am broadcast -a com.voicerewriter.STOP_BUBBLE  -n com.voicerewriter/.B
 
 - In-place replace works in editable fields. Some apps restrict the action or
   mark selections read-only; there you get clipboard copy.
-- The six prompts are the extension defaults (not yet editable in the UI —
+- The six prompts are the built-in defaults (not yet editable in the UI —
   edit `Defaults.DEFAULT_PROMPTS` to change them).
 - The API key lives in app-private DataStore. For a personal sideloaded build
   that's fine; swap to EncryptedSharedPreferences if you want at-rest encryption.

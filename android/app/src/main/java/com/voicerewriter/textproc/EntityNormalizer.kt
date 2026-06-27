@@ -4,7 +4,7 @@ package com.voicerewriter.textproc
  * Deterministic fixes for spoken entities (names, acronyms) that STT renders as
  * separated letters. Conservative and cue-gated to avoid false positives.
  *
- * Part of Phase 1 of docs/names-emails-plan.md. The riskier entity rules
+ * The riskier entity rules
  * (multi-word email domains, NATO "B as in boy") are intentionally NOT here —
  * they're too ambiguous for a deterministic pass and are deferred to the
  * personal-vocabulary phase.

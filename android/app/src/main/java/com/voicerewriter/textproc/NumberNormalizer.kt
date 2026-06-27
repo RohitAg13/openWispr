@@ -1,8 +1,8 @@
 package com.voicerewriter.textproc
 
 /**
- * Converts spoken number words into digit form. Kotlin port of the cleanup pipeline's
- * NumberNormalizer (github.com/openwispr).
+ * Converts spoken number words into digit form. Part of the deterministic
+ * cleanup pipeline.
  *
  * Handles cardinals ("one hundred twenty three" -> "123"), ordinals
  * ("twenty first" -> "21st"), and decimals ("three point one four" -> "3.14").

@@ -22,13 +22,7 @@ scratch/
 claude_runtime.txt
 claude_session.txt
 
-# eval build artifacts
-eval/textproc_cli/textproc.jar
-eval/runs/
 __pycache__/
-
-# personal usage-mined eval data (Wispr) — never commit
-eval/datasets/local/
 
 # Android build artifacts are ignored by android/.gitignore; this is a backstop
 **/build/

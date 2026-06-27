@@ -18,18 +18,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // @MainActor coordinator; we're on the main thread in this delegate callback.
         MainActor.assumeIsolated {
-            // Headless eval bridge: `--eval-dump <in> <out>` runs the datasets through the real
-            // pipeline and exits, without showing the UI or grabbing the hotkey. (Android does
-            // this via an adb-broadcast `EvalDumpReceiver`; on macOS it's a launch argument.)
-            if let inv = EvalDump.parse(CommandLine.arguments) {
-                NSApp.setActivationPolicy(.prohibited)   // no menu-bar icon / Dock during the run
-                Task { @MainActor in
-                    await EvalDump.run(inv)
-                    NSApp.terminate(nil)
-                }
-                return
-            }
-
             // The hotkey/coordinator and the main window controller exist for the whole session
             // regardless — but on first run we show guided setup first and the main window only
             // once it's done, so a new user isn't dropped into a Home screen that can't dictate.

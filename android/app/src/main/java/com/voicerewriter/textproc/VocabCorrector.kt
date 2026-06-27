@@ -11,8 +11,6 @@ import kotlin.math.max
  *  - Exact alias/canonical match (case-insensitive, whole word) -> always replace.
  *  - Fuzzy match -> Soundex phonetic equality + small edit distance, gated against
  *    common English words and short tokens, so "right"/"to"/"one" are never touched.
- *
- * Phase 2 of docs/names-emails-plan.md.
  */
 object VocabCorrector {
 

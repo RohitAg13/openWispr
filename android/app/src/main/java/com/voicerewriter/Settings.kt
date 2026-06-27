@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * How hard the LLM polish edits, replacing the old on/off toggle. Mirrors the cleanup pipeline's
- * CleanupLevel — the `instruction` is appended to the dictation polish prompt. OFF skips
+ * How hard the LLM polish edits, replacing the old on/off toggle. A graded
+ * cleanup level — the `instruction` is appended to the dictation polish prompt. OFF skips
  * the model entirely (deterministic-only). The fine-tune ignores the level (it runs its
  * trained behavior); levels steer the cloud / generic on-device models.
  */
@@ -35,7 +35,7 @@ enum class PolishLevel(val key: String, val label: String, val blurb: String, va
     }
 }
 
-/** Port of DEFAULT_SETTINGS from defaults.js. */
+/** The app's default settings. */
 data class Settings(
     val provider: String = Defaults.DEFAULT_PROVIDER,
     val model: String = Defaults.DEFAULT_MODEL,
@@ -49,7 +49,7 @@ data class Settings(
     val sttEndpoint: String = "", // only used when sttProvider == "custom"
     val sttKey: String = "",
     val sttModel: String = "",
-    // --- OpenWispr behavior ---
+    // --- Dictation / rewrite behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
     val polishLevel: PolishLevel = PolishLevel.OFF, // LLM polish intensity (replaces the old on/off toggle)
@@ -63,7 +63,7 @@ data class Settings(
      */
     val llmPolishEnabled: Boolean
         get() = polishLevel != PolishLevel.OFF
-    /** Mirrors the extension's gate: needs a key before it can rewrite. */
+    /** Cloud gate: needs an API key before it can rewrite via a cloud provider. */
     val isConfigured: Boolean get() = apiKey.isNotBlank()
 
     /** Voice features need a speech-to-text key as well as the LLM key. */

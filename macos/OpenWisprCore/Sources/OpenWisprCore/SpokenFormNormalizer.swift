@@ -1,7 +1,7 @@
 import Foundation
 
-/// Converts spoken punctuation and symbol names to their written forms. Port of
-/// the cleanup pipeline's SpokenFormNormalizer.
+/// Converts spoken punctuation and symbol names to their written forms. Swift port of
+/// the Android `SpokenFormNormalizer`.
 enum SpokenFormNormalizer {
 
     static func normalize(_ text: String, unambiguousOnly: Bool = false) -> String {

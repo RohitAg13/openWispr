@@ -424,7 +424,7 @@ class RewriteActivity : ComponentActivity() {
             // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a
             // period on a single casual message reads as terse/formal, which people don't want.
             val cleaned = dropChatTerminalPeriod(cleaned0, category)
-            // Guards (ported from the cleanup pipeline's LocalLLMProcessor): skip the LLM where it tends to
+            // Guards: skip the LLM where it tends to
             // harm rather than help — polish off, very short input, or code/terminal context
             // (the deterministic stage already handles those; code only goes to the LLM at FULL).
             val wordCount = cleaned.trim().split(Regex("\\s+")).count { it.isNotBlank() }

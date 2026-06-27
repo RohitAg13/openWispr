@@ -1,7 +1,7 @@
 import Foundation
 
 /// Over-edit / runaway guards for the on-device LLM polish step. A faithful port of the
-/// guard half of Android `RewriteEngine` (itself ported from the cleanup pipeline's `LocalLLMProcessor`):
+/// guard half of Android `RewriteEngine`:
 /// tiny local models invent content, balloon short fragments, and loop on their own output,
 /// so these decide when to trust a rewrite and how to salvage a looped one. Pure & deterministic.
 public enum PolishGuards {
@@ -28,7 +28,7 @@ public enum PolishGuards {
     }
 
     /// True if `output` is a safe cleanup of `input`: it didn't balloon with invented content
-    /// and kept enough of the input's words. Mirrors the the cleanup pipeline content-drop guard (≥60% of
+    /// and kept enough of the input's words. Applies a content-drop guard (≥60% of
     /// input words kept, relaxed to 40% on self-correction) plus a length-blowup check.
     public static func preservesContent(input: String, output: String, relaxed: Bool) -> Bool {
         let inW = contentWords(input)

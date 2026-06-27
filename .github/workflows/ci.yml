@@ -24,7 +24,3 @@ jobs:
       - name: Assemble debug + run unit tests
         working-directory: android
         run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
-
-# Note: the eval harness (eval/textproc_cli/build.sh) single-sources the deterministic
-# pipeline from android/ and compiles it with Android Studio's bundled kotlinc, so it is
-# validated locally rather than in CI. See eval/README.md.

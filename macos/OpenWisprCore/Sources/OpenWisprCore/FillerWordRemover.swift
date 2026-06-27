@@ -1,7 +1,7 @@
 import Foundation
 
-/// Removes filler words using word-boundary-aware regex. Port of the cleanup pipeline's
-/// FillerWordRemover.
+/// Removes filler words using word-boundary-aware regex. Swift port of the Android
+/// `FillerWordRemover`.
 enum FillerWordRemover {
 
     /// Filler -> preceding words that mark it as a verb phrase (so keep it).

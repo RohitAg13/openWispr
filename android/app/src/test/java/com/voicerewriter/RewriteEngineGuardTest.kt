@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pins the over-edit guards ported from the cleanup pipeline's LocalLLMProcessor: the content-preservation
+ * Pins the over-edit guards: the content-preservation
  * check (drop / balloon) and self-correction detection that relaxes it.
  */
 class RewriteEngineGuardTest {

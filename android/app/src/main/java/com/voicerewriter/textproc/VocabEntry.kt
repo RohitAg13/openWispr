@@ -8,8 +8,6 @@ package com.voicerewriter.textproc
  * - [canonical]: the correct spelling to insert ("Rohit", "Kubernetes").
  * - [aliases]: explicit known mishearings ("row hit", "silyro") — always matched.
  *   Fuzzy/phonetic matching also catches unlisted mishearings.
- *
- * Part of Phase 2 of docs/names-emails-plan.md.
  */
 data class VocabEntry(
     val canonical: String,

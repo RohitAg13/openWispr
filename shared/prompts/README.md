@@ -2,7 +2,7 @@
 
 The dictation prompt, the fine-tune system prompt, the per-context tone fragments, and the
 cleanup-level instructions are **mirrored across several places**. They must stay byte-for-byte
-in sync — drift silently changes behavior and breaks the eval gate. This file is the human
+in sync — drift silently changes behavior. This file is the human
 source of truth and the index of every mirror.
 
 > No codegen today: each platform keeps its own literal copy. When you change any string
@@ -16,7 +16,6 @@ source of truth and the index of every mirror.
 | `FINETUNE_SYSTEM` + `FINETUNE_TONE` (the fine-tune's trained prompt) | `android/.../RewriteEngine.kt` |
 | Per-category tone fragments (`DEFAULT_TONE`) | `android/.../textproc/AppContext.kt` |
 | Cleanup-level instructions (`PolishLevel` Off/Light/Medium/Full) | `android/.../Settings.kt` |
-| Eval mirror of the above | `eval/prompts.py` |
 | Training system prompt + tone | `openwispr-finetune/common.py` (separate repo) |
 | macOS port | `macos/` (must mirror when implemented) |
 

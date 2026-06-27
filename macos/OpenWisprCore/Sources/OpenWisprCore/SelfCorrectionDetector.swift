@@ -1,7 +1,7 @@
 import Foundation
 
 /// Resolves spoken self-corrections, keeping only the corrected version. A
-/// conservative port of the cleanup pipeline's SelfCorrectionDetector.
+/// conservative Swift port of the Android `SelfCorrectionDetector`.
 enum SelfCorrectionDetector {
 
     /// Restart markers: when they form their own clause, drop everything before.

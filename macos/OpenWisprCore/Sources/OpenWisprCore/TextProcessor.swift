@@ -41,8 +41,8 @@ public struct TextProcessingResult {
     public let stages: [StageResult]
 }
 
-/// Orchestrates the deterministic, zero-latency cleanup pipeline. Port of the cleanup pipeline's
-/// TextProcessor.
+/// Orchestrates the deterministic, zero-latency cleanup pipeline. Swift port of the
+/// Android `textproc` pipeline.
 public enum TextProcessor {
 
     public static func process(

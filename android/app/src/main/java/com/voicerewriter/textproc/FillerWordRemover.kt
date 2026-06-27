@@ -1,8 +1,7 @@
 package com.voicerewriter.textproc
 
 /**
- * Removes filler words using word-boundary-aware regex. Kotlin port of the cleanup pipeline's
- * FillerWordRemover (github.com/openwispr).
+ * Removes filler words using word-boundary-aware regex.
  *
  * Handles single-word fillers ("um", "uh") and phrases ("you know"), then cleans
  * up the double spaces and orphaned commas removal leaves behind. Context-sensitive

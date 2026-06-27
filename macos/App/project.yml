@@ -45,7 +45,7 @@ targets:
         PRODUCT_NAME: OpenWispr
         INFOPLIST_FILE: Info.plist
         CODE_SIGN_ENTITLEMENTS: OpenWispr.entitlements
-        # Non-sandboxed (like the cleanup pipeline): the Accessibility API can't drive other
+        # Non-sandboxed: the Accessibility API can't drive other
         # apps' text fields from inside the App Sandbox. Hardened runtime off for dev.
         ENABLE_HARDENED_RUNTIME: NO
         GENERATE_INFOPLIST_FILE: NO
