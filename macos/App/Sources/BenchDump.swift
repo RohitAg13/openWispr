@@ -88,12 +88,17 @@ enum BenchDump {
             let cleaned = TextProcessor.process(corrected, isCodeContext: c.isCode)
             let category: AppContext.Category = c.isCode ? .code : .generic
             var output = cleaned
+            let gated = cfg.gate && !BenchGate.needsPolish(cleaned)   // skip LLM for clean input
             for run in 0..<repeats {
-                if !cfg.warm { LocalLLMEngine.shared.unload() }   // emulate reload-per-call
+                if !cfg.warm && !gated { LocalLLMEngine.shared.unload() }   // emulate reload-per-call
                 let t0 = DispatchTime.now()
-                output = await LocalLLMEngine.shared.polish(
-                    cleaned, level: .full, category: category,
-                    modelPath: modelPath, isFinetune: isFinetune, fewShot: "")
+                if gated {
+                    output = BenchGate.finish(cleaned)
+                } else {
+                    output = await LocalLLMEngine.shared.polish(
+                        cleaned, level: .full, category: category,
+                        modelPath: modelPath, isFinetune: isFinetune, fewShot: "")
+                }
                 let ms = elapsedMs(t0)
                 timings.append(timingLine(id: c.id, run: run, fields: ["polish_ms": ms, "total_ms": ms]))
             }
@@ -134,13 +139,14 @@ enum BenchDump {
                 if e2e {
                     let corrected = vocab.isEmpty ? transcript : VocabCorrector.correct(transcript, vocab)
                     let cleaned = TextProcessor.process(corrected, isCodeContext: false)
-                    if let mp = polishPath {
+                    let gated = cfg.gate && !BenchGate.needsPolish(cleaned)
+                    if let mp = polishPath, !gated {
                         let tp = DispatchTime.now()
                         text = await LocalLLMEngine.shared.polish(
                             cleaned, level: .full, category: .generic,
                             modelPath: mp, isFinetune: isFinetune, fewShot: "")
                         fields["polish_ms"] = elapsedMs(tp)
-                    } else { text = cleaned }
+                    } else { text = gated ? BenchGate.finish(cleaned) : cleaned }
                 }
                 fields["total_ms"] = elapsedMs(t0)
                 output = text

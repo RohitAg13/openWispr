@@ -34,6 +34,7 @@ enum BenchConfig {
         var nPredict: Int?
         var nThreads: Int32?
         var warm = true
+        var gate = false                    // skip the LLM when the deterministic output is clean
         // stt
         var whisperModelPath: String?
         var whisperModel = "base.en"
@@ -51,6 +52,7 @@ enum BenchConfig {
             if let n = polish["n_predict"] as? Int { p.nPredict = n }
             if let n = polish["n_threads"] as? Int { p.nThreads = Int32(n) }
             if let w = polish["warm"] as? Bool { p.warm = w }
+            if let g = polish["gate"] as? Bool { p.gate = g }
         }
         if let stt = obj["stt"] as? [String: Any] {
             p.whisperModelPath = (stt["model_path"] as? String).flatMap { $0.isEmpty ? nil : expand($0) }
