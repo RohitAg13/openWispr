@@ -24,6 +24,7 @@ class EvalReceiver : BroadcastReceiver() {
             putExtra("gate", intent.getBooleanExtra("gate", false))
             putExtra("repeats", intent.getIntExtra("repeats", 1))
             putExtra("engine", intent.getStringExtra("engine") ?: "cpu") // "cpu" | "gpu" (MLC/Adreno)
+            putExtra("stt", intent.getStringExtra("stt") ?: "") // e2e: "tiny"|"base"|"small"; blank = settings
             intent.getStringExtra("in")?.let { putExtra("in", it) }
             intent.getStringExtra("out")?.let { putExtra("out", it) }
         }

@@ -44,6 +44,7 @@ class EvalService : Service() {
         val gate = intent?.getBooleanExtra("gate", false) ?: false
         val repeats = (intent?.getIntExtra("repeats", 1) ?: 1).coerceAtLeast(1)
         val engine = intent?.getStringExtra("engine") ?: "cpu" // "cpu" (llama.cpp) | "gpu" (MLC/Adreno)
+        val sttModel = intent?.getStringExtra("stt") ?: "" // e2e mode: "tiny"|"base"|"small"; blank = settings
         val base = applicationContext.getExternalFilesDir(null)!!
         val inDir = File(intent?.getStringExtra("in") ?: File(base, "eval-in").path)
         val outDir = File(intent?.getStringExtra("out") ?: File(base, "eval-out").path)
@@ -51,7 +52,7 @@ class EvalService : Service() {
 
         scope.launch {
             try {
-                runEval(mode, gate, repeats, inDir, outDir, engine)
+                runEval(mode, gate, repeats, inDir, outDir, engine, sttModel)
             } catch (t: Throwable) {
                 Log.e(TAG, "eval failed", t)
             } finally {
@@ -82,14 +83,17 @@ class EvalService : Service() {
         return out
     }
 
-    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String) {
+    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, sttModel: String = "") {
         val gpu = engine == "gpu"
         val s0 = SettingsRepository(applicationContext).get()
         val settings = s0.copy(
             provider = if (gpu) "local-gpu" else "local",
             model = LlmModelManager.FINETUNE_MODEL_ID,
             polishLevel = PolishLevel.FULL,
+            sttModel = sttModel.ifBlank { s0.sttModel },
         )
+        if (mode == "e2e") { runE2E(gate, repeats, inDir, outDir, engine, settings); return }
+
         val cases = loadCases(inDir)
         Log.i(TAG, "start mode=$mode gate=$gate repeats=$repeats engine=$engine cases=${cases.size} model=${settings.model}")
 
@@ -144,6 +148,94 @@ class EvalService : Service() {
             ).toString()
         )
         Log.i(TAG, "done: ${cases.size} cases, gated $nGated/${cases.size} -> ${outDir.path}")
+    }
+
+    private data class AudioCase(val id: String, val wav: String)
+
+    private fun loadAudioCases(inDir: File): List<AudioCase> {
+        val out = ArrayList<AudioCase>()
+        val f = File(inDir, "audio.jsonl")
+        if (!f.exists()) return out
+        f.forEachLine { line ->
+            val s = line.trim()
+            if (s.isEmpty()) return@forEachLine
+            val o = JSONObject(s)
+            out.add(AudioCase(o.getString("id"), o.getString("wav")))
+        }
+        return out
+    }
+
+    /** Decode a 16 kHz mono PCM16 WAV into normalized float samples (skips the 44-byte header). */
+    private fun decodeWav(file: File): FloatArray {
+        val bytes = file.readBytes()
+        var dataOff = 44
+        // Find the "data" chunk in case of a non-canonical header.
+        var i = 12
+        while (i + 8 <= bytes.size) {
+            val id = String(bytes, i, 4, Charsets.US_ASCII)
+            val sz = (bytes[i + 4].toInt() and 0xFF) or ((bytes[i + 5].toInt() and 0xFF) shl 8) or
+                ((bytes[i + 6].toInt() and 0xFF) shl 16) or ((bytes[i + 7].toInt() and 0xFF) shl 24)
+            if (id == "data") { dataOff = i + 8; break }
+            i += 8 + sz
+        }
+        val n = (bytes.size - dataOff) / 2
+        return FloatArray(n) { k ->
+            val lo = bytes[dataOff + k * 2].toInt() and 0xFF
+            val hi = bytes[dataOff + k * 2 + 1].toInt()
+            ((hi shl 8) or lo) / 32768f
+        }
+    }
+
+    /** Full pipeline timing: WAV -> Whisper STT (CPU) -> det textproc -> gated LLM polish. */
+    private suspend fun runE2E(gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, settings: Settings) {
+        val gpu = engine == "gpu"
+        val sttId = settings.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL }
+        LocalWhisperStt.warm(applicationContext, sttId)
+        val cases = loadAudioCases(File(inDir, "audio"))
+        Log.i(TAG, "e2e start gate=$gate engine=$engine sttModel=$sttId cases=${cases.size}")
+        val results = StringBuilder(); val timings = StringBuilder(); var nGated = 0
+
+        for ((ci, c) in cases.withIndex()) {
+            val samples = decodeWav(File(File(inDir, "audio"), c.wav))
+            val durS = samples.size / AudioRecorder.SAMPLE_RATE.toFloat()
+            var output = ""; var sttMs = 0.0; var llmMs = 0.0; var gated = false; var sttStats = ""
+            for (run in 0 until repeats) {
+                val t0 = System.nanoTime()
+                val transcript = LocalWhisperStt.transcribe(applicationContext, settings, samples, null)
+                val t1 = System.nanoTime()
+                val det = TextProcessor.process(transcript, TextProcessingConfig(), isCodeContext = false)
+                gated = gate && !BenchGate.needsPolish(det)
+                output = if (gated) BenchGate.finish(det) else {
+                    val sb = StringBuilder()
+                    if (gpu) LocalGpuLlmEngine.streamWithPrompt(applicationContext, settings, "", det).collect { sb.append(it) }
+                    else LocalLlmEngine.streamWithPrompt(applicationContext, settings, "", det).collect { sb.append(it) }
+                    RewriteEngine.cleanOutput(sb.toString()).ifBlank { det }
+                }
+                val t2 = System.nanoTime()
+                sttMs = (t1 - t0) / 1_000_000.0; llmMs = (t2 - t1) / 1_000_000.0
+                sttStats = if (gpu && !gated) LocalGpuLlmEngine.lastStats else ""
+                timings.append(
+                    JSONObject(
+                        linkedMapOf(
+                            "id" to c.id, "run" to run, "cold" to (run == 0), "audio_s" to round1(durS.toDouble()),
+                            "stt_ms" to round1(sttMs), "llm_ms" to round1(llmMs),
+                            "total_ms" to round1(sttMs + llmMs), "gated" to gated,
+                            "engine" to engine, "stats" to sttStats
+                        )
+                    )
+                ).append('\n')
+            }
+            if (gated) nGated++
+            results.append(JSONObject(linkedMapOf("id" to c.id, "output" to output))).append('\n')
+            File(outDir, "results.jsonl").writeText(results.toString())
+            File(outDir, "timings.jsonl").writeText(timings.toString())
+            Log.i(TAG, "[${ci + 1}/${cases.size}] ${c.id} stt=${round1(sttMs)}ms llm=${round1(llmMs)}ms ${if (gated) "GATED" else ""} -> ${output.take(40)}")
+        }
+        File(outDir, "meta.json").writeText(
+            JSONObject(linkedMapOf("mode" to "e2e", "gate" to gate, "engine" to engine, "sttModel" to sttId,
+                "model" to settings.model, "count" to cases.size, "gated" to nGated)).toString()
+        )
+        Log.i(TAG, "e2e done: ${cases.size} cases, gated $nGated -> ${outDir.path}")
     }
 
     private fun round1(x: Double): Double = Math.round(x * 10.0) / 10.0
