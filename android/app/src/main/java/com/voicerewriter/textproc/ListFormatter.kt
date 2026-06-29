@@ -50,6 +50,14 @@ object ListFormatter {
             .map { Triple(it.range.first, it.range.last + 1, it.groupValues[1].toInt()) }.toList()
         buildList(text, digit, minRun = 2)?.let { return it }
 
+        // Bare digit markers ("1 prelinguistic 2 crying 3 cooing"): STT inverse-text-normalization
+        // (e.g. Parakeet) renders spoken "one, two, three" as digits with NO '.'/')'. Ambiguous
+        // (years, counts, durations), so require a consecutive run from 1 with ≥3 small (1-2 digit)
+        // markers, each followed by real content — buildList enforces non-empty items.
+        val bareDigit = Regex("(?<=^|\\s)(\\d{1,2})\\s+(?=\\S)").findAll(text)
+            .map { Triple(it.range.first, it.range.last + 1, it.groupValues[1].toInt()) }.toList()
+        buildList(text, bareDigit, minRun = 3)?.let { return it }
+
         // Spoken-word enumerators: ordinals ("first … second … third") or cardinals
         // ("one … two … three"). Both are ambiguous, so a list only forms from a consecutive
         // run starting at 1 with ≥3 items (and non-empty items — buildList enforces that, so

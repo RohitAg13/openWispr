@@ -73,4 +73,20 @@ class ListFormatterTest {
         // "one to three weeks" → markers 1 then 3, not consecutive → no list.
         assertEquals("one to three weeks of work", ListFormatter.format("one to three weeks of work"))
     }
+
+    @Test fun bareDigitsFormAList() {
+        // STT (e.g. Parakeet) renders spoken "one two three" as digits with no '.' separator.
+        assertEquals(
+            "the stages are\n1. prelinguistic\n2. crying\n3. cooing\n4. babbling\n5. gestures",
+            ListFormatter.format("the stages are 1 prelinguistic, 2 crying, 3 cooing, 4 babbling, 5 gestures"),
+        )
+    }
+
+    @Test fun twoBareDigitsAreNotEnough() {
+        assertEquals("I have 1 apple 2 oranges", ListFormatter.format("I have 1 apple 2 oranges"))
+    }
+
+    @Test fun nonConsecutiveBareDigitsAreNotAList() {
+        assertEquals("chapter 1 then chapter 5 later", ListFormatter.format("chapter 1 then chapter 5 later"))
+    }
 }
