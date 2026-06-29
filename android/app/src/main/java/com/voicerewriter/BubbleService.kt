@@ -121,6 +121,9 @@ class BubbleService : Service() {
                 if (s.provider == "local") {
                     AiChat.getInferenceEngine(applicationContext)
                 }
+                if (s.provider == "local-gpu") {
+                    LocalGpuLlmEngine.warm(applicationContext) // compile Adreno OpenCL kernels off the first-dictation path
+                }
             } catch (e: Exception) {
                 android.util.Log.w("BubbleService", "warmup skipped", e)
             }

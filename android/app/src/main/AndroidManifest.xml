@@ -19,6 +19,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenWispr">
 
+        <!-- MLC-LLM Adreno GPU path needs the vendor OpenCL driver (Android 12+ gated). -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-pixel.so"
+            android:required="false" />
+
         <!-- Launcher: home (stats + recent dictations) -->
         <activity
             android:name=".HomeActivity"
@@ -112,6 +120,10 @@
                 <action android:name="com.voicerewriter.STOP_BUBBLE" />
             </intent-filter>
         </receiver>
+
+        <!-- Tier-3 on-device benchmark bridge (EvalReceiver + EvalService) is declared in the
+             DEBUG-only manifest (app/src/debug/AndroidManifest.xml) so the exported adb bridge
+             never ships in release. The Kotlin classes remain in the main source set. -->
 
     </application>
 </manifest>

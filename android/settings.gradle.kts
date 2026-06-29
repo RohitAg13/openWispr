@@ -17,3 +17,4 @@ rootProject.name = "OpenWispr"
 include(":app")
 include(":lib")
 include(":llm")
+include(":mlc4j")

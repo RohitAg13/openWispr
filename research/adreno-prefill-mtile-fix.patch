@@ -1,0 +1,25 @@
+diff --git a/python/tvm/s_tir/dlight/gpu/matmul.py b/python/tvm/s_tir/dlight/gpu/matmul.py
+index d0197f6f7..44895a849 100644
+--- a/python/tvm/s_tir/dlight/gpu/matmul.py
++++ b/python/tvm/s_tir/dlight/gpu/matmul.py
+@@ -951,16 +951,16 @@ class Matmul(GPUScheduleRule):
+         ):
+             return Matmul.Config(
+                 block_size_x=32,
+-                block_size_y=4,
++                block_size_y=8,
+                 vthread_x=1,
+                 vthread_y=1,
+                 micro_size_x=8,
+-                micro_size_y=2,
++                micro_size_y=8,
+                 micro_size_k=16,
+                 vector_size=8,
+                 unroll=16,
+-                use_shared=False,
+-                storage_align=False,
++                use_shared=True,
++                storage_align=True,
+                 inner_x=True,
+             )
+         else:

@@ -55,9 +55,15 @@ actor LlamaContext {
         guard let model = llama_model_load_from_file(path, modelParams) else {
             throw LlamaError.couldNotLoad
         }
-        let nThreads = Int32(max(1, min(8, ProcessInfo.processInfo.processorCount - 2)))
+        var nThreads = Int32(max(1, min(8, ProcessInfo.processInfo.processorCount - 2)))
+        var nCtx: Int32 = 4096
+        #if DEBUG
+        // Tier-2 benchmark overrides (nil ⇒ the defaults above; release never compiles this).
+        if let o = BenchConfig.llamaNCtx { nCtx = o }
+        if let o = BenchConfig.llamaNThreads { nThreads = o }
+        #endif
         var ctxParams = llama_context_default_params()
-        ctxParams.n_ctx = 4096
+        ctxParams.n_ctx = UInt32(nCtx)
         ctxParams.n_threads = nThreads
         ctxParams.n_threads_batch = nThreads
         guard let context = llama_init_from_model(model, ctxParams) else {

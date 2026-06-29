@@ -48,7 +48,11 @@ final class LocalLLMEngine {
         // L3: closest past corrections as few-shot, so the model cleans the way this user likes.
         if !fewShot.isEmpty { system += "\n\n" + fewShot }
         let user = LlmPolish.userContent(trimmed)
-        let raw = await ctx.complete(system: system, user: user, maxTokens: predictLength(for: trimmed))
+        var maxTokens = predictLength(for: trimmed)
+        #if DEBUG
+        if let o = BenchConfig.polishMaxTokens { maxTokens = o }   // Tier-2 n_predict override
+        #endif
+        let raw = await ctx.complete(system: system, user: user, maxTokens: maxTokens)
 
         let cleaned = PolishGuards.cleanOutput(raw)
         guard !cleaned.isEmpty else { return text }
