@@ -9,6 +9,24 @@ it with a small on-device LLM, and auto-inserts the result into whatever app you
 learns your vocabulary and style the more you use it, and keeps everything on your device unless
 you explicitly choose a cloud provider.
 
+## Screenshots
+
+<div align="center">
+
+**macOS** — a menu-bar app; talk lands in the notch and inserts straight at your cursor.
+
+<img src="docs/screenshots/macos-home.png" alt="OpenWispr on macOS — home, with stats and dictation history" width="720">
+
+<img src="docs/screenshots/macos-listening.png" alt="OpenWispr on macOS — listening in the notch, live transcript, on-device" width="720">
+
+**Android** — home feed and the on-device listening overlay.
+
+<img src="docs/screenshots/android-home.png" alt="OpenWispr on Android — home with stats and recent dictations" width="250">
+&nbsp;&nbsp;&nbsp;
+<img src="docs/screenshots/android-listening.png" alt="OpenWispr on Android — listening overlay with live transcript" width="250">
+
+</div>
+
 ## Why OpenWispr
 
 Most voice-dictation tools send your audio to the cloud. OpenWispr can run the entire pipeline
