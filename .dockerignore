@@ -1,0 +1,8 @@
+# Keep the Docker build context small — only website/ is needed for the landing page.
+android/
+macos/
+shared/
+design_assets/
+docs/
+.github/
+*.md
