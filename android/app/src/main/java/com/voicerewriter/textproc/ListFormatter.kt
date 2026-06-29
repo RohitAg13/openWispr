@@ -3,13 +3,15 @@ package com.voicerewriter.textproc
 /**
  * Turns explicit spoken structure into real newlines:
  *  - "new line" -> "\n", "new paragraph" -> "\n\n".
- *  - explicit numbered enumerations ("for 1. apples 2. bananas 3. oranges", or
- *    "first … second … third …") -> a newline-separated list.
+ *  - explicit numbered enumerations ("for 1. apples 2. bananas 3. oranges",
+ *    "first … second … third …", or "one … two … three …") -> a newline-separated list.
  *
  * Conservative on purpose: a list only forms from a run of enumerators that starts
- * at 1/"first" and increases consecutively (≥2 for digit markers, ≥3 for ordinal
- * words, which are ambiguous). Natural enumerations without markers ("apples,
- * bananas and oranges") are left for the fine-tuned LLM.
+ * at 1/"first"/"one" and increases consecutively (≥2 for digit markers, ≥3 for the
+ * ambiguous ordinal/cardinal words). Spoken-word enumerators are matched at any word
+ * boundary ("three things first the api second the docs …"), not only after
+ * punctuation, since the STT transcript often doesn't punctuate the lead-in. Natural
+ * enumerations without markers ("apples, bananas and oranges") are left for the LLM.
  *
  * Runs after NumberNormalizer so digits are settled and no earlier stage flattens
  * the newlines it introduces.
@@ -19,6 +21,11 @@ object ListFormatter {
     private val ordinals = linkedMapOf(
         "first" to 1, "second" to 2, "third" to 3, "fourth" to 4, "fifth" to 5,
         "sixth" to 6, "seventh" to 7, "eighth" to 8, "ninth" to 9, "tenth" to 10,
+    )
+
+    private val cardinals = linkedMapOf(
+        "one" to 1, "two" to 2, "three" to 3, "four" to 4, "five" to 5,
+        "six" to 6, "seven" to 7, "eight" to 8, "nine" to 9, "ten" to 10,
     )
 
     fun format(text: String): String {
@@ -43,12 +50,25 @@ object ListFormatter {
             .map { Triple(it.range.first, it.range.last + 1, it.groupValues[1].toInt()) }.toList()
         buildList(text, digit, minRun = 2)?.let { return it }
 
-        // Ordinal words at a clause start ("First, … Second, …"). Ambiguous → require ≥3.
-        val ords = Regex("(?<=^|[.,;:]\\s)(${ordinals.keys.joinToString("|")})\\b,?\\s+", RegexOption.IGNORE_CASE)
-            .findAll(text)
-            .mapNotNull { m -> ordinals[m.groupValues[1].lowercase()]?.let { Triple(m.range.first, m.range.last + 1, it) } }
-            .toList()
-        buildList(text, ords, minRun = 3)?.let { return it }
+        // Bare digit markers ("1 prelinguistic 2 crying 3 cooing"): STT inverse-text-normalization
+        // (e.g. Parakeet) renders spoken "one, two, three" as digits with NO '.'/')'. Ambiguous
+        // (years, counts, durations), so require a consecutive run from 1 with ≥3 small (1-2 digit)
+        // markers, each followed by real content — buildList enforces non-empty items.
+        val bareDigit = Regex("(?<=^|\\s)(\\d{1,2})\\s+(?=\\S)").findAll(text)
+            .map { Triple(it.range.first, it.range.last + 1, it.groupValues[1].toInt()) }.toList()
+        buildList(text, bareDigit, minRun = 3)?.let { return it }
+
+        // Spoken-word enumerators: ordinals ("first … second … third") or cardinals
+        // ("one … two … three"). Both are ambiguous, so a list only forms from a consecutive
+        // run starting at 1 with ≥3 items (and non-empty items — buildList enforces that, so
+        // "one, two, three of those" with nothing between markers does NOT become a list).
+        for (words in listOf(ordinals, cardinals)) {
+            val marks = Regex("(?<=^|\\s)(${words.keys.joinToString("|")})\\b,?\\s+", RegexOption.IGNORE_CASE)
+                .findAll(text)
+                .mapNotNull { m -> words[m.groupValues[1].lowercase()]?.let { Triple(m.range.first, m.range.last + 1, it) } }
+                .toList()
+            buildList(text, marks, minRun = 3)?.let { return it }
+        }
 
         return text
     }

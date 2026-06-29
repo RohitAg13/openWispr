@@ -428,7 +428,13 @@ class RewriteActivity : ComponentActivity() {
             // harm rather than help — polish off, very short input, or code/terminal context
             // (the deterministic stage already handles those; code only goes to the LLM at FULL).
             val wordCount = cleaned.trim().split(Regex("\\s+")).count { it.isNotBlank() }
-            if (!s.llmPolishEnabled || wordCount < 4 || (isCode && s.polishLevel != PolishLevel.FULL)) {
+            // Skip the LLM when the deterministic stage already produced line structure: once
+            // ListFormatter has turned a dictated enumeration into a multi-line numbered list
+            // (or "new line"/"new paragraph" into real breaks), handing it to the tiny on-device
+            // model reflows it back onto one line. Keep the structured text verbatim.
+            val deterministicStructure = cleaned.contains('\n')
+            if (!s.llmPolishEnabled || wordCount < 4 || (isCode && s.polishLevel != PolishLevel.FULL) ||
+                deterministicStructure) {
                 toReview(cleaned); return
             }
             stage = Stage.CORRECTING
