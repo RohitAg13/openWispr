@@ -64,6 +64,36 @@ object LocalGpuLlmEngine {
         return modelId
     }
 
+    /**
+     * Preload the model AND trigger OpenCL kernel JIT ahead of the first real dictation, so the
+     * first GPU rewrite doesn't pay the one-time ~3-4s shader-compile cost. Best-effort: returns
+     * quietly if weights aren't present. Runs one tiny generation to force pipeline creation.
+     */
+    suspend fun warm(context: Context) {
+        try {
+            mutex.withLock {
+                ensureLoaded(context.applicationContext)
+                val eng = engine!!
+                eng.reset()
+                val t0 = System.nanoTime()
+                val channel = eng.chat.completions.create(
+                    messages = listOf(
+                        OpenAIProtocol.ChatCompletionMessage(
+                            role = OpenAIProtocol.ChatCompletionRole.user, content = "hi"
+                        )
+                    ),
+                    temperature = 0.0f,
+                    max_tokens = 1,
+                )
+                for (response in channel) { /* drain to completion */ }
+                eng.reset()
+                Log.i(TAG, "warm: kernels compiled in ${(System.nanoTime() - t0) / 1_000_000}ms")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "warm skipped: ${e.message}")
+        }
+    }
+
     fun streamWithPrompt(context: Context, settings: Settings, prompt: String, text: String): Flow<String> = flow {
         val isFinetune = settings.model == LlmModelManager.FINETUNE_MODEL_ID
         val system: String

@@ -29,6 +29,7 @@ object WhisperModelManager {
 
     val MODELS = listOf(
         WhisperModel("tiny", "Tiny (fastest)", "ggml-tiny.bin", hf("ggml-tiny.bin"), "~75MB"),
+        WhisperModel("tiny-q8_0", "Tiny Q8 (fastest, quantized)", "ggml-tiny-q8_0.bin", hf("ggml-tiny-q8_0.bin"), "~43MB"),
         WhisperModel("base", "Base (balanced)", "ggml-base.bin", hf("ggml-base.bin"), "~142MB"),
         WhisperModel("small", "Small (most accurate)", "ggml-small.bin", hf("ggml-small.bin"), "~488MB"),
     )

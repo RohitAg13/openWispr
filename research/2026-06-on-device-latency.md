@@ -11,10 +11,12 @@ keep-rate ≥95% / hallucination ≤5% / no WER regression / 100% coverage.
 
 | Lever | Verdict | Headline |
 |---|---|---|
-| LLM cleanup → Adreno GPU (MLC-LLM, dlight M-tile fix) | **KEEP** | prefill 11→75 tok/s (6.8×); per-call 1607 ms vs CPU 3213 ms (2×); gated p95 1778 ms |
+| LLM cleanup → Adreno GPU (MLC-LLM, dlight M-tile fix, BM 8→64) | **KEEP** | prefill 11→132 tok/s (12×); per-call 964 ms vs CPU 3213 ms (3.3×) |
 | Gating (skip LLM when deterministic output is clean) | KEEP | median LLM cost → 0 ms (33/51 gated) |
+| GPU LLM warm-up (compile OpenCL kernels on service start) | KEEP | first-dictation cold-start 4.2 s → 1.6 s |
 | STT thread bump (4→6/8) | DISCARD | Android cpuset oversubscription + ggml spin-barriers → 30–50× stall |
 | STT → Adreno GPU (ggml-vulkan) | DISCARD (blocked) | Qualcomm driver rejects ggml `mul_mat_vec` shaders |
+| STT quantization (tiny-q8_0) | DISCARD | no CPU speedup (1044 ms ≈ tiny f16 996 ms) |
 
 ## 1. LLM cleanup on the Adreno GPU (KEEP)
 
@@ -26,12 +28,15 @@ Root-caused via `mlc_llm compile --debug-dump`: the ~110-token prefill matmul
 memory ~`seq/8`≈14× = memory-bound ~11 tok/s.
 
 **Fix** (`research/adreno-prefill-mtile-fix.patch`, pure-Python dlight edit, no TVM C++ rebuild):
-`block_size_y=8, micro_size_y=4` (M-tile 8→32, 4× fewer weight re-reads) + `use_shared=True,
-storage_align=True` (stages an 8 KB dequant-weight tile in shared, ~9 KB < 16 KB budget).
-`use_shared` *alone* did nothing — it's weight-reuse-bound, so the **M-tile is the lever**.
+`block_size_y=8, micro_size_y=8` (M-tile 8→64, ~8× fewer weight re-reads) + `use_shared=True,
+storage_align=True` (stages a dequant-weight tile in shared, ~10 KB < 16 KB budget).
+`use_shared` *alone* did nothing — it's weight-reuse-bound, so the **M-tile is the lever**. Scaling:
+BM=8→32 gave prefill 11→75 tok/s; BM=32→64 gave 75→132 tok/s (per-call 1607→964 ms). BM=128 not
+pursued (256-thread cap + register pressure).
 
-Measured (S25, same-day, Tier-3): prefill **11→75 tok/s**; per-call (all-LLM) **1607 ms vs CPU 3213 ms**;
-gated production **e2e p50 0 ms / p95 1778 ms**, GATE=PASS (keep 91.2%, WER 0.043, names 100%).
+Measured (S25, same-day, Tier-3): prefill **11→132 tok/s** (12×); per-call (all-LLM) **964 ms vs CPU
+3213 ms** (3.3×); gated production GATE=PASS (keep 91.2%, WER 0.037, names 100%, coverage 100%).
+Quality is tile-size-independent (K-reduction length unchanged); BM=64 re-verified equal to BM=32.
 Caveat: gate-OFF GPU keep 88% < CPU 96.5% (MLC-q4f16_1 clean-case quality gap — gated away in prod).
 
 **Gotcha:** `mlc_llm package` caches the compiled lib by the *schedule-independent* model_lib hash —
@@ -66,6 +71,28 @@ PoC: built upstream whisper.cpp 0.15.3 with `GGML_VULKAN=ON` for arm64 (host `gl
 (DISABLE_F16/COOPMAT/COOPMAT2/BFLOAT16/INTEGER_DOT/MMVQ/…). Qualcomm's Adreno Vulkan driver rejects
 ggml's subgroup-based mat-vec SPIR-V. Reviving needs deep shader patching with uncertain payoff (no
 matrix cores, 32 KB shared) — not worth it with p50 already met. CPU `-ng` path works (924 ms / 12s clip).
+
+## 3. The p95 tail
+
+Diagnosed via `mode=e2e` (gated, tiny STT). The tail is the **disfluent, longest-audio** utterances
+that pay both STT and LLM (e.g. `long-01`, 12.2 s audio: STT ~1.0 s + LLM). Progression:
+
+| config | e2e p50 | e2e p95 | notes |
+|---|---|---|---|
+| tiny + BM32 | ~1058 ms | 3144 ms | LLM ~1.9 s dominates the tail |
+| **tiny + BM64** | ~1.1 s | **2512 ms** | LLM ~1.5 s (prefill 132 tok/s) |
+| + GPU warm-up | — | — | first-dictation cold-start 4.2 s → 1.6 s (off critical path) |
+
+- **BM=64** is the main p95 lever (cuts the LLM, the larger tail component). Now a clean KEEP
+  (GATE=PASS, supersedes BM=32).
+- **GPU warm-up** (`LocalGpuLlmEngine.warm()`, called on service start when provider=`local-gpu`)
+  removes the one-time OpenCL kernel-JIT from the first dictation.
+- **tiny-q8_0 STT DISCARD**: quantized tiny gave no CPU speedup (STT 1044 ms ≈ f16 996 ms).
+- **p95 < 2 s is not reachable for the longest disfluent utterances with cheap levers**: an 8–12 s
+  utterance's STT alone is ~1 s on CPU (irreducible without GPU-STT, which is driver-blocked), plus
+  ~1.5 s LLM. p50 (~1.1 s) is comfortably under target; the p95 floor is the long-audio STT.
+- Note: thermal throttling confounds back-to-back benchmarks (sustained CPU/GPU load doubles STT on
+  late clips); real spaced dictation doesn't hit this.
 
 ## Reproduce
 

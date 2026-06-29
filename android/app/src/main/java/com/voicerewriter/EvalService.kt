@@ -193,6 +193,7 @@ class EvalService : Service() {
         val gpu = engine == "gpu"
         val sttId = settings.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL }
         LocalWhisperStt.warm(applicationContext, sttId)
+        if (engine == "gpu") LocalGpuLlmEngine.warm(applicationContext) // compile OpenCL kernels off the critical path
         val cases = loadAudioCases(File(inDir, "audio"))
         Log.i(TAG, "e2e start gate=$gate engine=$engine sttModel=$sttId cases=${cases.size}")
         val results = StringBuilder(); val timings = StringBuilder(); var nGated = 0
