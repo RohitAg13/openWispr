@@ -44,4 +44,33 @@ class ListFormatterTest {
             ListFormatter.format("first, eat, second, sleep, third, code"),
         )
     }
+
+    @Test fun ordinalsMidSentenceWithoutPunctuationFormAList() {
+        // Natural dictation: the lead-in isn't punctuated and the ordinals follow plain words.
+        assertEquals(
+            "We need to do three things\n1. the API\n2. the docs\n3. the tests",
+            ListFormatter.format("We need to do three things first the API second the docs third the tests"),
+        )
+    }
+
+    @Test fun cardinalsFormAList() {
+        assertEquals(
+            "The plan is\n1. set up the repo\n2. write the tests\n3. ship it",
+            ListFormatter.format("The plan is one set up the repo two write the tests three ship it"),
+        )
+    }
+
+    @Test fun twoCardinalsAreNotEnough() {
+        assertEquals("one apple two oranges", ListFormatter.format("one apple two oranges"))
+    }
+
+    @Test fun cardinalsWithEmptyItemsAreNotAList() {
+        // "one, two, three of those" has nothing between the markers — must stay prose.
+        assertEquals("I'll take one, two, three of those", ListFormatter.format("I'll take one, two, three of those"))
+    }
+
+    @Test fun nonConsecutiveCardinalsAreNotAList() {
+        // "one to three weeks" → markers 1 then 3, not consecutive → no list.
+        assertEquals("one to three weeks of work", ListFormatter.format("one to three weeks of work"))
+    }
 }
