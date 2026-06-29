@@ -135,17 +135,17 @@ object RewriteEngine {
         "$prompt\n\n$text"
 
     // ---- Fine-tuned dictation-cleanup model (openwispr-qwen3-0.6b) ----
-    // The model was trained on THIS exact system prompt + per-context tone (mirror of
-    // openwispr-finetune/common.py SYSTEM/TONE and eval/prompts.py). Keep all three in
-    // sync — drift from the training prompt makes the fine-tune (and its gate) meaningless.
+    // The model was RE-TRAINED on THIS exact SHORT system prompt (mirror of
+    // openwispr-finetune/common.py SYSTEM_SHORT and eval/prompts.py FINETUNE_SHORT_SYSTEM_PROMPT).
+    // Keep all three byte-identical — drift from the training prompt makes the fine-tune (and
+    // its gate) meaningless. The short prompt (~55 tok vs ~120) cuts on-device prefill on the
+    // ungated/disfluent cases that gating still routes to the LLM.
     const val FINETUNE_SYSTEM =
-        "You convert a raw speech-to-text transcript into clean written text. " +
-        "Remove filler words and false starts; resolve self-corrections, keeping only the " +
-        "speaker's final intent; fix grammar and punctuation; add capitalization, sentence " +
-        "breaks and paragraph breaks; and format dictated enumerations as a numbered list. " +
-        "Copy names, emails, URLs, numbers and code EXACTLY — never change their spelling. " +
-        "Preserve the speaker's own words, meaning and voice. Do not add content, summaries " +
-        "or commentary. Output ONLY the cleaned text. /no_think"
+        "Convert this speech-to-text transcript into clean written text: remove fillers, " +
+        "false starts and self-corrections; fix grammar, punctuation and capitalization; " +
+        "format dictated enumerations as a numbered list. Copy names, emails, URLs, numbers " +
+        "and code EXACTLY. Keep the speaker's words, meaning and voice. Output ONLY the " +
+        "cleaned text. /no_think"
 
     private val FINETUNE_TONE = mapOf(
         "email" to "Context: a professional email or document — clear, polite, complete sentences, no slang.",

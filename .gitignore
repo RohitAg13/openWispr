@@ -49,3 +49,6 @@ macos/dist/
 
 # Tier-2 benchmark debug build (research branch)
 macos/App/build-bench/
+
+# MLC-LLM (mlc4j) native runtime — regenerable via `mlc_llm package` (see android/mlc4j/REGENERATE.md)
+android/mlc4j/output/**/*.so

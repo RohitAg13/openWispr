@@ -92,5 +92,6 @@ dependencies {
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
+    implementation(project(":mlc4j")) // on-device MLC-LLM (Adreno GPU / OpenCL)
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2") // Silero VAD
 }

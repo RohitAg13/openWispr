@@ -43,6 +43,7 @@ class EvalService : Service() {
         val mode = intent?.getStringExtra("mode") ?: "polish"
         val gate = intent?.getBooleanExtra("gate", false) ?: false
         val repeats = (intent?.getIntExtra("repeats", 1) ?: 1).coerceAtLeast(1)
+        val engine = intent?.getStringExtra("engine") ?: "cpu" // "cpu" (llama.cpp) | "gpu" (MLC/Adreno)
         val base = applicationContext.getExternalFilesDir(null)!!
         val inDir = File(intent?.getStringExtra("in") ?: File(base, "eval-in").path)
         val outDir = File(intent?.getStringExtra("out") ?: File(base, "eval-out").path)
@@ -50,7 +51,7 @@ class EvalService : Service() {
 
         scope.launch {
             try {
-                runEval(mode, gate, repeats, inDir, outDir)
+                runEval(mode, gate, repeats, inDir, outDir, engine)
             } catch (t: Throwable) {
                 Log.e(TAG, "eval failed", t)
             } finally {
@@ -81,15 +82,16 @@ class EvalService : Service() {
         return out
     }
 
-    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File) {
+    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String) {
+        val gpu = engine == "gpu"
         val s0 = SettingsRepository(applicationContext).get()
         val settings = s0.copy(
-            provider = "local",
+            provider = if (gpu) "local-gpu" else "local",
             model = LlmModelManager.FINETUNE_MODEL_ID,
             polishLevel = PolishLevel.FULL,
         )
         val cases = loadCases(inDir)
-        Log.i(TAG, "start mode=$mode gate=$gate repeats=$repeats cases=${cases.size} model=${settings.model}")
+        Log.i(TAG, "start mode=$mode gate=$gate repeats=$repeats engine=$engine cases=${cases.size} model=${settings.model}")
 
         val results = StringBuilder()
         val timings = StringBuilder()
@@ -107,16 +109,22 @@ class EvalService : Service() {
                     gated -> BenchGate.finish(det)
                     else -> {
                         val sb = StringBuilder()
-                        LocalLlmEngine.streamWithPrompt(applicationContext, settings, "", det).collect { sb.append(it) }
+                        if (gpu) {
+                            LocalGpuLlmEngine.streamWithPrompt(applicationContext, settings, "", det).collect { sb.append(it) }
+                        } else {
+                            LocalLlmEngine.streamWithPrompt(applicationContext, settings, "", det).collect { sb.append(it) }
+                        }
                         RewriteEngine.cleanOutput(sb.toString()).ifBlank { det }
                     }
                 }
                 val ms = (System.nanoTime() - t0) / 1_000_000.0
+                val stats = if (gpu && !gated && mode != "det") LocalGpuLlmEngine.lastStats else ""
                 timings.append(
                     JSONObject(
                         linkedMapOf(
                             "id" to c.id, "run" to run, "cold" to (run == 0),
-                            "polish_ms" to round1(ms), "total_ms" to round1(ms), "gated" to gated
+                            "polish_ms" to round1(ms), "total_ms" to round1(ms), "gated" to gated,
+                            "engine" to engine, "stats" to stats
                         )
                     )
                 ).append('\n')
@@ -130,7 +138,7 @@ class EvalService : Service() {
         File(outDir, "meta.json").writeText(
             JSONObject(
                 linkedMapOf(
-                    "mode" to mode, "gate" to gate, "repeats" to repeats,
+                    "mode" to mode, "gate" to gate, "repeats" to repeats, "engine" to engine,
                     "model" to settings.model, "count" to cases.size, "gated" to nGated
                 )
             ).toString()
