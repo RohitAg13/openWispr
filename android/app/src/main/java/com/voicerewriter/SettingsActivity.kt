@@ -202,8 +202,9 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     }
     LaunchedEffect(sttProvider, sttModel) {
         if (sttProvider == "local") {
-            if (WhisperModelManager.MODELS.none { it.id == sttModel }) sttModel = WhisperModelManager.DEFAULT_MODEL
-            modelReady = WhisperModelManager.isReady(context, sttModel)
+            val known = OnDeviceStt.isParakeet(sttModel) || WhisperModelManager.MODELS.any { it.id == sttModel }
+            if (!known) sttModel = WhisperModelManager.DEFAULT_MODEL
+            modelReady = OnDeviceStt.isReady(context, sttModel)
         }
     }
 
@@ -341,15 +342,22 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 }
 
                 if (sttProvider == "local") {
+                    val selLabel = if (OnDeviceStt.isParakeet(sttModel))
+                        "${ParakeetModelManager.LABEL} (${ParakeetModelManager.SIZE_LABEL})"
+                    else WhisperModelManager.model(sttModel).let { "${it.label} (${it.sizeLabel})" }
+                    val selSize = if (OnDeviceStt.isParakeet(sttModel)) ParakeetModelManager.SIZE_LABEL
+                    else WhisperModelManager.model(sttModel).sizeLabel
                     ExposedDropdownMenuBox(expanded = sttModelMenu, onExpandedChange = { sttModelMenu = it }) {
-                        val sel = WhisperModelManager.model(sttModel)
                         OutlinedTextField(
-                            value = "${sel.label} (${sel.sizeLabel})", onValueChange = {}, readOnly = true,
-                            label = { Text("Whisper model") },
+                            value = selLabel, onValueChange = {}, readOnly = true,
+                            label = { Text("On-device model") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sttModelMenu) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                         )
                         ExposedDropdownMenu(expanded = sttModelMenu, onDismissRequest = { sttModelMenu = false }) {
+                            // Parakeet (transducer) first — fastest + most accurate; then whisper sizes.
+                            DropdownMenuItem(text = { Text("${ParakeetModelManager.LABEL} (${ParakeetModelManager.SIZE_LABEL})") },
+                                onClick = { sttModel = ParakeetModelManager.MODEL_ID; sttModelMenu = false })
                             WhisperModelManager.MODELS.forEach { m ->
                                 DropdownMenuItem(text = { Text("${m.label} (${m.sizeLabel})") },
                                     onClick = { sttModel = m.id; sttModelMenu = false })
@@ -360,12 +368,13 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         ready = modelReady,
                         progress = modelProgress,
                         readyText = "Ready — runs fully offline on this phone.",
-                        notReadyText = "Download once (${WhisperModelManager.model(sttModel).sizeLabel}).",
+                        notReadyText = "Download once ($selSize).",
                     ) {
                         val id = sttModel; modelProgress = 0f
                         launch {
                             try {
-                                WhisperModelManager.download(context, id) { p -> modelProgress = p }
+                                if (OnDeviceStt.isParakeet(id)) ParakeetModelManager.download(context) { p -> modelProgress = p }
+                                else WhisperModelManager.download(context, id) { p -> modelProgress = p }
                                 modelReady = true; modelProgress = null
                                 Toast.makeText(context, "Model ready", Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {

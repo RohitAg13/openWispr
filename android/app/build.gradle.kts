@@ -14,6 +14,12 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+        ndk {
+            // Device is arm64; the whisper/llm/mlc4j native libs and the sherpa-onnx AAR
+            // all ship arm64-v8a. Restricting here keeps the APK from bundling unused ABIs
+            // (sherpa ships armeabi-v7a/x86/x86_64 too).
+            abiFilters += "arm64-v8a"
+        }
     }
 
     // Release signing is driven by environment variables so the keystore never lives in the
@@ -59,6 +65,11 @@ android {
         // runtime, so they must be extracted on install (matches extractNativeLibs=true).
         jniLibs {
             useLegacyPackaging = true
+            // The sherpa static-link AAR still ships an x86 libonnxruntime.so, which collides
+            // with com.microsoft.onnxruntime's at merge-time (merge runs across all ABIs before
+            // abiFilters strips non-arm64). arm64-v8a has only the Microsoft copy (sherpa's is
+            // statically linked there), so picking either is correct; x86 isn't packaged anyway.
+            pickFirsts += "**/libonnxruntime.so"
         }
     }
     testOptions {
@@ -92,5 +103,8 @@ dependencies {
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2") // Silero VAD
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2") // Silero VAD (ai.onnxruntime Java API)
+    // On-device Parakeet/Moonshine STT (transducer). Vendored static-link AAR (onnxruntime baked
+    // into libsherpa-onnx-jni.so, so no libonnxruntime.so collision with the VAD ORT above).
+    implementation(group = "", name = "sherpa-onnx-static-link-onnxruntime-1.13.3", ext = "aar")
 }
