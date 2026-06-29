@@ -110,8 +110,11 @@ object Defaults {
         ),
     )
 
-    const val DEFAULT_PROVIDER = "vercel"
-    val DEFAULT_MODEL = PROVIDERS.getValue("vercel").defaultModel
+    // Default to the on-device LLM so a fresh install is private and needs no API key.
+    // (LLM polish is OFF by default, so this model is only downloaded if the user opts
+    // into polish — see Settings.polishLevel.)
+    const val DEFAULT_PROVIDER = "local"
+    val DEFAULT_MODEL = PROVIDERS.getValue(DEFAULT_PROVIDER).defaultModel
     const val DEFAULT_TEMPERATURE = 0.7
 
     // ---------------- speech-to-text ----------------
@@ -155,7 +158,9 @@ object Defaults {
         ),
     )
 
-    const val DEFAULT_STT_PROVIDER = "groq"
+    // Default to on-device Whisper so dictation works offline with no API key.
+    // The model (WhisperModelManager.DEFAULT_MODEL) downloads on first use.
+    const val DEFAULT_STT_PROVIDER = "local"
 
     // ---------------- voice modes ----------------
 
