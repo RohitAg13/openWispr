@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr — Private, on-device voice dictation</title>
+<meta name="description" content="OpenWispr is open-source voice dictation powered by on-device AI. Speak in any app and get clean, formatted text — zero cloud, zero accounts, zero tracking.">
+<meta property="og:title" content="OpenWispr — Your voice never leaves your device">
+<meta property="og:description" content="Open-source, 100% on-device voice dictation for macOS and Android. No cloud, no account, no tracking.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    input { font-family: inherit; }
+    a { text-decoration: none; color: inherit; }
+    @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+    @keyframes ow-ripple  { 0% { transform: scale(.55); opacity:.5; } 100% { transform: scale(2.5); opacity:0; } }
+    @keyframes ow-wave    { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+    @keyframes ow-float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  </style>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+
+  <!-- ===================== NAV ===================== -->
+  <div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+    <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+
+      <!-- left: logo -->
+      <a href="#top" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+        <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+          <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+        </span>
+        <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+      </a>
+
+      <!-- center: links -->
+      <div style="display:flex; align-items:center; gap:2px;">
+        <a href="#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Privacy</a>
+        <a href="#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Features</a>
+        <a href="#how" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">How it works</a>
+        <a href="#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Compare</a>
+        <a href="#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Open source</a>
+      </div>
+
+      <!-- right: actions -->
+      <div style="display:flex; align-items:center; gap:9px;">
+        <a href="https://github.com/RohitAg13/openWispr" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70); transition:background .16s;" data-sh="background:oklch(0.94 0.016 70);">
+          <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+          <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+        </a>
+        <a href="#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">
+          <span style="display:inline-flex; align-items:flex-end; gap:2px; height:13px;">
+            <span style="width:2.5px; height:6px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:bottom; animation:ow-wave 0.9s ease-in-out infinite;"></span>
+            <span style="width:2.5px; height:12px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:bottom; animation:ow-wave 0.9s ease-in-out infinite; animation-delay:.15s;"></span>
+            <span style="width:2.5px; height:8px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:bottom; animation:ow-wave 0.9s ease-in-out infinite; animation-delay:.3s;"></span>
+          </span>
+          Download
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== HERO ===================== -->
+  <div id="top" style="position:relative;">
+
+    <!-- HERO: LIGHT -->
+    <div style="position:relative; overflow:hidden;">
+        <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
+        <div style="position:absolute; top:60px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.74 0.13 30 / 0.22), transparent); pointer-events:none;"></div>
+        <div style="position:relative; max-width:1180px; margin:0 auto; padding:78px 32px 88px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;">
+          <div>
+            <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
+              <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">100% on-device · open source</span>
+            </div>
+            <h1 style="font-size:62px; line-height:1.04; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 22px;">Your voice never<br>leaves your device.</h1>
+            <p style="font-size:19px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 0 34px; max-width:500px;">OpenWispr is open-source voice dictation powered by AI that runs entirely on your own machine. Speak in any app and watch clean, formatted text appear — with zero cloud, zero accounts, zero tracking.</p>
+            <div style="display:flex; align-items:center; gap:13px; flex-wrap:wrap;">
+              <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">
+                <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M16.4 12.1c0-1.7.9-3.1 2.3-3.9-.8-1.1-2-1.8-3.6-1.9-1.5-.1-3.1.9-3.7.9-.6 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.8 2.4-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1 2.8-2.2c.6-.9.9-1.8 1.1-2.7-1.5-.6-2.4-2-2.4-3.7zM14.2 4.7c.7-.8 1.1-2 1-3.2-1 .1-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.5 2.9-1.3z"/></svg>
+                Download for macOS
+              </a>
+              <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">
+                <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:oklch(0.55 0.1 145);"><path d="M17.6 9.5l1.8-3.1c.1-.2 0-.4-.1-.5-.2-.1-.4 0-.5.1l-1.8 3.1c-1.4-.6-2.9-.9-4.5-.9s-3.1.3-4.5.9L6.2 6c-.1-.2-.3-.2-.5-.1-.2.1-.2.3-.1.5l1.8 3.1C4.3 11.2 2.3 14.2 2 17.7h20c-.3-3.5-2.3-6.5-4.4-8.2zM7.5 14.8c-.5 0-.9-.4-.9-.9s.4-.9.9-.9.9.4.9.9-.4.9-.9.9zm9 0c-.5 0-.9-.4-.9-.9s.4-.9.9-.9.9.4.9.9-.4.9-.9.9z"/></svg>
+                Download for Android
+              </a>
+            </div>
+            <div style="display:flex; align-items:center; gap:18px; margin-top:26px; font-size:13px; color:oklch(0.55 0.025 52);">
+              <span style="display:inline-flex; align-items:center; gap:7px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;display:block;color:oklch(0.55 0.11 145);fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg> No account needed</span>
+              <span style="display:inline-flex; align-items:center; gap:7px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;display:block;color:oklch(0.55 0.11 145);fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg> Works offline</span>
+              <span style="display:inline-flex; align-items:center; gap:7px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;display:block;color:oklch(0.55 0.11 145);fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg> Open source (MIT)</span>
+            </div>
+          </div>
+
+          <!-- ABSTRACT PRODUCT SHOT -->
+          <div style="position:relative;">
+            <div style="position:relative; width:100%; min-height:420px; display:flex; align-items:center; justify-content:center; font-family:'Mulish',sans-serif;">
+
+  <!-- main transcription card -->
+  <div style="position:relative; width:380px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:20px; box-shadow:0 30px 70px -24px oklch(0.4 0.08 35 / 0.5), 0 6px 16px -8px rgba(0,0,0,0.1); padding:22px; animation:ow-float 7s ease-in-out infinite;">
+    <!-- title row -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <div style="width:26px; height:26px; border-radius:8px; background:oklch(0.93 0.022 65); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:13px; color:oklch(0.45 0.04 45);">S</div>
+        <span style="font-size:14px; font-weight:600; color:oklch(0.32 0.03 47);">Slack</span>
+      </div>
+      <span style="display:inline-flex; align-items:center; gap:5px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:4px 9px; border-radius:7px;"><span style="width:5px; height:5px; border-radius:50%; background:oklch(0.66 0.13 40);"></span>on-device</span>
+    </div>
+    <!-- transcribed text -->
+    <div style="font-size:16px; line-height:1.6; color:oklch(0.3 0.03 45);">Pushed the fix for the auth bug — can you review the PR when you get a sec?<span style="display:inline-block; width:2px; height:17px; background:oklch(0.66 0.13 40); margin-left:2px; vertical-align:-3px;"></span></div>
+    <!-- meta -->
+    <div style="display:flex; gap:7px; margin-top:18px; padding-top:16px; border-top:1px solid oklch(0.94 0.01 72);">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.025 52); background:oklch(0.96 0.012 72); padding:3px 8px; border-radius:6px;">0:32</span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.025 52); background:oklch(0.96 0.012 72); padding:3px 8px; border-radius:6px;">88 words</span>
+      <span style="display:inline-flex; align-items:center; gap:4px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:3px 8px; border-radius:6px;"><svg viewBox="0 0 24 24" style="width:11px;height:11px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>inserted</span>
+    </div>
+  </div>
+
+  <!-- floating notch / listening pill (top) -->
+  <div style="position:absolute; top:8px; left:50%; transform:translateX(-50%); background:oklch(0.07 0.004 60); border-radius:0 0 20px 20px; padding:9px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 12px 30px -8px rgba(0,0,0,0.45); animation:ow-float 6s ease-in-out infinite;">
+    <div style="position:relative; width:30px; height:30px; display:flex; align-items:center; justify-content:center;">
+      <div style="position:absolute; inset:0; border-radius:50%; border:1.5px solid oklch(0.66 0.13 40); animation:ow-ripple 2.1s ease-out infinite;"></div>
+      <div style="position:relative; width:30px; height:30px; border-radius:50%; background:linear-gradient(140deg, oklch(0.86 0.11 76), oklch(0.74 0.14 44) 50%, oklch(0.62 0.13 20)); display:flex; align-items:center; justify-content:center; gap:2px;">
+        <div style="width:2px; height:7px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite;"></div>
+        <div style="width:2px; height:12px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.12s;"></div>
+        <div style="width:2px; height:15px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.24s;"></div>
+        <div style="width:2px; height:9px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.36s;"></div>
+      </div>
+    </div>
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.12em; color:oklch(0.82 0.04 65); text-transform:uppercase;">Listening</span>
+  </div>
+
+  <!-- small floating chip: shortcut (bottom-left) -->
+  <div style="position:absolute; bottom:24px; left:-6px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:12px; padding:11px 14px; box-shadow:0 16px 34px -16px oklch(0.4 0.08 35 / 0.5); display:flex; align-items:center; gap:9px; animation:ow-float 7.6s ease-in-out infinite; animation-delay:.4s;">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50);">hold</span>
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.3 0.03 45); background:oklch(0.96 0.012 72); border:1px solid oklch(0.9 0.014 70); border-radius:6px; padding:3px 8px;">⌥ Space</span>
+  </div>
+
+  <!-- small floating chip: privacy (top-right) -->
+  <div style="position:absolute; top:84px; right:-10px; background:linear-gradient(150deg, oklch(0.78 0.1 62), oklch(0.66 0.13 40)); border-radius:12px; padding:12px 15px; box-shadow:0 16px 34px -14px oklch(0.5 0.13 38 / 0.7); display:flex; align-items:center; gap:9px; color:oklch(0.99 0.01 85); animation:ow-float 8s ease-in-out infinite; animation-delay:.8s;">
+    <svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+    <span style="font-size:12.5px; font-weight:600; line-height:1.2;">0 bytes<br>uploaded</span>
+  </div>
+
+</div>
+          </div>
+        </div>
+      </div>
+
+    <!-- HERO: DARK -->
+    
+  </div>
+
+  <!-- ===================== TRUST STRIP ===================== -->
+  <div style="border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72); background:oklch(0.96 0.012 74);">
+    <div style="max-width:1180px; margin:0 auto; padding:22px 32px; display:flex; align-items:center; justify-content:center; gap:42px; flex-wrap:wrap;">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:oklch(0.55 0.025 52); text-transform:uppercase;">Runs locally on</span>
+      <span style="font-size:15px; font-weight:600; color:oklch(0.42 0.03 48);">macOS</span>
+      <span style="font-size:15px; font-weight:600; color:oklch(0.42 0.03 48);">Android</span>
+      <span style="font-size:15px; font-weight:500; color:oklch(0.62 0.02 55);">Windows <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.68 0.02 58);">SOON</span></span>
+      <span style="font-size:15px; font-weight:500; color:oklch(0.62 0.02 55);">Linux <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.68 0.02 58);">SOON</span></span>
+      <span style="width:1px; height:20px; background:oklch(0.88 0.012 70);"></span>
+      <span style="font-size:14px; color:oklch(0.55 0.025 52);">No data ever sent to a server.</span>
+    </div>
+  </div>
+
+  <!-- ===================== WHY LOCAL = PRIVACY (DARK) ===================== -->
+  <div id="privacy" style="background:linear-gradient(170deg, oklch(0.3 0.055 30), oklch(0.21 0.04 24)); color:oklch(0.95 0.012 82);">
+    <div style="max-width:1180px; margin:0 auto; padding:88px 32px;">
+      <div style="text-align:center; max-width:680px; margin:0 auto 56px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.78 0.09 60); text-transform:uppercase; margin-bottom:18px;">Why on-device matters</div>
+        <h2 style="font-size:42px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0 0 18px; color:oklch(0.97 0.012 82);">Privacy isn't a setting.<br>It's where the work happens.</h2>
+        <p style="font-size:17.5px; line-height:1.6; color:oklch(0.82 0.03 70); margin:0;">Most voice tools stream your microphone to a company's servers. OpenWispr does the entire job — listening, transcribing, polishing — on the device in your hands. The difference isn't a promise. It's architecture.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
+        <!-- cloud path -->
+        <div style="background:oklch(0.26 0.04 26); border:1px solid oklch(0.4 0.05 30); border-radius:18px; padding:30px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:22px;">
+            <span style="width:10px; height:10px; border-radius:50%; background:oklch(0.62 0.14 22);"></span>
+            <span style="font-size:13px; font-weight:600; letter-spacing:0.04em; color:oklch(0.8 0.06 40); text-transform:uppercase;">Cloud dictation</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.34 0.045 28); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.78 0.06 40);"><svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><line x1="4" y1="10" x2="4" y2="14"></line><line x1="8" y1="7" x2="8" y2="17"></line><line x1="12" y1="9" x2="12" y2="15"></line><line x1="16" y1="6" x2="16" y2="18"></line><line x1="20" y1="10" x2="20" y2="14"></line></svg></div>
+              <div style="font-size:14.5px; color:oklch(0.86 0.02 70);">Your voice is recorded</div>
+            </div>
+            <div style="padding-left:19px; color:oklch(0.55 0.06 35); font-size:18px;">↓</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.34 0.045 28); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.78 0.06 40);"><svg viewBox="0 0 24 24" style="width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.5 9.2 3.5 3.5 0 0 1 17 18H7z"></path><polyline points="10 13.5 12 11.5 14 13.5"></polyline><line x1="12" y1="11.5" x2="12" y2="16.5"></line></svg></div>
+              <div style="font-size:14.5px; color:oklch(0.86 0.02 70);">Uploaded to their servers</div>
+            </div>
+            <div style="padding-left:19px; color:oklch(0.55 0.06 35); font-size:18px;">↓</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.34 0.045 28); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.78 0.06 40);"><svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6"></path><path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3"></path></svg></div>
+              <div style="font-size:14.5px; color:oklch(0.86 0.02 70);">Stored, logged, maybe used for training</div>
+            </div>
+          </div>
+          <div style="margin-top:24px; padding-top:18px; border-top:1px dashed oklch(0.42 0.05 30); font-size:13.5px; line-height:1.55; color:oklch(0.72 0.05 35);">Subject to breaches, subpoenas, policy changes, and an account you can't truly close.</div>
+        </div>
+
+        <!-- local path -->
+        <div style="background:linear-gradient(160deg, oklch(0.4 0.07 42), oklch(0.32 0.06 32)); border:1px solid oklch(0.55 0.09 48); border-radius:18px; padding:30px; position:relative; overflow:hidden;">
+          <div style="position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.75 0.12 55 / 0.35), transparent);"></div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:22px; position:relative;">
+            <span style="width:10px; height:10px; border-radius:50%; background:oklch(0.82 0.12 75);"></span>
+            <span style="font-size:13px; font-weight:600; letter-spacing:0.04em; color:oklch(0.93 0.06 75); text-transform:uppercase;">OpenWispr</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px; position:relative;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.48 0.08 45); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.99 0.01 85);">
+                <svg viewBox="0 0 100 100" style="width:22px; height:22px; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+              </div>
+              <div style="font-size:14.5px; color:oklch(0.96 0.012 80); font-weight:500;">Your voice is captured</div>
+            </div>
+            <div style="padding-left:19px; color:oklch(0.82 0.1 60); font-size:18px;">↓</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.48 0.08 45); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.97 0.012 82);"><svg viewBox="0 0 24 24" style="width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><rect x="4" y="5" width="16" height="11" rx="2"></rect><line x1="2.5" y1="19.5" x2="21.5" y2="19.5"></line></svg></div>
+              <div style="font-size:14.5px; color:oklch(0.96 0.012 80); font-weight:500;">Transcribed &amp; polished on your device</div>
+            </div>
+            <div style="padding-left:19px; color:oklch(0.82 0.1 60); font-size:18px;">↓</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:40px; height:40px; border-radius:11px; background:oklch(0.48 0.08 45); display:flex; align-items:center; justify-content:center; flex:none; color:oklch(0.97 0.012 82);"><svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M9 5h6"></path><path d="M9 19h6"></path><line x1="12" y1="5" x2="12" y2="19"></line></svg></div>
+              <div style="font-size:14.5px; color:oklch(0.96 0.012 80); font-weight:500;">Text appears at your cursor</div>
+            </div>
+          </div>
+          <div style="margin-top:24px; padding-top:18px; border-top:1px solid oklch(0.55 0.08 48); font-size:13.5px; line-height:1.55; color:oklch(0.92 0.04 72); position:relative;">Nothing is uploaded. There's no server to breach, no account to leak, no log to subpoena. Full stop.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FEATURE GRID ===================== -->
+  <div id="features" style="background:oklch(0.972 0.014 78);">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 32px;">
+      <div style="max-width:660px; margin-bottom:42px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Inside OpenWispr</div>
+        <h2 style="font-size:40px; line-height:1.08; font-weight:700; letter-spacing:-0.025em; margin:0 0 16px; color:oklch(0.3 0.03 45);">It doesn’t just hear you.<br>It understands you.</h2>
+        <p style="font-size:17px; line-height:1.6; color:oklch(0.5 0.03 50); margin:0;">Stammer, backtrack, think out loud, change your mind halfway through. OpenWispr follows the way people actually talk — and quietly hands back text you’d be glad to have written.</p>
+      </div>
+
+      <!-- spotlight -->
+      <div style="background:linear-gradient(150deg, oklch(0.955 0.025 68), oklch(0.93 0.032 56)); border:1px solid oklch(0.9 0.022 64); border-radius:22px; padding:38px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:36px; align-items:center; margin-bottom:18px;">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; color:oklch(0.62 0.12 42); text-transform:uppercase;">The core</div>
+          <h3 style="font-size:31px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; color:oklch(0.29 0.03 44); margin:14px 0 14px;">Every word stays on the machine in front of you.</h3>
+          <p style="font-size:16px; line-height:1.62; color:oklch(0.46 0.03 50); margin:0 0 24px;">Speech and language models run entirely on your device — the fluency you’d expect from the cloud, with none of the exposure. No streaming. No servers. No internet required.</p>
+          <div style="display:flex; gap:9px; flex-wrap:wrap;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.04em; color:oklch(0.46 0.04 46); background:oklch(0.99 0.008 82); border:1px solid oklch(0.89 0.016 66); padding:7px 12px; border-radius:20px;">Offline-first</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.04em; color:oklch(0.46 0.04 46); background:oklch(0.99 0.008 82); border:1px solid oklch(0.89 0.016 66); padding:7px 12px; border-radius:20px;">Whisper-class</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.04em; color:oklch(0.46 0.04 46); background:oklch(0.99 0.008 82); border:1px solid oklch(0.89 0.016 66); padding:7px 12px; border-radius:20px;">No account</span>
+          </div>
+        </div>
+        <div style="position:relative; background:oklch(0.2 0.038 26); border-radius:18px; padding:32px; display:flex; flex-direction:column; align-items:center; gap:22px; overflow:hidden;">
+          <div style="position:absolute; top:-50px; right:-50px; width:180px; height:180px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.7 0.12 50 / 0.4), transparent);"></div>
+          <div style="position:relative; width:84px; height:84px; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; inset:0; border-radius:50%; border:1.5px solid oklch(0.66 0.13 40); animation:ow-ripple 2.1s ease-out infinite;"></div>
+            <div style="position:relative; width:84px; height:84px; border-radius:50%; background:linear-gradient(140deg, oklch(0.86 0.11 76), oklch(0.74 0.14 44) 50%, oklch(0.62 0.13 20)); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 14px 34px -10px oklch(0.5 0.13 38 / 0.7);">
+              <div style="width:4px; height:16px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite;"></div>
+              <div style="width:4px; height:30px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.12s;"></div>
+              <div style="width:4px; height:38px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.24s;"></div>
+              <div style="width:4px; height:24px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.36s;"></div>
+              <div style="width:4px; height:14px; border-radius:2px; background:oklch(0.99 0.01 85); transform-origin:center; animation:ow-wave .9s ease-in-out infinite; animation-delay:.48s;"></div>
+            </div>
+          </div>
+          <div style="position:relative; display:inline-flex; align-items:center; gap:7px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; color:oklch(0.82 0.06 60); text-transform:uppercase;"><span style="width:6px; height:6px; border-radius:50%; background:oklch(0.71 0.13 40);"></span>Processing on-device</div>
+          <div style="position:relative; width:100%; display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid oklch(0.32 0.03 30);">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.6 0.03 55);">network</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.86 0.06 70);">0 bytes sent</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- capability explorer -->
+      <div style="display:grid; grid-template-columns:336px 1fr; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:20px; overflow:hidden;">
+        <div style="border-right:1px solid oklch(0.92 0.012 72); padding:12px; display:flex; flex-direction:column; gap:2px; background:oklch(0.978 0.012 74);">
+          <div data-cap-btn="0" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.965 0.02 70); transition:background .15s;">
+            <div data-cap-bar="0" style="display:block; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="5" width="18" height="14" rx="3"></rect><line x1="7.5" y1="12" x2="11.5" y2="12"></line><line x1="9.5" y1="10" x2="9.5" y2="14"></line></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Dictate anywhere</div>
+          </div>
+          <div data-cap-btn="1" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="1" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><line x1="5" y1="10" x2="5" y2="14"></line><line x1="9" y1="7.5" x2="9" y2="16.5"></line><line x1="13" y1="9.5" x2="13" y2="14.5"></line><path d="M18 6.3l.66 1.84 1.84.66-1.84.66L18 11.7l-.66-1.84L15.5 9.2l1.84-.66z"></path></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Real-speech polish</div>
+          </div>
+          <div data-cap-btn="2" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="2" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M9 5h6"></path><path d="M9 19h6"></path><line x1="12" y1="5" x2="12" y2="19"></line><path d="M18.4 4.6l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z"></path></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Refine on the spot</div>
+          </div>
+          <div data-cap-btn="3" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="3" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M4.5 11.5a7.5 7.5 0 0 1 12.8-4.7L20 9"></path><polyline points="20 4 20 9 15 9"></polyline><path d="M19.5 12.5a7.5 7.5 0 0 1-12.8 4.7L4 15"></path><polyline points="4 20 4 15 9 15"></polyline></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Teach it once</div>
+          </div>
+          <div data-cap-btn="4" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="4" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M4 4h7l9 9-7 7-9-9V4z"></path><circle cx="7.7" cy="7.7" r="1.3"></circle></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Names, spelled right</div>
+          </div>
+          <div data-cap-btn="5" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="5" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="6" width="12" height="12" rx="2.5"></rect><path d="M9 6V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-1"></path></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Reads the room</div>
+          </div>
+          <div data-cap-btn="6" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="6" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><rect x="3.5" y="4" width="17" height="16" rx="2.5"></rect><path d="M7.5 4v6h9V4"></path><rect x="9" y="13" width="6" height="4" rx="1"></rect></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Yours to keep</div>
+          </div>
+          <div data-cap-btn="7" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.995 0.006 85); transition:background .15s;">
+            <div data-cap-bar="7" style="display:none; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
+            <div style="width:38px; height:38px; border-radius:10px; background:oklch(0.95 0.022 66); display:flex; align-items:center; justify-content:center; color:oklch(0.6 0.13 40); flex:none;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><polyline points="3 16 9 10 13 14 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg></div>
+            <div style="font-size:14.5px; font-weight:600; color:oklch(0.32 0.03 46); letter-spacing:-0.01em;">Sharper over time</div>
+          </div>
+        </div>
+        <div style="padding:38px 40px; position:relative; min-height:392px; display:flex; flex-direction:column;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:14px;">Capability <span data-cap-num>01</span></div>
+          <h3 data-cap-title style="font-size:27px; line-height:1.12; font-weight:700; letter-spacing:-0.02em; color:oklch(0.29 0.03 44); margin:0 0 14px;">Dictate anywhere</h3>
+          <p data-cap-body style="font-size:15.5px; line-height:1.6; color:oklch(0.48 0.03 50); margin:0 0 26px; max-width:460px;">Any app, any text field — if your cursor blinks there, you can speak there. One global shortcut works everywhere, system-wide, with no per-app setup.</p>
+          <div style="border-top:1px solid oklch(0.94 0.01 72); padding-top:26px;">
+          <div data-cap-feat="0" style="display:flex; flex-direction:column; gap:16px;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap;"><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Slack</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">VS Code</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Gmail</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Notion</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Messages</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Terminal</span></div>
+  <div style="background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:15px 16px; font-size:15px; color:oklch(0.34 0.03 46);">Pushed the fix for the auth bug<span style="display:inline-block; width:2px; height:16px; background:oklch(0.66 0.13 40); margin-left:2px; vertical-align:-3px;"></span></div>
+</div>
+          <div data-cap-feat="1" style="display:none; flex-direction:column; gap:13px;">
+  <div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">You said</div><div style="font-size:15.5px; line-height:1.55; color:oklch(0.6 0.025 52); font-style:italic;">“um so yeah let's <span style="text-decoration:line-through; opacity:.6;">like</span> ship it friday and uh loop in dana”</div></div>
+  <div style="color:oklch(0.66 0.1 45); font-size:16px;">↓</div>
+  <div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">OpenWispr wrote</div><div style="font-size:16px; line-height:1.55; color:oklch(0.3 0.03 45);">Let's ship it Friday and loop in Dana.</div></div>
+</div>
+          <div data-cap-feat="2" style="display:none; flex-direction:column; gap:14px;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Selected</div>
+  <div style="font-size:14.5px; color:oklch(0.42 0.03 48); background:oklch(0.95 0.03 70); border-radius:9px; padding:11px 13px;">“let's move the meeting, I have a conflict”</div>
+  <div style="display:flex; gap:8px;"><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); border:1px solid oklch(0.66 0.13 40); padding:5px 11px; border-radius:8px;">Refine</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Elaborate</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Formalize</span></div>
+  <div style="font-size:15.5px; line-height:1.55; color:oklch(0.3 0.03 45);">Let's move the meeting — I have a conflict.</div>
+</div>
+          <div data-cap-feat="3" style="display:none; flex-direction:column; gap:14px;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Heard → corrected once → remembered</div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <span style="font-size:16px; color:oklch(0.6 0.025 52); font-style:italic;">“distil whisper”</span>
+    <span style="color:oklch(0.66 0.1 45); font-size:18px;">→</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">DistilWhisper</span>
+  </div>
+  <div style="display:inline-flex; align-items:center; gap:7px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.1 145); background:oklch(0.95 0.03 150); padding:6px 11px; border-radius:8px; align-self:flex-start;"><svg viewBox="0 0 24 24" style="width:13px;height:13px;display:block;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>saved to your dictionary</div>
+</div>
+          <div data-cap-feat="4" style="display:none; flex-direction:column; gap:14px;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap;"><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Sarah Okonkwo</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Aanya Krishnan</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.5 0.03 50); background:oklch(0.96 0.012 72); border:1px solid oklch(0.91 0.012 70); padding:5px 11px; border-radius:8px;">Project Meridian</span></div>
+  <div style="font-size:16px; line-height:1.55; color:oklch(0.3 0.03 45);">Thanks <span style="background:oklch(0.93 0.045 68); border-radius:5px; padding:1px 5px; color:oklch(0.42 0.08 44); font-weight:600;">Sarah Okonkwo</span> — pushing <span style="background:oklch(0.93 0.045 68); border-radius:5px; padding:1px 5px; color:oklch(0.42 0.08 44); font-weight:600;">Project Meridian</span> live today.</div>
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.58 0.025 52);">contacts matched locally · never uploaded</div>
+</div>
+          <div data-cap-feat="5" style="display:none; flex-direction:column; gap:12px;">
+  <div style="font-size:13px; color:oklch(0.5 0.03 50);">One spoken line — “handle the null case before we deref the pointer” — three destinations:</div>
+  <div style="display:flex; gap:10px;">
+    <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Editor</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); font-family:'IBM Plex Mono',monospace; font-size:11.5px;">// handle the null case before<br>// we deref the pointer</div></div>
+    <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Email</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); ">Please handle the null case before we dereference the pointer.</div></div>
+    <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Chat</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); ">handle the null case before we deref the pointer</div></div>
+  </div>
+</div>
+          <div data-cap-feat="6" style="display:none; flex-direction:column; gap:11px;">
+  <div style="display:flex; align-items:center; gap:9px; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:10px; padding:9px 13px;">
+    <svg viewBox="0 0 24 24" style="width:15px;height:15px;display:block;fill:none;stroke:oklch(0.6 0.025 52);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+    <span style="font-size:13px; color:oklch(0.58 0.025 52);">Search your transcripts…</span>
+  </div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 13px; border:1px solid oklch(0.92 0.012 70); border-radius:10px;">
+    <div style="min-width:0;"><div style="font-size:13.5px; color:oklch(0.34 0.03 46); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Pushed the fix for the auth bug…</div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.58 0.025 52); margin-top:3px;">Slack · 9:24 AM</div></div>
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:3px 8px; border-radius:6px; flex:none;">local</span>
+  </div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 13px; border:1px solid oklch(0.92 0.012 70); border-radius:10px;">
+    <div style="min-width:0;"><div style="font-size:13.5px; color:oklch(0.34 0.03 46); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Hi Dana, thanks for the quick turnaround…</div><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.58 0.025 52); margin-top:3px;">Gmail · 2:47 PM</div></div>
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:3px 8px; border-radius:6px; flex:none;">local</span>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.58 0.025 52);">stored on this device · clear anytime</div>
+</div>
+          <div data-cap-feat="7" style="display:none; flex-direction:column; gap:16px;">
+  <div style="display:flex; align-items:flex-end; gap:12px; height:120px;">
+    <div style="width:26px; height:46px; border-radius:5px 5px 0 0; background:oklch(0.92 0.012 70);"></div><div style="width:26px; height:60px; border-radius:5px 5px 0 0; background:oklch(0.92 0.012 70);"></div><div style="width:26px; height:72px; border-radius:5px 5px 0 0; background:oklch(0.92 0.012 70);"></div><div style="width:26px; height:88px; border-radius:5px 5px 0 0; background:oklch(0.92 0.012 70);"></div><div style="width:26px; height:104px; border-radius:5px 5px 0 0; background:linear-gradient(180deg, oklch(0.8 0.11 62), oklch(0.66 0.13 40));"></div>
+  </div>
+  <div style="display:flex; align-items:baseline; gap:10px;">
+    <span style="font-size:30px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">97.8%</span>
+    <span style="font-size:13.5px; color:oklch(0.5 0.1 145); font-weight:600;">▲ accuracy on your voice</span>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.58 0.025 52);">improves on-device · week over week</div>
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <div id="how" style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72);">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 32px;">
+      <div style="text-align:center; max-width:600px; margin:0 auto 56px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">How it works</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0; color:oklch(0.3 0.03 45);">From thought to text in a single breath.</h2>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:30px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">1</div>
+          <div style="font-size:19px; font-weight:600; color:oklch(0.3 0.03 45); margin-bottom:10px; letter-spacing:-0.01em;">Hold a key</div>
+          <div style="font-size:14.5px; line-height:1.6; color:oklch(0.5 0.03 50);">Press <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; background:oklch(0.96 0.012 72); border:1px solid oklch(0.9 0.014 70); border-radius:5px; padding:1px 6px;">⌥ Space</span> wherever your cursor already is. No app to open, no window to hunt for.</div>
+        </div>
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:30px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">2</div>
+          <div style="font-size:19px; font-weight:600; color:oklch(0.3 0.03 45); margin-bottom:10px; letter-spacing:-0.01em;">Say it however it comes</div>
+          <div style="font-size:14.5px; line-height:1.6; color:oklch(0.5 0.03 50);">Ramble, restart, think out loud. OpenWispr is built for real speech — not careful, robotic diction.</div>
+        </div>
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:30px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">3</div>
+          <div style="font-size:19px; font-weight:600; color:oklch(0.3 0.03 45); margin-bottom:10px; letter-spacing:-0.01em;">Watch it land</div>
+          <div style="font-size:14.5px; line-height:1.6; color:oklch(0.5 0.03 50);">Clean, punctuated, shaped for wherever you’re writing — then gone from memory unless you choose to keep it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== INTERACTIVE DEMO ===================== -->
+  <div style="background:oklch(0.972 0.014 78);">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 32px;">
+      <div style="max-width:640px; margin-bottom:46px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">See it work</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0 0 16px; color:oklch(0.3 0.03 45);">From messy speech to finished text.</h2>
+        <p style="font-size:17px; line-height:1.6; color:oklch(0.5 0.03 50); margin:0;">OpenWispr strips the “ums,” fixes punctuation, and respects how you actually talk. Then refine any selection with a local LLM.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+        <!-- voice cleanup -->
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+            <span style="font-size:15px; font-weight:600; color:oklch(0.3 0.03 45);">Voice cleanup</span>
+            <div style="display:inline-flex; background:oklch(0.95 0.012 72); border-radius:9px; padding:3px;">
+              <div data-clean-tab="raw" style="font-size:12.5px; font-weight:500; padding:6px 13px; border-radius:7px; cursor:pointer; color:oklch(0.55 0.03 50); background:transparent;">Raw</div>
+              <div data-clean-tab="clean" style="font-size:12.5px; font-weight:600; padding:6px 13px; border-radius:7px; cursor:pointer; color:oklch(0.3 0.03 45); background:oklch(0.995 0.006 85);">OpenWispr</div>
+            </div>
+          </div>
+          <div data-clean-view="raw" style="display:none; font-size:17px; line-height:1.65; color:oklch(0.6 0.025 52); font-style:italic; min-height:132px;">“um so yeah let's uh ship the local model by end of july and then like revisit the cloud fallback thing in q4 also remind me to email dana”</div>
+          <div data-clean-view="clean" style="display:block; font-size:17px; line-height:1.65; color:oklch(0.3 0.03 45); min-height:132px;">Let's ship the local model by end of July, then revisit the cloud fallback in Q4. Also, remind me to email Dana.</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; padding-top:18px; border-top:1px solid oklch(0.94 0.01 72);">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:4px 9px; border-radius:7px;">fillers removed</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:4px 9px; border-radius:7px;">auto-punctuation</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:oklch(0.55 0.04 42); background:oklch(0.95 0.02 64); padding:4px 9px; border-radius:7px;">capitalization</span>
+          </div>
+        </div>
+
+        <!-- llm polish -->
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+            <span style="font-size:15px; font-weight:600; color:oklch(0.3 0.03 45);">Select &amp; polish</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.08em; color:oklch(0.6 0.025 55); text-transform:uppercase;">local LLM</span>
+          </div>
+          <div style="font-size:13px; color:oklch(0.55 0.025 52); margin-bottom:7px;">Selected text</div>
+          <div style="font-size:15px; line-height:1.55; color:oklch(0.4 0.03 48); background:oklch(0.95 0.03 70); border-radius:9px; padding:12px 14px; margin-bottom:18px;">“let's move the meeting to next week, I have a conflict”</div>
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <div data-polish="refine" style="font-size:13px; font-weight:600; padding:7px 14px; border-radius:20px; cursor:pointer; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); border:1px solid oklch(0.66 0.13 40);">Refine</div><div data-polish="elaborate" style="font-size:13px; font-weight:500; padding:7px 14px; border-radius:20px; cursor:pointer; color:oklch(0.5 0.03 50); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70);">Elaborate</div><div data-polish="formalize" style="font-size:13px; font-weight:500; padding:7px 14px; border-radius:20px; cursor:pointer; color:oklch(0.5 0.03 50); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70);">Formalize</div>
+          </div>
+          <div data-polish-result style="font-size:16px; line-height:1.6; color:oklch(0.3 0.03 45); min-height:84px;">Let’s move the meeting to next week — I have a conflict.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== COMPARISON ===================== -->
+  <div id="compare" style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+    <div style="max-width:1000px; margin:0 auto; padding:90px 32px;">
+      <div style="text-align:center; max-width:600px; margin:0 auto 50px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The difference</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0; color:oklch(0.3 0.03 45);">OpenWispr vs. cloud dictation</h2>
+      </div>
+
+      <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr;">
+          <div style="padding:18px 24px; border-bottom:1px solid oklch(0.92 0.012 72);"></div>
+          <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; background:oklch(0.97 0.018 72);">
+            <svg viewBox="0 0 100 100" style="width:22px; height:22px; display:block; color:oklch(0.66 0.13 40);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+            <span style="font-size:13.5px; font-weight:700; color:oklch(0.3 0.03 45);">OpenWispr</span>
+          </div>
+          <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+            <span style="color:oklch(0.55 0.03 50);"><svg viewBox="0 0 24 24" style="width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;"><path d="M7 17a4 4 0 1 1 .8-7.92A5 5 0 0 1 17 10a3.5 3.5 0 0 1 0 7H7z"></path></svg></span>
+            <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">Cloud dictation<br><span style="font-size:11px; font-weight:400; color:oklch(0.6 0.02 55);">(Wispr Flow, etc.)</span></span>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Where audio is processed</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Your device</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Their servers</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Works fully offline</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Account required</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Never</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Usually</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Voice stored in the cloud</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Never</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Often</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Open source &amp; auditable</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes · MIT</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Telemetry / usage tracking</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">None</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Typical</span></div></div><div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);"><div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Getting started</div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Download &amp; go</span></div><div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Sign up + subscribe</span></div></div>
+      </div>
+      <div style="text-align:center; font-size:12.5px; color:oklch(0.58 0.025 52); margin-top:16px;">Comparison reflects typical cloud dictation architecture. Features vary by provider.</div>
+    </div>
+  </div>
+
+  <!-- ===================== PRIVACY DEEP-DIVE (DARK) ===================== -->
+  <div style="background:linear-gradient(170deg, oklch(0.22 0.04 24), oklch(0.28 0.05 28)); color:oklch(0.95 0.012 82);">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:center;">
+
+      <!-- left: statement -->
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.78 0.09 60); text-transform:uppercase; margin-bottom:16px;">Built to be trusted</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0 0 18px; color:oklch(0.97 0.012 82);">Privacy you can verify,<br>not just believe.</h2>
+        <p style="font-size:17px; line-height:1.6; color:oklch(0.82 0.03 70); margin:0 0 28px;">Trust shouldn’t require faith. Every guarantee on the right is enforced by how the app is built — and because the source is open, you can confirm each one yourself.</p>
+        <a href="https://github.com/RohitAg13/openWispr" style="display:inline-flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:oklch(0.99 0.01 85); background:oklch(0.4 0.04 35 / 0.5); border:1px solid oklch(0.54 0.06 42); padding:12px 18px; border-radius:11px;">
+          <svg viewBox="0 0 24 24" style="width:17px; height:17px; fill:currentColor;"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+          Read the source that proves it
+        </a>
+        <div style="display:flex; gap:8px; margin-top:22px; flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:oklch(0.8 0.04 62); border:1px solid oklch(0.45 0.05 38); padding:6px 11px; border-radius:999px; text-transform:uppercase;">Auditable</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:oklch(0.8 0.04 62); border:1px solid oklch(0.45 0.05 38); padding:6px 11px; border-radius:999px; text-transform:uppercase;">MIT</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:oklch(0.8 0.04 62); border:1px solid oklch(0.45 0.05 38); padding:6px 11px; border-radius:999px; text-transform:uppercase;">0 telemetry</span>
+        </div>
+      </div>
+
+      <!-- right: privacy manifest -->
+      <div style="background:oklch(0.185 0.028 26); border:1px solid oklch(0.36 0.04 30); border-radius:18px; overflow:hidden; box-shadow:0 30px 70px -28px rgba(0,0,0,0.7);">
+        <!-- title bar -->
+        <div style="display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid oklch(0.32 0.035 28); background:oklch(0.15 0.024 25);">
+          <span style="display:flex; gap:7px;">
+            <span style="width:11px; height:11px; border-radius:50%; background:oklch(0.62 0.14 25);"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:oklch(0.78 0.11 75);"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:oklch(0.7 0.12 150);"></span>
+          </span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:oklch(0.66 0.02 60); letter-spacing:0.02em;">openwispr — privacy audit</span>
+          <span style="margin-left:auto; display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.08em; color:oklch(0.7 0.1 150); text-transform:uppercase;"><span style="width:6px; height:6px; border-radius:50%; background:oklch(0.72 0.13 150);"></span>passing</span>
+        </div>
+        <!-- ledger -->
+        <div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; border-bottom:1px solid oklch(0.3 0.03 28); transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">01</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">Nothing leaves your device</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">audio &amp; text processed locally</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>enforced</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; border-bottom:1px solid oklch(0.3 0.03 28); transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">02</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">No account, no sign-in</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">no email, no profile, nothing to leak</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>enforced</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; border-bottom:1px solid oklch(0.3 0.03 28); transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">03</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">Auditable &amp; open</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">every line is MIT-licensed on GitHub</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>open · MIT</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; border-bottom:1px solid oklch(0.3 0.03 28); transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">04</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">Zero telemetry</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">no analytics, no crash pings, no “usage data”</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>none</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; border-bottom:1px solid oklch(0.3 0.03 28); transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">05</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">Fully offline</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">unplug the network and it still works</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>offline</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 20px; transition:background .15s;" data-sh="background:oklch(0.25 0.035 28);">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; color:oklch(0.7 0.12 44); flex:none; width:20px;">06</span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:15px; font-weight:600; color:oklch(0.95 0.012 82); letter-spacing:-0.01em;">You own your history</div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.66 0.025 60); margin-top:3px;">local, searchable, erasable in one click</div>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; color:oklch(0.8 0.13 150); background:oklch(0.32 0.06 150 / 0.35); border:1px solid oklch(0.5 0.09 150 / 0.5); padding:5px 10px; border-radius:999px; flex:none; text-transform:uppercase;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none;"><polyline points="4 12 9.5 17.5 20 6.5"></polyline></svg>yours</span>
+            </div>
+        </div>
+        <!-- proof footer -->
+        <div style="padding:16px 20px; background:oklch(0.14 0.02 24); border-top:1px solid oklch(0.32 0.035 28); font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.7;">
+          <div style="color:oklch(0.6 0.025 58);"><span style="color:oklch(0.7 0.12 44);">$</span> grep -rn "https://\|fetch(" ./src</div>
+          <div style="color:oklch(0.8 0.13 150);">→ 0 matches · OpenWispr makes no network calls</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== OPEN SOURCE ===================== -->
+  <div id="opensource" style="background:oklch(0.972 0.014 78);">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center;">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Open source</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0 0 18px; color:oklch(0.3 0.03 45);">Owned by everyone.<br>Beholden to no one.</h2>
+        <p style="font-size:17px; line-height:1.65; color:oklch(0.5 0.03 50); margin:0 0 28px;">OpenWispr is MIT-licensed and developed in the open. No VC pressure to monetize your data, no roadmap held hostage by a quarterly target. Read it, fork it, audit it, ship it.</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="https://github.com/RohitAg13/openWispr" style="display:inline-flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.3 0.03 40); padding:13px 20px; border-radius:11px;">
+            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+            Read the code
+          </a>
+          <a href="https://github.com/RohitAg13/openWispr/blob/main/LICENSE" style="display:inline-flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:13px 20px; border-radius:11px;">MIT License</a>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:24px;">
+          <div style="font-size:34px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">MIT</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:oklch(0.55 0.025 52); text-transform:uppercase; margin-top:8px;">Permissive license</div>
+        </div>
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:24px;">
+          <div style="font-size:34px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">100%</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:oklch(0.55 0.025 52); text-transform:uppercase; margin-top:8px;">On your device</div>
+        </div>
+        <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:24px;">
+          <div style="font-size:34px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">0</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:oklch(0.55 0.025 52); text-transform:uppercase; margin-top:8px;">Trackers &amp; ads</div>
+        </div>
+        <a href="https://github.com/RohitAg13/openWispr" style="background:linear-gradient(150deg, oklch(0.78 0.1 62), oklch(0.66 0.13 40)); border-radius:16px; padding:24px; color:oklch(0.99 0.01 85); display:flex; flex-direction:column; justify-content:space-between;">
+          <svg viewBox="0 0 24 24" style="width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;"><polygon points="12 3 14.6 8.6 20.8 9.3 16.2 13.5 17.5 19.6 12 16.5 6.5 19.6 7.8 13.5 3.2 9.3 9.4 8.6 12 3"></polygon></svg>
+          <div>
+            <div style="font-size:16px; font-weight:700; letter-spacing:-0.01em; margin-top:14px;">Star us on GitHub</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; opacity:0.92; text-transform:uppercase; margin-top:6px;">Early project — help it grow</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FAQ ===================== -->
+  <div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+    <div style="max-width:820px; margin:0 auto; padding:90px 32px;">
+      <div style="text-align:center; margin-bottom:46px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+        <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">Does it really work offline?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(45deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:block;">Yes — completely. The speech and polish models live on your device. Once installed, OpenWispr never needs a network connection to transcribe, format, or refine your text.</div></div><div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">Is it actually free?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes. OpenWispr is free and MIT-licensed. There’s no paid tier, no usage cap, and no account. The models run on your hardware, so there are no server costs to pass on to you.</div></div><div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">Will the models slow down my machine?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">OpenWispr ships right-sized models tuned for on-device speed. Transcription is near real-time on modern Macs and Android devices, and you can pick a lighter model if you prefer.</div></div><div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">Which languages are supported?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">The underlying Whisper-class models support dozens of languages out of the box. You select your primary language in Settings, and dictation works fully offline in each.</div></div><div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">Can I delete my history?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Anytime. History is stored locally and you can clear individual entries or wipe everything in one click. You can also turn history off entirely so nothing is ever written to disk.</div></div><div data-faq="5" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;"><div style="display:flex; align-items:center; justify-content:space-between; gap:16px;"><span style="font-size:16.5px; font-weight:600; color:oklch(0.3 0.03 45);">What platforms are supported?</span><span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span></div><div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">macOS and Android are available today from GitHub Releases. Windows and Linux builds are in active development — star the repo to follow along.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FOOTER CTA ===================== -->
+  <div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+    <div style="max-width:1180px; margin:0 auto; padding:96px 32px; text-align:center;">
+      <div style="width:74px; height:74px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 28px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </div>
+      <h2 style="font-size:46px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; margin:0 0 18px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+      <p style="font-size:18px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 36px; max-width:520px;">Open source and entirely on your device. Grab the latest release from GitHub — no account, no sign-up, just a download.</p>
+      <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+        <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">
+          <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M16.4 12.1c0-1.7.9-3.1 2.3-3.9-.8-1.1-2-1.8-3.6-1.9-1.5-.1-3.1.9-3.7.9-.6 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.8 2.4-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1 2.8-2.2c.6-.9.9-1.8 1.1-2.7-1.5-.6-2.4-2-2.4-3.7zM14.2 4.7c.7-.8 1.1-2 1-3.2-1 .1-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.5 2.9-1.3z"/></svg>
+          Download for macOS
+        </a>
+        <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">
+          <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:oklch(0.72 0.13 145);"><path d="M17.6 9.5l1.8-3.1c.1-.2 0-.4-.1-.5-.2-.1-.4 0-.5.1l-1.8 3.1c-1.4-.6-2.9-.9-4.5-.9s-3.1.3-4.5.9L6.2 6c-.1-.2-.3-.2-.5-.1-.2.1-.2.3-.1.5l1.8 3.1C4.3 11.2 2.3 14.2 2 17.7h20c-.3-3.5-2.3-6.5-4.4-8.2zM7.5 14.8c-.5 0-.9-.4-.9-.9s.4-.9.9-.9.9.4.9.9-.4.9-.9.9zm9 0c-.5 0-.9-.4-.9-.9s.4-.9.9-.9.9.4.9.9-.4.9-.9.9z"/></svg>
+          Download for Android
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+    <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+        <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+        <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:26px; font-size:13.5px;">
+        <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+        <a href="#privacy" style="color:oklch(0.72 0.02 65);">Privacy</a>
+        <a href="#features" style="color:oklch(0.72 0.02 65);">Features</a>
+        <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+(function(){
+  var FEAT = [["Dictate anywhere", "Any app, any text field — if your cursor blinks there, you can speak there. One global shortcut works everywhere, system-wide, with no per-app setup."], ["Real-speech polish", "Fillers disappear, punctuation lands itself, and saying “scratch that” actually rewinds. You talk like a person; OpenWispr writes like an editor."], ["Refine on the spot", "Highlight any sentence and reshape it with a local language model — make it sharper, longer, or more formal. The rewrite happens on your device, not a server."], ["Teach it once", "Correct a mis-hearing a single time and OpenWispr remembers it for good. Your jargon, acronyms, and odd spellings stop fighting you."], ["Names, spelled right", "Optionally import your contacts on-device so teammates, places, and project names come out exactly — never phonetically guessed. The list never leaves your machine."], ["Reads the room", "It formats for where you are: tidy code in your editor, full sentences in your inbox, loose shorthand in chat. One voice, the right shape every time."], ["Yours to keep", "Every transcript lives on your own disk — searchable, exportable, or wiped in a single click. Or keep nothing at all, and OpenWispr forgets the moment it inserts."], ["Sharper over time", "It quietly adapts to your voice and the words you actually use. The model gets better the more you talk — and the learning never leaves home."]], POLISH = {"refine": "Let’s move the meeting to next week — I have a conflict.", "elaborate": "Could we move next week’s meeting? I have a scheduling conflict and want to make sure everyone can attend.", "formalize": "I’d like to propose rescheduling our meeting to next week, as I have a prior commitment."};
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+
+  // generic hover (data-sh)
+  qa('[data-sh]').forEach(function(el){
+    var base = el.getAttribute('style')||'', extra = el.getAttribute('data-sh')||'';
+    el.addEventListener('mouseenter', function(){ el.setAttribute('style', base + ';' + extra); });
+    el.addEventListener('mouseleave', function(){ el.setAttribute('style', base); });
+  });
+
+  // capability explorer
+  function setCap(n){
+    qa('[data-cap-btn]').forEach(function(b){
+      var on = +b.getAttribute('data-cap-btn') === n;
+      b.style.background = on ? 'oklch(0.965 0.02 70)' : 'oklch(0.995 0.006 85)';
+    });
+    qa('[data-cap-bar]').forEach(function(b){ b.style.display = (+b.getAttribute('data-cap-bar')===n)?'block':'none'; });
+    qa('[data-cap-feat]').forEach(function(b){ b.style.display = (+b.getAttribute('data-cap-feat')===n)?'flex':'none'; });
+    var num=document.querySelector('[data-cap-num]'), t=document.querySelector('[data-cap-title]'), bd=document.querySelector('[data-cap-body]');
+    if(num) num.textContent = '0'+(n+1);
+    if(t) t.textContent = FEAT[n][0];
+    if(bd) bd.textContent = FEAT[n][1];
+  }
+  qa('[data-cap-btn]').forEach(function(b){ b.addEventListener('click', function(){ setCap(+b.getAttribute('data-cap-btn')); }); });
+
+  // voice cleanup toggle
+  function setClean(view){
+    qa('[data-clean-view]').forEach(function(v){ v.style.display = (v.getAttribute('data-clean-view')===view)?'block':'none'; });
+    qa('[data-clean-tab]').forEach(function(t){
+      var on = t.getAttribute('data-clean-tab')===view;
+      t.style.fontWeight = on?'600':'500';
+      t.style.color = on?'oklch(0.3 0.03 45)':'oklch(0.55 0.03 50)';
+      t.style.background = on?'oklch(0.995 0.006 85)':'transparent';
+    });
+  }
+  qa('[data-clean-tab]').forEach(function(t){ t.addEventListener('click', function(){ setClean(t.getAttribute('data-clean-tab')); }); });
+
+  // polish tabs
+  var ACCENT='oklch(0.66 0.13 40)';
+  function setPolish(key){
+    qa('[data-polish]').forEach(function(t){
+      var on = t.getAttribute('data-polish')===key;
+      t.style.fontWeight = on?'600':'500';
+      t.style.color = on?'oklch(0.985 0.012 82)':'oklch(0.5 0.03 50)';
+      t.style.background = on?ACCENT:'oklch(0.995 0.006 85)';
+      t.style.border = '1px solid ' + (on?ACCENT:'oklch(0.88 0.014 70)');
+    });
+    var r=document.querySelector('[data-polish-result]'); if(r) r.textContent = POLISH[key];
+  }
+  qa('[data-polish]').forEach(function(t){ t.addEventListener('click', function(){ setPolish(t.getAttribute('data-polish')); }); });
+
+  // faq accordion
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>
