@@ -45,6 +45,8 @@ class EvalService : Service() {
         val repeats = (intent?.getIntExtra("repeats", 1) ?: 1).coerceAtLeast(1)
         val engine = intent?.getStringExtra("engine") ?: "cpu" // "cpu" (llama.cpp) | "gpu" (MLC/Adreno)
         val sttModel = intent?.getStringExtra("stt") ?: "" // e2e mode: "tiny"|"base"|"small"; blank = settings
+        com.whispercpp.whisper.WhisperCpuConfig.forcedThreadCount = intent?.getIntExtra("threads", 0) ?: 0
+        val clipDelayMs = (intent?.getIntExtra("delay_ms", 0) ?: 0).toLong() // e2e: cooldown between clips (mimic spaced dictation)
         val base = applicationContext.getExternalFilesDir(null)!!
         val inDir = File(intent?.getStringExtra("in") ?: File(base, "eval-in").path)
         val outDir = File(intent?.getStringExtra("out") ?: File(base, "eval-out").path)
@@ -52,7 +54,7 @@ class EvalService : Service() {
 
         scope.launch {
             try {
-                runEval(mode, gate, repeats, inDir, outDir, engine, sttModel)
+                runEval(mode, gate, repeats, inDir, outDir, engine, sttModel, clipDelayMs)
             } catch (t: Throwable) {
                 Log.e(TAG, "eval failed", t)
             } finally {
@@ -83,7 +85,7 @@ class EvalService : Service() {
         return out
     }
 
-    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, sttModel: String = "") {
+    private suspend fun runEval(mode: String, gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, sttModel: String = "", clipDelayMs: Long = 0) {
         val gpu = engine == "gpu"
         val s0 = SettingsRepository(applicationContext).get()
         val settings = s0.copy(
@@ -92,7 +94,7 @@ class EvalService : Service() {
             polishLevel = PolishLevel.FULL,
             sttModel = sttModel.ifBlank { s0.sttModel },
         )
-        if (mode == "e2e") { runE2E(gate, repeats, inDir, outDir, engine, settings); return }
+        if (mode == "e2e") { runE2E(gate, repeats, inDir, outDir, engine, settings, clipDelayMs); return }
 
         val cases = loadCases(inDir)
         Log.i(TAG, "start mode=$mode gate=$gate repeats=$repeats engine=$engine cases=${cases.size} model=${settings.model}")
@@ -187,7 +189,7 @@ class EvalService : Service() {
     }
 
     /** Full pipeline timing: WAV -> Whisper STT (CPU) -> det textproc -> gated LLM polish. */
-    private suspend fun runE2E(gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, settings: Settings) {
+    private suspend fun runE2E(gate: Boolean, repeats: Int, inDir: File, outDir: File, engine: String, settings: Settings, clipDelayMs: Long = 0) {
         val gpu = engine == "gpu"
         val sttId = settings.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL }
         LocalWhisperStt.warm(applicationContext, sttId)
@@ -196,6 +198,7 @@ class EvalService : Service() {
         val results = StringBuilder(); val timings = StringBuilder(); var nGated = 0
 
         for ((ci, c) in cases.withIndex()) {
+            if (clipDelayMs > 0 && ci > 0) kotlinx.coroutines.delay(clipDelayMs) // mimic spaced dictation (thermal recovery)
             val samples = decodeWav(File(File(inDir, "audio"), c.wav))
             val durS = samples.size / AudioRecorder.SAMPLE_RATE.toFloat()
             var output = ""; var sttMs = 0.0; var llmMs = 0.0; var gated = false; var sttStats = ""

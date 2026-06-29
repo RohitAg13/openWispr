@@ -5,11 +5,17 @@ import java.io.BufferedReader
 import java.io.FileReader
 
 object WhisperCpuConfig {
+    // Research override: when >0, forces the whisper thread count (set by the eval harness
+    // to sweep thread scaling). 0 = use the default heuristic below.
+    @Volatile var forcedThreadCount: Int = 0
+
     val preferredThreadCount: Int
         // Use the big cores only: spanning onto the slow "little" cores makes ggml
         // wait on the stragglers each layer and is slower overall. 4 is a good cap
-        // for typical phone SoCs (≈1 prime + 3 big).
-        get() = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
+        // for typical phone SoCs (≈1 prime + 3 big). NOTE: all-big-core SoCs (e.g.
+        // Snapdragon 8 Elite: 2 prime + 6 perf, no little cores) can benefit from more.
+        get() = if (forcedThreadCount > 0) forcedThreadCount
+                else Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
 }
 
 private class CpuInfo(private val lines: List<String>) {
