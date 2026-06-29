@@ -30,6 +30,13 @@ jobs:
         run: |
           sdkmanager "ndk;25.1.8937393" "ndk;29.0.13113456" "cmake;3.22.1" "cmake;3.31.6"
 
+      - name: Fetch vendored sherpa-onnx AAR (on-device Parakeet STT; gitignored binary)
+        working-directory: android
+        run: |
+          mkdir -p app/libs
+          curl -fSL --retry 3 -o app/libs/sherpa-onnx-static-link-onnxruntime-1.13.3.aar \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.3/sherpa-onnx-static-link-onnxruntime-1.13.3.aar
+
       - name: Decode release keystore
         env:
           KEYSTORE_B64: ${{ secrets.OPENWISPR_KEYSTORE_BASE64 }}
