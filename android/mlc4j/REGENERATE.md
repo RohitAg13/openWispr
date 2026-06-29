@@ -14,5 +14,9 @@ It bundles the TVM/OpenCL runtime + the statically-linked compiled Qwen3-0.6B mo
 Model weights (~331MB, also not committed) are pushed to the device at
 `/sdcard/Android/data/com.voicerewriter/files/ow-ft-q4f16_1/`.
 
-STATUS: experiment concluded DISCARD — Adreno prefill ~10 tok/s makes per-call ~9.4s vs CPU 2862ms
-for this prefill-bound workload. Kept for resurrection if a faster mobile-GPU prefill path appears.
+STATUS: KEEP. The initial Adreno prefill was ~10 tok/s (per-call ~9.4s vs CPU) — a dlight schedule bug,
+not a hardware limit. Fixed by patching the prefill matmul M-tile 8→64 + shared-memory staging
+(`research/adreno-prefill-mtile-fix.patch`; apply to the pinned TVM before step 2, with
+`MLC_JIT_POLICY=REDO` / clear `~/.cache/mlc_llm/model_lib` so the schedule edit is recompiled).
+Result: prefill 11→132 tok/s, per-call LLM 964ms (3.3× faster than CPU), gated Tier-3 GATE=PASS.
+See `research/2026-06-on-device-latency.md` and the research memory `mlc-llm-adreno-probe`.

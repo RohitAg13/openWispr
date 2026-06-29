@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only manifest. The Tier-3 on-device benchmark bridge (adb-driven research harness)
+  is registered ONLY in debug builds so it never ships in release. EvalReceiver is exported
+  (adb broadcasts it) and EvalService takes attacker-controllable in/out paths, so exposing
+  them in a release APK would let any app trigger arbitrary-path file I/O + a battery-draining
+  LLM sweep. The Kotlin classes live in the main source set; only these declarations are
+  debug-scoped (manifest merger adds them for debug variants only).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- Tier-3 on-device benchmark bridge (research harness; adb-driven). Debug-only. -->
+        <receiver
+            android:name=".EvalReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.voicerewriter.RUN_EVAL_DUMP" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Foreground runner for the benchmark so the LLM-heavy sweep survives LMK. Debug-only. -->
+        <service
+            android:name=".EvalService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="ondevice_benchmark" />
+        </service>
+
+    </application>
+</manifest>
