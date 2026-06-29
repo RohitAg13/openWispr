@@ -1,0 +1,12 @@
+{
+  "name": "openwispr-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenWispr marketing landing page — static site served by a zero-dependency Node server.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
