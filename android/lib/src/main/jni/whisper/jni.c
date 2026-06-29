@@ -180,7 +180,30 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
     params.n_threads = num_threads;
     params.offset_ms = 0;
     params.no_context = true;
-    params.single_segment = false;
+    params.single_segment = true;
+
+    // Latency: stock Whisper zero-pads the mel to 30s (audio_ctx=1500) and runs the full
+    // encoder over it, so a short dictation clip wastes ~7x encoder compute. Size audio_ctx
+    // to the actual clip instead. Units: ~50 encoder tokens/sec (1500 = 30s). Round up to a
+    // multiple of 64 (hardware tiling), keep a 768 floor (below that the decoder can loop /
+    // repeat the last tokens), and cap at 1500 (whisper's 30s max). For typical 3-8s clips
+    // this lands at the 768 floor => ~2x faster encoder, negligible accuracy cost.
+    {
+        int needed = (audio_data_length + 319) / 320 + 16; // ceil(samples/16000*50) + margin
+        int ctx = ((needed + 63) / 64) * 64;
+        if (ctx < 768)  ctx = 768;
+        if (ctx > 1500) ctx = 1500;
+        params.audio_ctx = ctx;
+    }
+
+    // Greedy at temperature 0. We KEEP whisper's temperature fallback (temperature_inc, the
+    // default 0.2) on purpose: shrinking audio_ctx makes the decoder more prone to repetition
+    // loops (e.g. digit strings -> "555-5-5-5-5..."), and the fallback's compression-ratio /
+    // entropy guard is exactly what catches a looped decode and re-runs it at a higher
+    // temperature. It only costs latency on the rare bad clip (a p95 event), not the p50.
+    params.temperature = 0.0f;
+    // Suppress non-speech tokens (music/silence markers) — fewer wasted decode steps.
+    params.suppress_nst = true;
 
     // Bias decoding toward the user's vocabulary (names/terms): the prompt is
     // prepended as context so Whisper is primed to spell these correctly.
