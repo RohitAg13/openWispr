@@ -57,15 +57,43 @@ Both native apps share one deterministic-cleanup pipeline contract (the Android 
 package is ported 1:1 to Swift in `macos/OpenWisprCore`) and one prompt/tone contract
 (see [`shared/prompts/`](shared/prompts/)), so behavior stays in sync across platforms.
 
-## Download
+## Install
 
-Grab the latest build from the [**Releases**](../../releases) page:
+Grab the latest build from the [**Releases**](../../releases/latest) page (currently **v0.1.0**,
+the first beta).
 
-- **Android** — download the `.apk` and sideload it (enable "Install unknown apps" for your
-  browser or files app, then open it). arm64 devices only.
-- **macOS** — download the `.dmg`, drag OpenWispr to Applications. The app is self-signed (not
-  notarized yet), so on first launch right-click it → **Open** once to clear Gatekeeper (or run
-  `xattr -dr com.apple.quarantine /Applications/OpenWispr.app`).
+### Android
+
+*Requires Android 7.0+ on an **arm64** device.*
+
+1. Download **`OpenWispr-v0.1.0.apk`** from the latest release.
+2. Open it. The first time you sideload, Android asks you to allow your browser / Files app to
+   **install unknown apps** — enable it, then tap back.
+3. Tap **Install**, then open OpenWispr.
+4. Grant the two permissions it requests:
+   - **Microphone** — so it can hear you.
+   - **Accessibility service** (*Settings → Accessibility → OpenWispr*) — so it can type the
+     cleaned text into the focused field of other apps.
+
+Updating later: just install a newer release `.apk` over the top — it's the same signing key, so
+it upgrades in place.
+
+### macOS
+
+*Requires macOS 13.3 (Ventura) or later. Apple Silicon or Intel.*
+
+1. Download **`OpenWispr-0.1.0.dmg`** from the latest release.
+2. Open the `.dmg` and drag **OpenWispr** into **Applications**.
+3. The app is self-signed (not yet notarized), so on first launch Gatekeeper blocks it.
+   **Right-click the app → Open** and confirm once — or run:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/OpenWispr.app
+   ```
+4. When prompted, grant **Microphone** and **Accessibility**
+   (*System Settings → Privacy & Security → Accessibility*) so it can listen and insert text.
+
+> Prefer to build from source? See the platform folders — [`android/`](android/) and
+> [`macos/`](macos/).
 
 ## How it works
 
