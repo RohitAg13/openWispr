@@ -46,3 +46,7 @@ macos/App/build-release/
 macos/App/build-eval/
 macos/dist/
 *.dmg
+
+# Vendored sherpa-onnx AAR (on-device Parakeet/Moonshine STT) — 37MB prebuilt binary,
+# regenerable from the k2-fsa/sherpa-onnx release. See android/app/libs/REGENERATE.md.
+android/app/libs/*.aar

@@ -499,7 +499,7 @@ class RewriteActivity : ComponentActivity() {
                     // remaining near-misses afterward (B2).
                     val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
                     val raw = if (local) {
-                        LocalWhisperStt.transcribe(this@RewriteActivity, s, floats!!, bias)
+                        OnDeviceStt.transcribe(this@RewriteActivity, s, floats!!, bias)
                     } else {
                         SttEngine.transcribe(s, wav!!, bias).also { wav.delete() }
                     }
@@ -537,7 +537,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun ensurePermissionThenRecord(s: Settings) {
             if (s.sttProvider == "local") {
-                if (!WhisperModelManager.isReady(this, s.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL })) {
+                if (!OnDeviceStt.isReady(this, s.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL })) {
                     error = "On-device model not downloaded. Open Settings → Voice → Download model."
                     stage = Stage.ERROR
                     return
