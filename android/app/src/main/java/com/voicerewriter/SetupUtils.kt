@@ -4,14 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings as AndroidSettings
 import androidx.core.content.ContextCompat
 
 /**
  * Shared helpers for the setup surfaces (onboarding + Settings): permission/state checks
  * and the deep-link intents into the relevant system Settings screens. Special-access grants
- * (overlay, accessibility, battery, restricted-settings) never give a result callback, so
+ * (overlay, accessibility, restricted-settings) never give a result callback, so
  * callers must re-check state on resume.
  */
 object SetupUtils {
@@ -39,11 +38,6 @@ object SetupUtils {
         return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
     }
 
-    fun ignoringBatteryOptimizations(ctx: Context): Boolean {
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return true
-        return pm.isIgnoringBatteryOptimizations(ctx.packageName)
-    }
-
     // ---- bubble service ----
 
     fun startBubble(ctx: Context) =
@@ -67,15 +61,6 @@ object SetupUtils {
     )
 
     fun appPermissionsIntent(ctx: Context) = appInfoIntent(ctx)
-
-    @Suppress("BatteryLife")
-    fun requestIgnoreBatteryIntent(ctx: Context) = Intent(
-        AndroidSettings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-        Uri.parse("package:${ctx.packageName}"),
-    )
-
-    fun batteryOptimizationSettingsIntent() =
-        Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
 
     /**
      * Best-effort deep links to common OEM auto-start / background-permission managers

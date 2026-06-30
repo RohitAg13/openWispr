@@ -103,7 +103,6 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var a11yEnabled by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
     var micGranted by remember { mutableStateOf(false) }
-    var batteryOk by remember { mutableStateOf(SetupUtils.ignoringBatteryOptimizations(context)) }
 
     // LLM (rewrite / polish model)
     var provider by remember { mutableStateOf(Defaults.DEFAULT_PROVIDER) }
@@ -142,9 +141,6 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> micGranted = granted }
     val a11yLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         a11yEnabled = SetupUtils.accessibilityEnabled(context)
-    }
-    val batteryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        batteryOk = SetupUtils.ignoringBatteryOptimizations(context)
     }
 
     fun enableBubble() {
@@ -414,11 +410,6 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             // ---------------- RELIABILITY ----------------
             Section("Reliability") {
                 Card {
-                    ToggleRow("Ignore battery optimization", "Stops the system killing the bubble", batteryOk) { want ->
-                        if (want) batteryLauncher.launch(SetupUtils.requestIgnoreBatteryIntent(context))
-                        else batteryLauncher.launch(SetupUtils.batteryOptimizationSettingsIntent())
-                    }
-                    Divider()
                     NavRow("Auto-start helper", "For Samsung, Xiaomi, OnePlus, Oppo") {
                         val intent = SetupUtils.oemAutoStartIntents().firstOrNull { it.resolveActivity(context.packageManager) != null }
                             ?: SetupUtils.appInfoIntent(context)

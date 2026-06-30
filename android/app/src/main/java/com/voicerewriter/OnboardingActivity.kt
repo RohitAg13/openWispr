@@ -82,7 +82,7 @@ import kotlinx.coroutines.withContext
  * Android-13 "restricted settings" unlock for sideloaded APKs) → first dictation →
  * optional extras → done.
  *
- * Special-access grants (overlay, accessibility, battery) deliver no result callback,
+ * Special-access grants (overlay, accessibility) deliver no result callback,
  * so live state is re-read from [SetupUtils] on every ON_RESUME. Shown once on first
  * launch (gated by [Settings.hasCompletedOnboarding]); re-launchable from Settings.
  */
@@ -146,7 +146,6 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     var a11yPhase by remember { mutableStateOf("restricted") }
 
     var notif by remember { mutableStateOf(SetupUtils.notificationsGranted(ctx)) }
-    var battery by remember { mutableStateOf(SetupUtils.ignoringBatteryOptimizations(ctx)) }
     var history by remember { mutableStateOf(DictationHistory.keepHistory(ctx)) }
 
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -164,7 +163,6 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 overlayGranted = SetupUtils.canDrawOverlays(ctx)
                 a11yGranted = SetupUtils.accessibilityEnabled(ctx)
                 notif = SetupUtils.notificationsGranted(ctx)
-                battery = SetupUtils.ignoringBatteryOptimizations(ctx)
                 if (a11yGranted) a11yPhase = "on"
                 // keep the model step in sync if a download finished while away
                 if (path == "private" && dl != "downloading" && OnDeviceStt.isReady(ctx, model)) dl = "done"
@@ -277,13 +275,12 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     )
                     6 -> DictateStep(onTry = onLaunchDictation, onNext = { next() })
                     7 -> ExtrasStep(
-                        notif = notif, battery = battery, history = history,
+                        notif = notif, history = history,
                         onNotif = {
                             if (!notif && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                                 notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                             else notif = !notif
                         },
-                        onBattery = { if (!battery) ctx.startActivity(SetupUtils.requestIgnoreBatteryIntent(ctx)) else battery = false },
                         onHistory = { history = !history },
                         onNext = { next() },
                     )
@@ -770,8 +767,8 @@ private fun DictateStep(onTry: () -> Unit, onNext: () -> Unit) {
 
 @Composable
 private fun ExtrasStep(
-    notif: Boolean, battery: Boolean, history: Boolean,
-    onNotif: () -> Unit, onBattery: () -> Unit, onHistory: () -> Unit, onNext: () -> Unit,
+    notif: Boolean, history: Boolean,
+    onNotif: () -> Unit, onHistory: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
     StepScaffold(
@@ -782,8 +779,6 @@ private fun ExtrasStep(
             Text("All optional — keep what helps, skip the rest.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
             ToggleRow(Icons.Filled.Notifications, "Notifications", "“Dictated ✓ / fix a word” after each use", notif, onNotif)
-            Spacer(Modifier.height(12.dp))
-            ToggleRow(Icons.Filled.Bolt, "Keep the bubble reliable", "Skip battery optimization so it isn't killed", battery, onBattery)
             Spacer(Modifier.height(12.dp))
             ToggleRow(Icons.Filled.Shield, "Keep history on-device", "Powers personalization · never uploaded", history, onHistory)
         },
