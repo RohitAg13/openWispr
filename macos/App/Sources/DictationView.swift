@@ -234,13 +234,17 @@ final class DictationController: ObservableObject {
         Task {
             do {
                 let rawText = try await stt.transcribe(samples, sampleRate: 16000)
-                // Deterministic cleanup; vocab correction is empty for now.
-                let cleanedText = TextProcessor.process(rawText)
+                // Deterministic cleanup (user-toggleable); vocab correction is empty for now.
+                let cleanedText = AppSettings.shared.smartCleanup
+                    ? TextProcessor.process(rawText) : rawText
                 raw = rawText
                 cleaned = cleanedText
                 editableCleaned = cleanedText
                 phase = .done
-                currentRecordID = DictationHistoryStore.shared.add(cleanedText)
+                // Honor the Privacy ▸ Keep history toggle.
+                if AppSettings.shared.keepHistory {
+                    currentRecordID = DictationHistoryStore.shared.add(cleanedText)
+                }
             } catch let error as STTError {
                 phase = .error(Self.message(for: error))
             } catch {
