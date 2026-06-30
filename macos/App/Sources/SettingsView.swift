@@ -8,6 +8,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject private var models = WhisperModelManager.shared
+    @ObservedObject private var parakeet = ParakeetModelManager.shared
     @ObservedObject private var llmModels = LlmModelManager.shared
     @ObservedObject private var history = DictationHistoryStore.shared
     @ObservedObject private var corpus = CorpusStore.shared
@@ -161,10 +162,13 @@ struct SettingsView: View {
     private var voiceSection: some View {
         group(header: "Engine") {
             VStack(spacing: 8) {
-                // On-device Whisper is the recommended default engine; Apple Speech is the
-                // alternate on-device recognizer. Both are selectable.
+                // On-device Parakeet (sherpa-onnx) is the fastest engine — sub-second and as
+                // accurate as whisper-small; Whisper is the alternate on-device recognizer and
+                // Apple Speech the built-in one. All three are selectable.
+                engineRow(.parakeet, title: "On-device (Parakeet)",
+                          subtitle: "Private, offline. Fastest — sub-second, accurate.", recommended: true)
                 engineRow(.whisper, title: "On-device (Whisper)",
-                          subtitle: "Private, offline. Runs entirely on this Mac.", recommended: true)
+                          subtitle: "Private, offline. Runs entirely on this Mac.", recommended: false)
                 engineRow(.appleSpeech, title: "Apple Speech",
                           subtitle: "The built-in macOS recognizer. No download.", recommended: false)
                 // Cloud engines from the design are not implemented on macOS yet (the app is
@@ -176,15 +180,24 @@ struct SettingsView: View {
             .padding(14)
         }
 
-        if settings.sttProvider == .whisper {
+        switch settings.sttProvider {
+        case .parakeet:
+            group(header: "On-device model") {
+                VStack(spacing: 8) {
+                    parakeetModelRow
+                }
+                .padding(14)
+            }
+            if let error = parakeet.lastError {
+                infoNote(error, tone: .danger)
+            }
+            infoNote("Parakeet runs fully on-device and offline. The model downloads once, then stays cached.")
+        case .whisper:
             group(header: "On-device models") {
                 VStack(spacing: 8) {
                     ForEach(WhisperModel.allCases) { model in
                         whisperModelRow(model)
                     }
-                    // Parakeet is Android-only today — macOS has no Parakeet (sherpa-onnx) STT
-                    // engine, so it is shown as "Coming soon" and is not selectable.
-                    parakeetComingSoonRow
                 }
                 .padding(14)
             }
@@ -192,7 +205,7 @@ struct SettingsView: View {
                 infoNote(error, tone: .danger)
             }
             infoNote("Whisper runs fully on-device and offline. Each model downloads once, then stays cached.")
-        } else {
+        case .appleSpeech:
             infoNote("Apple Speech uses the macOS recognizer. The first hands-free dictation will ask for Speech Recognition access.")
         }
     }
@@ -294,20 +307,48 @@ struct SettingsView: View {
             .strokeBorder(isActive ? OW.coral : OW.border, lineWidth: isActive ? 1.5 : 1))
     }
 
-    // Parakeet is an Android-only on-device engine (sherpa-onnx); there is no macOS build today.
-    private var parakeetComingSoonRow: some View {
+    /// The Parakeet model row with download / Active / delete states. Unlike Whisper there's a
+    /// single quality tier, so it's one row driving the whole file set.
+    @ViewBuilder
+    private var parakeetModelRow: some View {
+        let isActive = settings.sttProvider == .parakeet && parakeet.isDownloaded
+        let downloading = parakeet.isDownloading
+        let downloaded = parakeet.isDownloaded
+
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Parakeet").font(OW.ui(14, weight: .semibold)).foregroundStyle(OW.textMuted)
-                Text("~631 MB · most accurate").font(OW.mono(11)).foregroundStyle(OW.textFaint)
+                Text("Parakeet-TDT 0.6B").font(OW.ui(14, weight: .semibold)).foregroundStyle(OW.text)
+                Text("\(ParakeetModel.approxSize) · fastest, most accurate")
+                    .font(OW.mono(11)).foregroundStyle(OW.textMuted)
             }
             Spacer()
-            OWStatusChip(text: "Coming soon", tone: .neutral)
+
+            if downloading {
+                ProgressView(value: parakeet.downloadProgress ?? 0)
+                    .tint(OW.coral).frame(width: 90)
+                Text("\(Int((parakeet.downloadProgress ?? 0) * 100))%")
+                    .font(OW.mono(11)).foregroundStyle(OW.textDim)
+                Button("Cancel") { parakeet.cancelDownload() }
+                    .buttonStyle(OWSecondaryButtonStyle())
+            } else if downloaded {
+                OWStatusChip(text: "Active", tone: .ok, systemImage: "checkmark")
+                Button {
+                    parakeet.delete()
+                } label: { Image(systemName: "trash") }
+                    .buttonStyle(OWSecondaryButtonStyle())
+                    .help("Remove download")
+            } else {
+                Button("Download \(ParakeetModel.approxSize)") {
+                    Task { await parakeet.download() }
+                }
+                .buttonStyle(OWPrimaryButtonStyle())
+                .disabled(parakeet.isDownloading)
+            }
         }
         .padding(12)
-        .background(OW.bgSunk, in: RoundedRectangle(cornerRadius: OW.rChip))
-        .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
-        .opacity(0.7)
+        .background(isActive ? OW.chip : OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
+        .overlay(RoundedRectangle(cornerRadius: OW.rChip)
+            .strokeBorder(isActive ? OW.coral : OW.border, lineWidth: isActive ? 1.5 : 1))
     }
 
     // MARK: - 2 · Cleanup & Polish

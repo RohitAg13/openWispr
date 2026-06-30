@@ -20,6 +20,10 @@ packages:
     # Local Swift package wrapping the llama.cpp xcframework (remote binaryTarget — the
     # ~200 MB binary is fetched & cached by SwiftPM, not committed).
     path: ../LlamaFramework
+  SherpaOnnxFramework:
+    # Local Swift package wrapping the sherpa-onnx + onnxruntime xcframeworks (remote
+    # binaryTargets — fetched & cached by SwiftPM, not committed). Powers on-device Parakeet STT.
+    path: ../SherpaOnnxFramework
 settings:
   base:
     MARKETING_VERSION: "0.1.0"
@@ -56,3 +60,5 @@ targets:
         product: WhisperFramework
       - package: LlamaFramework
         product: LlamaFramework
+      - package: SherpaOnnxFramework
+        product: SherpaOnnxFramework

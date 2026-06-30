@@ -11,6 +11,7 @@
 		128DC48D49D0F4186446610D /* AppleSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */; };
 		12C77C17FEF02DC0A3DD3C84 /* VADFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C4B9AA37D433AAE380041B /* VADFactory.swift */; };
 		15C10874605E939512C7A8B8 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF81E4A2F234EA887979354C /* DesignTokens.swift */; };
+		177585A091E711CACA01036E /* ParakeetSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = E787768CD9DAD25C977CD704 /* ParakeetSTT.swift */; };
 		1AA45ACABE366CEE2DC552ED /* LlamaContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD83732B416F83A22F9F882 /* LlamaContext.swift */; };
 		1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */ = {isa = PBXBuildFile; productRef = 144850BF2FCDC5E1155AA002 /* OpenWisprCore */; };
 		25F4CD230BD6B058E836BCF0 /* ggml-silero-v5.1.2.bin in Resources */ = {isa = PBXBuildFile; fileRef = 928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */; };
@@ -18,6 +19,7 @@
 		34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F7A241C06B014563A413FD /* LocalLLMEngine.swift */; };
 		3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */; };
 		3FDDC578961C8AA92CD90476 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D58E56F2D386A113D12352B /* AppSettings.swift */; };
+		515AA42779AD16A9261120DD /* ParakeetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */; };
 		5FAF1F31DC1DAD60EA84AEDB /* WhisperSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */; };
 		610E71F926A1145E62EE0D78 /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */; };
 		675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */; };
@@ -31,6 +33,7 @@
 		9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7478C1EA9682B72F53EB0E31 /* HomeView.swift */; };
 		AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6955227F30F04FA604BF89A /* PersonalizationStores.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
+		C9E8BB50864A9E410F4BC11B /* SherpaOnnxFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 4128EBE63C315B246A50288B /* SherpaOnnxFramework */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
 		D0EE0E5387488DBD5285291B /* SystemPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E98EE3AF36569B7957F68F01 /* SystemPermissions.swift */; };
 		D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2791865DF65073E3B5E7363 /* RecordingHUD.swift */; };
@@ -56,6 +59,7 @@
 		5024196DC9350854BB69F293 /* OpenWisprCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenWisprCore; path = ../OpenWisprCore; sourceTree = SOURCE_ROOT; };
 		5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationCoordinator.swift; sourceTree = "<group>"; };
 		5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5C12529028DF2FBEB448E7D6 /* SherpaOnnxFramework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SherpaOnnxFramework; path = ../SherpaOnnxFramework; sourceTree = SOURCE_ROOT; };
 		5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleMemoryView.swift; sourceTree = "<group>"; };
 		6994CE01136A2B690BB52D3B /* LlmModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlmModel.swift; sourceTree = "<group>"; };
 		6FD83732B416F83A22F9F882 /* LlamaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaContext.swift; sourceTree = "<group>"; };
@@ -65,6 +69,7 @@
 		83F7A241C06B014563A413FD /* LocalLLMEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngine.swift; sourceTree = "<group>"; };
 		8D58E56F2D386A113D12352B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-silero-v5.1.2.bin"; sourceTree = "<group>"; };
+		9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetModel.swift; sourceTree = "<group>"; };
 		AB950BDB7B85E7982EEBA9C3 /* WhisperFramework */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WhisperFramework; path = ../WhisperFramework; sourceTree = SOURCE_ROOT; };
 		C2791865DF65073E3B5E7363 /* RecordingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingHUD.swift; sourceTree = "<group>"; };
 		C6955227F30F04FA604BF89A /* PersonalizationStores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationStores.swift; sourceTree = "<group>"; };
@@ -72,6 +77,7 @@
 		D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
+		E787768CD9DAD25C977CD704 /* ParakeetSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetSTT.swift; sourceTree = "<group>"; };
 		E98EE3AF36569B7957F68F01 /* SystemPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPermissions.swift; sourceTree = "<group>"; };
 		EF81E4A2F234EA887979354C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -85,6 +91,7 @@
 				1D6F4B2747F8CBE64CF22127 /* OpenWisprCore in Frameworks */,
 				DF8AABD765D213F0AD587DB9 /* WhisperFramework in Frameworks */,
 				610E71F926A1145E62EE0D78 /* LlamaFramework in Frameworks */,
+				C9E8BB50864A9E410F4BC11B /* SherpaOnnxFramework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +132,8 @@
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
 				F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
+				9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */,
+				E787768CD9DAD25C977CD704 /* ParakeetSTT.swift */,
 				443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */,
 				C6955227F30F04FA604BF89A /* PersonalizationStores.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
@@ -157,6 +166,7 @@
 			children = (
 				2AF373FF3F1E1993CF554E2F /* LlamaFramework */,
 				5024196DC9350854BB69F293 /* OpenWisprCore */,
+				5C12529028DF2FBEB448E7D6 /* SherpaOnnxFramework */,
 				AB950BDB7B85E7982EEBA9C3 /* WhisperFramework */,
 			);
 			name = Packages;
@@ -182,6 +192,7 @@
 				144850BF2FCDC5E1155AA002 /* OpenWisprCore */,
 				D8615A45FBDB52F322616ED1 /* WhisperFramework */,
 				5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */,
+				4128EBE63C315B246A50288B /* SherpaOnnxFramework */,
 			);
 			productName = OpenWispr;
 			productReference = 3AD2F169F5B404A53861CE81 /* OpenWispr.app */;
@@ -214,6 +225,7 @@
 			packageReferences = (
 				ECC2CE5F01CA06C44337B4FB /* XCLocalSwiftPackageReference "../LlamaFramework" */,
 				300CDBD800DDB292AEA5C59C /* XCLocalSwiftPackageReference "../OpenWisprCore" */,
+				98082A5197F9B9E18ED261A4 /* XCLocalSwiftPackageReference "../SherpaOnnxFramework" */,
 				216E5060AD3964D37603C6EB /* XCLocalSwiftPackageReference "../WhisperFramework" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -257,6 +269,8 @@
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
 				675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
+				515AA42779AD16A9261120DD /* ParakeetModel.swift in Sources */,
+				177585A091E711CACA01036E /* ParakeetSTT.swift in Sources */,
 				EF648D5DF1514550D65165DE /* PersonalDictionaryView.swift in Sources */,
 				AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
@@ -475,6 +489,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../OpenWisprCore;
 		};
+		98082A5197F9B9E18ED261A4 /* XCLocalSwiftPackageReference "../SherpaOnnxFramework" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../SherpaOnnxFramework;
+		};
 		ECC2CE5F01CA06C44337B4FB /* XCLocalSwiftPackageReference "../LlamaFramework" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../LlamaFramework;
@@ -485,6 +503,10 @@
 		144850BF2FCDC5E1155AA002 /* OpenWisprCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = OpenWisprCore;
+		};
+		4128EBE63C315B246A50288B /* SherpaOnnxFramework */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SherpaOnnxFramework;
 		};
 		5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -15,6 +15,10 @@ enum STTFactory {
     /// every session. Rebuilt only when the selected model changes.
     private static var cachedWhisper: (model: WhisperModel, stt: WhisperSTT)?
 
+    /// The Parakeet provider, kept warm so we don't reload the (~660 MB) ONNX graphs every
+    /// session. Built once on first use of the Parakeet engine.
+    private static var cachedParakeet: ParakeetSTT?
+
     /// The provider to use for the next take.
     static func make() -> STT {
         let settings = AppSettings.shared
@@ -34,11 +38,21 @@ enum STTFactory {
             let stt = WhisperSTT(model: model, modelPath: manager.fileURL(for: model).path)
             cachedWhisper = (model, stt)
             return stt
+        case .parakeet:
+            let manager = ParakeetModelManager.shared
+            guard manager.isDownloaded else {
+                // Not downloaded — fall back; Settings prompts the download.
+                return AppleSpeechSTT()
+            }
+            if let cached = cachedParakeet { return cached }
+            let stt = ParakeetSTT(modelDirectory: manager.modelDirectory)
+            cachedParakeet = stt
+            return stt
         }
     }
 
     /// Whether the next take will use Apple Speech (so the caller knows to request Speech
-    /// recognition permission). True for the Apple provider and for the Whisper fallback.
+    /// recognition permission). True for the Apple provider and for the on-device fallbacks.
     static func usesAppleSpeech() -> Bool {
         let settings = AppSettings.shared
         switch settings.sttProvider {
@@ -46,6 +60,8 @@ enum STTFactory {
             return true
         case .whisper:
             return !WhisperModelManager.shared.isDownloaded(settings.whisperModel)
+        case .parakeet:
+            return !ParakeetModelManager.shared.isDownloaded
         }
     }
 }
