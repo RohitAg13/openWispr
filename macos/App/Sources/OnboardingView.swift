@@ -187,14 +187,14 @@ struct OnboardingView: View {
                 .padding(.top, 4).padding(.bottom, 18)
 
             VStack(spacing: 10) {
-                voiceModelRow(.base, tagline: "\(WhisperModel.base.approxSize) · accurate · recommended")
-                voiceModelRow(.tiny, tagline: "\(WhisperModel.tiny.approxSize) · fastest")
-                // Parakeet is Android-only today — there is no Mac (sherpa-onnx) Parakeet engine,
-                // so it's surfaced as "coming soon" and is not selectable. See report.
-                parakeetComingSoonRow
+                // Parakeet (sherpa-onnx) is the fastest on-device engine and the recommended
+                // default; Whisper base/tiny are the alternates.
+                parakeetRow
+                voiceModelRow(.base, tagline: "\(WhisperModel.base.approxSize) · Whisper · accurate")
+                voiceModelRow(.tiny, tagline: "\(WhisperModel.tiny.approxSize) · Whisper · fastest")
             }
 
-            WhisperOnboardingDownload(settings: settings)
+            VoiceOnboardingDownload(settings: settings)
                 .padding(.top, 16)
 
             Spacer()
@@ -208,7 +208,10 @@ struct OnboardingView: View {
     }
 
     private var voiceContinueTitle: String {
-        WhisperModelManager.shared.isDownloaded(settings.whisperModel) ? "Continue" : "Skip for now"
+        let ready = settings.sttProvider == .parakeet
+            ? ParakeetModelManager.shared.isDownloaded
+            : WhisperModelManager.shared.isDownloaded(settings.whisperModel)
+        return ready ? "Continue" : "Skip for now"
     }
 
     private func voiceModelRow(_ model: WhisperModel, tagline: String) -> some View {
@@ -246,21 +249,33 @@ struct OnboardingView: View {
         }
     }
 
-    private var parakeetComingSoonRow: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Parakeet")
-                    .font(OW.ui(14.5, weight: .semibold)).foregroundStyle(OW.textMuted)
-                Text("~631 MB · most accurate")
-                    .font(OW.mono(11)).foregroundStyle(OW.textFaint)
+    private var parakeetRow: some View {
+        let selected = settings.sttProvider == .parakeet
+        return Button {
+            settings.sttProvider = .parakeet
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 7) {
+                        Text("Parakeet")
+                            .font(OW.ui(14.5, weight: .semibold)).foregroundStyle(OW.text)
+                        OWStatusChip(text: "Recommended", tone: .ok)
+                    }
+                    Text("\(ParakeetModel.approxSize) · fastest · sub-second")
+                        .font(OW.mono(11)).foregroundStyle(OW.textMuted)
+                }
+                Spacer()
+                Circle()
+                    .strokeBorder(selected ? OW.coral : OW.border, lineWidth: selected ? 4 : 1.5)
+                    .frame(width: 13, height: 13)
             }
-            Spacer()
-            OWStatusChip(text: "Coming soon", tone: .neutral)
+            .padding(14)
+            .background(selected ? OW.chip : OW.card, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(selected ? OW.coral : OW.border, lineWidth: selected ? 1.5 : 1))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
-        .padding(14)
-        .background(OW.bgSunk, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(OW.border, lineWidth: 1))
-        .opacity(0.7)
+        .buttonStyle(.plain)
     }
 
     // MARK: - 3 · Accessibility
@@ -556,38 +571,63 @@ private struct OnboardingBackground: View {
 
 /// Compact Whisper model download control used inside the onboarding voice step. Reads live
 /// download state from `WhisperModelManager` for the currently selected model.
-private struct WhisperOnboardingDownload: View {
+/// The first-run model download affordance. Adapts to the selected engine: Parakeet (one fixed
+/// file set) or the chosen Whisper model.
+private struct VoiceOnboardingDownload: View {
     @ObservedObject var settings: AppSettings
-    @ObservedObject private var manager = WhisperModelManager.shared
+    @ObservedObject private var whisper = WhisperModelManager.shared
+    @ObservedObject private var parakeet = ParakeetModelManager.shared
 
     var body: some View {
-        let model = settings.whisperModel
-        Group {
-            if manager.isDownloaded(model) {
-                OWStatusChip(text: "Model ready · works offline", tone: .ok, systemImage: "checkmark")
-            } else if manager.downloadingModel == model {
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack {
-                        Text("Downloading…").font(OW.ui(13, weight: .semibold)).foregroundStyle(OW.textDim)
-                        Spacer()
-                        Text("\(Int((manager.downloadProgress ?? 0) * 100))%")
-                            .font(OW.mono(12)).foregroundStyle(OW.textMuted)
-                    }
-                    ProgressView(value: manager.downloadProgress ?? 0).tint(OW.coral)
-                }
-            } else {
-                HStack {
-                    Button("Download & continue") {
-                        Task { await manager.download(model) }
-                    }
-                    .buttonStyle(OWPrimaryButtonStyle())
-                    if let err = manager.lastError {
-                        Text(err).font(OW.ui(11)).foregroundStyle(OW.danger).lineLimit(2)
-                    }
-                    Spacer()
-                }
-            }
+        if settings.sttProvider == .parakeet {
+            parakeetBody.id(parakeet.revision)
+        } else {
+            whisperBody.id(whisper.revision)
         }
-        .id(manager.revision)
+    }
+
+    @ViewBuilder
+    private var parakeetBody: some View {
+        if parakeet.isDownloaded {
+            OWStatusChip(text: "Model ready · works offline", tone: .ok, systemImage: "checkmark")
+        } else if parakeet.isDownloading {
+            downloadingBar(progress: parakeet.downloadProgress ?? 0)
+        } else {
+            downloadButton(error: parakeet.lastError) { Task { await parakeet.download() } }
+        }
+    }
+
+    @ViewBuilder
+    private var whisperBody: some View {
+        let model = settings.whisperModel
+        if whisper.isDownloaded(model) {
+            OWStatusChip(text: "Model ready · works offline", tone: .ok, systemImage: "checkmark")
+        } else if whisper.downloadingModel == model {
+            downloadingBar(progress: whisper.downloadProgress ?? 0)
+        } else {
+            downloadButton(error: whisper.lastError) { Task { await whisper.download(model) } }
+        }
+    }
+
+    private func downloadingBar(progress: Double) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text("Downloading…").font(OW.ui(13, weight: .semibold)).foregroundStyle(OW.textDim)
+                Spacer()
+                Text("\(Int(progress * 100))%").font(OW.mono(12)).foregroundStyle(OW.textMuted)
+            }
+            ProgressView(value: progress).tint(OW.coral)
+        }
+    }
+
+    private func downloadButton(error: String?, action: @escaping () -> Void) -> some View {
+        HStack {
+            Button("Download & continue", action: action)
+                .buttonStyle(OWPrimaryButtonStyle())
+            if let error {
+                Text(error).font(OW.ui(11)).foregroundStyle(OW.danger).lineLimit(2)
+            }
+            Spacer()
+        }
     }
 }

@@ -44,9 +44,14 @@ DerivedData/
 # macOS packaging artifacts (Release build + .dmg output)
 macos/App/build-release/
 macos/App/build-eval/
+macos/App/build-bench/
 macos/dist/
 *.dmg
 
 # Vendored sherpa-onnx AAR (on-device Parakeet/Moonshine STT) — 37MB prebuilt binary,
 # regenerable from the k2-fsa/sherpa-onnx release. See android/app/libs/REGENERATE.md.
 android/app/libs/*.aar
+
+# Vendored sherpa-onnx + onnxruntime xcframeworks for macOS on-device Parakeet STT — large
+# prebuilt binaries, regenerable via macos/SherpaOnnxFramework/fetch-binaries.sh.
+macos/SherpaOnnxFramework/binaries/

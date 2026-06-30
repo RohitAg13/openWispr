@@ -2,25 +2,28 @@ import Carbon.HIToolbox
 import Combine
 import Foundation
 
-/// STT backend choice. Only `.appleSpeech` is wired up today; `.whisper` is scaffolding
-/// for a later whisper.cpp step.
+/// STT backend choice. All three are wired up; the on-device engines (Whisper, Parakeet) need
+/// their model downloaded before a session can use them (the Settings UI prompts for that).
 enum STTProvider: String, CaseIterable {
     case appleSpeech
     case whisper
+    case parakeet
 
     var label: String {
         switch self {
         case .appleSpeech: return "Apple Speech"
         case .whisper:     return "Whisper (on-device)"
+        case .parakeet:    return "Parakeet (on-device, fastest)"
         }
     }
 
-    /// Whether this provider is selectable. Whisper is now wired up — but it still needs its
-    /// model downloaded before a session can use it (the Settings UI prompts for that).
+    /// Whether this provider is selectable. All are wired up — but the on-device engines still
+    /// need their model downloaded before a session can use them (the Settings UI prompts for that).
     var isAvailable: Bool {
         switch self {
         case .appleSpeech: return true
         case .whisper:     return true
+        case .parakeet:    return true
         }
     }
 }

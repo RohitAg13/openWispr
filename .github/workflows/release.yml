@@ -76,6 +76,9 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Fetch vendored sherpa-onnx xcframeworks (on-device Parakeet STT; gitignored binaries)
+        run: bash macos/SherpaOnnxFramework/fetch-binaries.sh
+
       - name: Generate Xcode project
         working-directory: macos/App
         run: ./generate.sh
