@@ -4,11 +4,12 @@ import Foundation
 /// comfortably on a Mac via llama.cpp/Metal. Qwen2.5-Instruct uses ChatML, which `LlamaContext`
 /// formats automatically from the model's embedded template.
 enum LlmModel: String, CaseIterable, Identifiable {
-    case qwen05 = "qwen2.5-0.5b-instruct"
-    case qwen15 = "qwen2.5-1.5b-instruct"
     /// OpenWispr's own fine-tune for dictation cleanup (Qwen3-0.6B), trained on the
     /// `LlmPolish.finetuneSystem` prompt + per-app tone. Uses its own prompt path.
+    /// Declared first so it's the top, default, and recommended polish model.
     case openwisprCleanup = "openwispr-cleanup-qwen3-0.6b"
+    case qwen05 = "qwen2.5-0.5b-instruct"
+    case qwen15 = "qwen2.5-1.5b-instruct"
 
     var id: String { rawValue }
 
@@ -33,9 +34,9 @@ enum LlmModel: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
+        case .openwisprCleanup: return "OpenWispr Cleanup (recommended)"
         case .qwen05:          return "Qwen2.5 0.5B (fastest)"
-        case .qwen15:          return "Qwen2.5 1.5B (recommended)"
-        case .openwisprCleanup: return "OpenWispr Cleanup (fine-tuned)"
+        case .qwen15:          return "Qwen2.5 1.5B (most accurate)"
         }
     }
 

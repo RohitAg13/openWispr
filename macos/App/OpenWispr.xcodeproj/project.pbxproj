@@ -32,6 +32,7 @@
 		AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6955227F30F04FA604BF89A /* PersonalizationStores.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
+		D0EE0E5387488DBD5285291B /* SystemPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E98EE3AF36569B7957F68F01 /* SystemPermissions.swift */; };
 		D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2791865DF65073E3B5E7363 /* RecordingHUD.swift */; };
 		DF8AABD765D213F0AD587DB9 /* WhisperFramework in Frameworks */ = {isa = PBXBuildFile; productRef = D8615A45FBDB52F322616ED1 /* WhisperFramework */; };
 		E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6994CE01136A2B690BB52D3B /* LlmModel.swift */; };
@@ -71,6 +72,7 @@
 		D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
 		DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapture.swift; sourceTree = "<group>"; };
 		E3F2CA4BD75D571287E0329E /* STTFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTFactory.swift; sourceTree = "<group>"; };
+		E98EE3AF36569B7957F68F01 /* SystemPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPermissions.swift; sourceTree = "<group>"; };
 		EF81E4A2F234EA887979354C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -131,6 +133,7 @@
 				41289BBCDAB952C0AA44E620 /* SileroVAD.swift */,
 				E3F2CA4BD75D571287E0329E /* STTFactory.swift */,
 				5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */,
+				E98EE3AF36569B7957F68F01 /* SystemPermissions.swift */,
 				48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */,
 				04C4B9AA37D433AAE380041B /* VADFactory.swift */,
 				3B19D8A624CAF050B187238A /* WhisperModel.swift */,
@@ -262,6 +265,7 @@
 				3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */,
 				336E0137F2BD5C80BEC3CAF7 /* SileroVAD.swift in Sources */,
 				F4163A095C3F2953A65FB882 /* StyleMemoryView.swift in Sources */,
+				D0EE0E5387488DBD5285291B /* SystemPermissions.swift in Sources */,
 				837374E3E7408B00F63F5533 /* TextInserter.swift in Sources */,
 				12C77C17FEF02DC0A3DD3C84 /* VADFactory.swift in Sources */,
 				78E2CA50E630ED2A8182A0E2 /* WhisperModel.swift in Sources */,

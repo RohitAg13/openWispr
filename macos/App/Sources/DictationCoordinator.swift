@@ -196,7 +196,9 @@ final class DictationCoordinator {
             do {
                 let raw = try await stt.transcribe(samples, sampleRate: 16000, bias: bias)
                 let corrected = VocabCorrector.correct(raw, vocab)
-                let cleaned = TextProcessor.process(corrected)
+                // Smart cleanup (deterministic pass) is user-toggleable; off → pass the
+                // vocab-corrected transcript through untouched.
+                let cleaned = settings.smartCleanup ? TextProcessor.process(corrected) : corrected
                 let category = AppContext.categoryFor(targetApp?.bundleIdentifier, cleaned)
                 // Optional on-device LLM polish (+ L3 corpus few-shot) on top of cleanup.
                 let polished = await applyPolish(cleaned, category: category)
@@ -249,8 +251,11 @@ final class DictationCoordinator {
             return
         }
 
-        // Record the hands-free dictation in the shared history (same list as Home).
-        DictationHistoryStore.shared.add(cleaned)
+        // Record the hands-free dictation in the shared history (same list as Home), unless the
+        // user turned history off in Settings ▸ Privacy.
+        if settings.keepHistory {
+            DictationHistoryStore.shared.add(cleaned)
+        }
 
         if TextInserter.isTrusted {
             TextInserter.insert(cleaned, into: targetApp)

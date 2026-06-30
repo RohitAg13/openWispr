@@ -250,6 +250,75 @@ struct OWSegmented<T: Hashable>: View {
     }
 }
 
+// MARK: - Brand toggle (replaces the native blue Toggle switch)
+
+/// A paper-styled on/off switch matching the design's pill toggles — coral track when on,
+/// muted track when off, with a sliding knob. Use in place of SwiftUI's `Toggle` so the
+/// control matches the warm theme instead of the system accent.
+struct OWToggle: View {
+    @Binding var isOn: Bool
+    var body: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) { isOn.toggle() }
+        } label: {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Capsule()
+                    .fill(isOn ? AnyShapeStyle(OW.coral) : AnyShapeStyle(OW.track))
+                    .overlay(Capsule().strokeBorder(isOn ? Color.clear : OW.border, lineWidth: 1))
+                    .frame(width: 44, height: 26)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 20, height: 20)
+                    .shadow(color: .black.opacity(0.18), radius: 1, x: 0, y: 1)
+                    .padding(.horizontal, 3)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Status chip ("Granted" / "Not granted" / "Coming soon")
+
+/// A small pill used to show a permission or feature state. Green for granted/ready, coral
+/// for an action-needed state, and a neutral paper tone for informational/"soon".
+struct OWStatusChip: View {
+    enum Tone { case ok, warn, neutral }
+    let text: String
+    var tone: Tone = .neutral
+    var systemImage: String?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let systemImage {
+                Image(systemName: systemImage).font(.system(size: 10, weight: .bold))
+            }
+            Text(text)
+                .font(OW.mono(10, weight: .medium))
+                .tracking(0.4)
+        }
+        .foregroundStyle(fg)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .background(bg, in: Capsule())
+        .overlay(Capsule().strokeBorder(fg.opacity(0.22), lineWidth: 1))
+    }
+
+    private var fg: Color {
+        switch tone {
+        case .ok:      return OW.success
+        case .warn:    return OW.coralDeep
+        case .neutral: return OW.textMuted
+        }
+    }
+    private var bg: Color {
+        switch tone {
+        case .ok:      return OW.success.opacity(0.12)
+        case .warn:    return OW.coralPill.opacity(0.5)
+        case .neutral: return OW.chip
+        }
+    }
+}
+
 // MARK: - Hex color helper
 
 extension Color {
