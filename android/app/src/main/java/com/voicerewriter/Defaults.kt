@@ -65,9 +65,10 @@ object Defaults {
     val PROVIDERS: Map<String, Provider> = mapOf(
         "local" to Provider(
             id = "local",
-            label = "On-device (Gemma / Qwen)",
+            label = "On-device (Qwen / Gemma)",
             endpoint = "",
-            defaultModel = "gemma3-270m",
+            // Recommended on-device default: the dictation-cleanup fine-tune.
+            defaultModel = LlmModelManager.FINETUNE_MODEL_ID,
             keyHelp = "Runs a small LLM on your phone — offline, private, no API key. Pick and download a model below.",
             keyUrl = "",
             modelHint = "On-device model (managed below).",
@@ -110,8 +111,10 @@ object Defaults {
         ),
     )
 
-    const val DEFAULT_PROVIDER = "vercel"
-    val DEFAULT_MODEL = PROVIDERS.getValue("vercel").defaultModel
+    // On-device by default: a fresh install is private and needs no API key. Cloud
+    // providers remain available as an opt-in "advanced / fastest" alternative.
+    const val DEFAULT_PROVIDER = "local"
+    val DEFAULT_MODEL = PROVIDERS.getValue("local").defaultModel
     const val DEFAULT_TEMPERATURE = 0.7
 
     // ---------------- speech-to-text ----------------
@@ -119,10 +122,11 @@ object Defaults {
     val STT_PROVIDERS: Map<String, SttProvider> = mapOf(
         "local" to SttProvider(
             id = "local",
-            label = "On-device (Whisper)",
+            label = "On-device",
             endpoint = "",
-            defaultModel = WhisperModelManager.DEFAULT_MODEL,
-            keyHelp = "Runs Whisper directly on your phone — fully offline, private, no API key. Pick and download a model below.",
+            // Recommended on-device default: Parakeet (fastest + most accurate).
+            defaultModel = ParakeetModelManager.MODEL_ID,
+            keyHelp = "Runs speech-to-text directly on your phone — fully offline, private, no API key. Pick and download a model below.",
             keyUrl = "",
             modelHint = "Managed below.",
         ),
@@ -155,7 +159,8 @@ object Defaults {
         ),
     )
 
-    const val DEFAULT_STT_PROVIDER = "groq"
+    // On-device speech-to-text by default (Parakeet). Cloud STT is opt-in.
+    const val DEFAULT_STT_PROVIDER = "local"
 
     // ---------------- voice modes ----------------
 

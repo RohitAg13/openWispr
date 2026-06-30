@@ -55,6 +55,7 @@ data class Settings(
     val polishLevel: PolishLevel = PolishLevel.OFF, // LLM polish intensity (replaces the old on/off toggle)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
     val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
+    val hasCompletedOnboarding: Boolean = false, // first-run onboarding shown once; re-launchable from Settings
 ) {
     /**
      * Whether to run the LLM polish layer on dictation. Off by default — the deterministic
@@ -102,6 +103,7 @@ class SettingsRepository(private val context: Context) {
         val POLISH_LEVEL = stringPreferencesKey("polishLevel")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
         val BUBBLE_ONLY_ON_FIELDS = booleanPreferencesKey("bubbleOnlyOnFields")
+        val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("hasCompletedOnboarding")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -123,6 +125,7 @@ class SettingsRepository(private val context: Context) {
             polishLevel = PolishLevel.from(p[Keys.POLISH_LEVEL]),
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
             bubbleOnlyOnFields = p[Keys.BUBBLE_ONLY_ON_FIELDS] ?: defaults.bubbleOnlyOnFields,
+            hasCompletedOnboarding = p[Keys.HAS_COMPLETED_ONBOARDING] ?: defaults.hasCompletedOnboarding,
         )
     }
 
@@ -146,6 +149,12 @@ class SettingsRepository(private val context: Context) {
             p[Keys.POLISH_LEVEL] = s.polishLevel.key
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
             p[Keys.BUBBLE_ONLY_ON_FIELDS] = s.bubbleOnlyOnFields
+            p[Keys.HAS_COMPLETED_ONBOARDING] = s.hasCompletedOnboarding
         }
+    }
+
+    /** Persist just the onboarding-complete flag without disturbing other prefs. */
+    suspend fun setOnboardingComplete(complete: Boolean) {
+        context.dataStore.edit { it[Keys.HAS_COMPLETED_ONBOARDING] = complete }
     }
 }
