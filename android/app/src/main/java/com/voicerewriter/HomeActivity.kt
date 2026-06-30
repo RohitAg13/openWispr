@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.lifecycleScope
 import com.voicerewriter.ui.BrandCoral
 import com.voicerewriter.ui.MarkCream
 import com.voicerewriter.ui.Mulish
@@ -81,6 +82,13 @@ class HomeActivity : ComponentActivity() {
         enableEdgeToEdge() // draw under the status/nav bars; the cream/plum bg fills the whole screen
         super.onCreate(savedInstanceState)
         setContent { OpenWisprTheme { HomeScreen() } }
+        // First launch: route once into onboarding (it returns here when finished).
+        lifecycleScope.launch {
+            val done = withContext(Dispatchers.IO) {
+                SettingsRepository(this@HomeActivity).get().hasCompletedOnboarding
+            }
+            if (!done && !isFinishing) startActivity(OnboardingActivity.intent(this@HomeActivity))
+        }
     }
 
     private data class HomeData(
