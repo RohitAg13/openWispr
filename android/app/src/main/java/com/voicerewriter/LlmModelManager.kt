@@ -21,9 +21,21 @@ object LlmModelManager {
         val fileName: String,
         val url: String,
         val sizeLabel: String,
+        val recommended: Boolean = false,
     )
 
     val MODELS = listOf(
+        // Recommended on-device polish model: fine-tuned for dictation cleanup (Phase 2).
+        // Trained on the FINETUNE prompt+tone; LocalLlmEngine feeds it that exact prompt
+        // shape when selected. Listed first and made the local provider's default.
+        LlmModel(
+            id = FINETUNE_MODEL_ID,
+            label = "OpenWispr Cleanup (Qwen3 0.6B)",
+            fileName = "openwispr-cleanup-qwen3-0.6b-Q4_K_M.gguf",
+            url = "https://huggingface.co/rohitag13/openwispr-cleanup-qwen3-0.6b-GGUF/resolve/main/qwen3-0.6b.Q4_K_M.gguf",
+            sizeLabel = "~397MB",
+            recommended = true,
+        ),
         LlmModel(
             id = "gemma3-270m",
             label = "Gemma 3 270M",
@@ -38,20 +50,11 @@ object LlmModelManager {
             url = "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf",
             sizeLabel = "~639MB",
         ),
-        // Fine-tuned for dictation cleanup (Phase 2). Trained on the FINETUNE prompt+tone;
-        // LocalLlmEngine feeds it that exact prompt shape when selected.
-        LlmModel(
-            id = FINETUNE_MODEL_ID,
-            label = "OpenWispr Cleanup (Qwen3 0.6B)",
-            fileName = "openwispr-cleanup-qwen3-0.6b-Q4_K_M.gguf",
-            url = "https://huggingface.co/rohitag13/openwispr-cleanup-qwen3-0.6b-GGUF/resolve/main/qwen3-0.6b.Q4_K_M.gguf",
-            sizeLabel = "~397MB",
-        ),
     )
 
-    const val DEFAULT_MODEL = "gemma3-270m"
     /** The dictation-cleanup fine-tune — gets the training-time prompt in LocalLlmEngine. */
     const val FINETUNE_MODEL_ID = "openwispr-qwen3-0.6b"
+    const val DEFAULT_MODEL = FINETUNE_MODEL_ID
     private const val MIN_VALID_BYTES = 50L * 1024 * 1024
 
     private val client = OkHttpClient.Builder()

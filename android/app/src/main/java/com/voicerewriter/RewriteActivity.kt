@@ -537,7 +537,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun ensurePermissionThenRecord(s: Settings) {
             if (s.sttProvider == "local") {
-                if (!OnDeviceStt.isReady(this, s.sttModel.ifBlank { WhisperModelManager.DEFAULT_MODEL })) {
+                if (!OnDeviceStt.isReady(this, s.sttModel)) {
                     error = "On-device model not downloaded. Open Settings → Voice → Download model."
                     stage = Stage.ERROR
                     return
