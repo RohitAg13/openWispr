@@ -161,14 +161,17 @@ final class AppSettings: ObservableObject {
             hotKeyModifiers = HotKey.defaultModifiers
         }
 
+        // On-device defaults: a fresh install gets Whisper (`base`, the recommended on-device
+        // engine) for STT and the OpenWispr fine-tune for polish. The `?? default` only applies
+        // when nothing is stored, so any prior explicit user choice is preserved on upgrade.
         sttProvider = defaults.string(forKey: Key.sttProvider)
-            .flatMap(STTProvider.init(rawValue:)) ?? .appleSpeech
+            .flatMap(STTProvider.init(rawValue:)) ?? .whisper
         whisperModel = defaults.string(forKey: Key.whisperModel)
             .flatMap(WhisperModel.init(rawValue:)) ?? .base
         polishLevel = defaults.string(forKey: Key.polishLevel)
             .flatMap(PolishLevel.init(rawValue:)) ?? .off
         llmModel = defaults.string(forKey: Key.llmModel)
-            .flatMap(LlmModel.init(rawValue:)) ?? .qwen15
+            .flatMap(LlmModel.init(rawValue:)) ?? .openwisprCleanup
         vadSensitivity = defaults.string(forKey: Key.vadSensitivity)
             .flatMap(VADSensitivity.init(rawValue:)) ?? .medium
         hasCompletedOnboarding = defaults.bool(forKey: Key.hasCompletedOnboarding)

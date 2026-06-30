@@ -58,13 +58,16 @@ final class OnboardingWindowController {
 
     init(onFinish: @escaping () -> Void) {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 720),
             styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Welcome to OpenWispr"
         window.titlebarAppearsTransparent = true
+        // The branded gradient fills the whole window (behind the transparent titlebar).
+        window.titleVisibility = .hidden
+        window.backgroundColor = .clear
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.center()

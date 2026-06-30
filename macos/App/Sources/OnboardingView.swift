@@ -1,343 +1,593 @@
 import AVFoundation
 import SwiftUI
 
-/// First-run guided setup. An LSUIElement app has no Dock icon and drives other apps' text
-/// fields, so a new user has two non-obvious gates (Microphone + Accessibility) and a choice
-/// of dictation engine before anything works. This walks them through it in the brand's
-/// "paper" style, then hands off to the main window.
+/// First-run guided setup, redesigned to the "OpenWispr Mac Onboarding" flow: a branded warm
+/// gradient window holding a centered "paper" card that steps the user through the two
+/// non-obvious macOS gates (Microphone + Accessibility), an on-device voice model download, the
+/// global-shortcut trigger, a real first dictation, and a recap.
 ///
-/// Shown by `OnboardingWindowController` at launch when `!settings.hasCompletedOnboarding`.
-/// `onFinish` is called once the user completes (or skips to the end); it persists the flag
-/// and opens the main window.
+/// An LSUIElement app has no Dock icon and drives other apps' text fields, so a new user can't
+/// dictate until these are in place. The flow is on-device only — no cloud path, nothing leaves
+/// the Mac.
+///
+/// Shown by `OnboardingWindowController` at launch when `!settings.hasCompletedOnboarding`, and
+/// re-launchable from Settings ▸ General. `onFinish` persists the flag and opens the main window.
 struct OnboardingView: View {
     @ObservedObject var settings: AppSettings
     var onFinish: () -> Void
 
     enum Step: Int, CaseIterable {
-        case welcome, microphone, accessibility, engine, ready
+        case welcome, microphone, voice, accessibility, shortcut, dictate, done
     }
 
     @State private var step: Step = .welcome
 
-    // Live permission state (Accessibility can't be observed, so we poll it on a timer).
+    // Live permission state (polled — none are KVO-observable).
     @State private var micGrant: Grant = .unknown
-    @State private var axTrusted: Bool = TextInserter.isTrusted
-    private let axPollTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var axTrusted: Bool = MacPermissions.accessibilityGranted
+    @State private var inputMonitoring: MacPermissions.Access = MacPermissions.inputMonitoring
+    private let pollTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    // The real end-to-end dictation flow, reused for the "try it once" step.
+    @StateObject private var dictation = DictationController()
 
     enum Grant { case unknown, granted, denied }
 
     var body: some View {
-        VStack(spacing: 0) {
-            progressHeader
-            Divider().overlay(OW.divider)
+        ZStack {
+            OnboardingBackground()
 
-            // The step body, in a fixed-height area so the footer doesn't jump between steps.
-            Group {
-                switch step {
-                case .welcome:       welcomeStep
-                case .microphone:    microphoneStep
-                case .accessibility: accessibilityStep
-                case .engine:        engineStep
-                case .ready:         readyStep
+            // Centered "paper" card holding the active step.
+            VStack(spacing: 0) {
+                cardTopBar
+                Divider().overlay(OW.divider)
+
+                Group {
+                    switch step {
+                    case .welcome:       welcomeStep
+                    case .microphone:    microphoneStep
+                    case .voice:         voiceStep
+                    case .accessibility: accessibilityStep
+                    case .shortcut:      shortcutStep
+                    case .dictate:       dictateStep
+                    case .done:          doneStep
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 40)
+            }
+            .frame(width: 600, height: 600)
+            .background(OW.bg, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(OW.border, lineWidth: 1))
+            .shadow(color: .black.opacity(0.35), radius: 40, x: 0, y: 24)
+        }
+        .frame(width: 720, height: 720)
+        .onAppear {
+            refreshMicStatus()
+            dictation.refreshAccessibility()
+        }
+        .onReceive(pollTimer) { _ in
+            axTrusted = MacPermissions.accessibilityGranted
+            inputMonitoring = MacPermissions.inputMonitoring
+        }
+    }
+
+    // MARK: - Card top bar (progress + skip)
+
+    private var cardTopBar: some View {
+        ZStack {
+            if step != .welcome && step != .done {
+                GeometryReader { _ in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(OW.track).frame(width: 200, height: 5)
+                        Capsule().fill(OW.coral).frame(width: 200 * progressFraction, height: 5)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .frame(height: 5)
+            }
+            HStack {
+                Spacer()
+                if canSkip {
+                    Button("Skip") { advance(1) }
+                        .buttonStyle(OWGhostButtonStyle())
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 44)
-
-            Divider().overlay(OW.divider)
-            footer
         }
-        .frame(width: 640, height: 560)
-        .background(OW.bg)
-        .onAppear { refreshMicStatus() }
-        .onReceive(axPollTimer) { _ in axTrusted = TextInserter.isTrusted }
+        .frame(height: 42)
+        .padding(.horizontal, 16)
     }
 
-    // MARK: - Header
-
-    private var progressHeader: some View {
-        HStack(spacing: 8) {
-            ForEach(Step.allCases, id: \.self) { s in
-                Capsule()
-                    .fill(s.rawValue <= step.rawValue ? AnyShapeStyle(OW.coral) : AnyShapeStyle(OW.border))
-                    .frame(width: s == step ? 22 : 7, height: 7)
-                    .animation(.easeInOut(duration: 0.2), value: step)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.vertical, 18)
+    private var progressFraction: CGFloat {
+        let total = CGFloat(Step.allCases.count - 1)
+        return min(1, max(0, CGFloat(step.rawValue) / total))
     }
 
-    // MARK: - Steps
+    /// Accessibility, shortcut, and the first-dictation step are all skippable.
+    private var canSkip: Bool {
+        step == .accessibility || step == .shortcut || step == .dictate
+    }
+
+    // MARK: - 0 · Welcome
 
     private var welcomeStep: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 0) {
             Spacer()
-            OWOrb(size: 92, breathing: true)
-            VStack(spacing: 10) {
-                Text("Welcome to OpenWispr")
-                    .font(OW.ui(26, weight: .semibold))
-                    .foregroundStyle(OW.text)
-                Text("Press a key, speak, and your words appear as clean text in any app —\nall on your Mac. Nothing is sent to the cloud.")
-                    .font(OW.ui(14))
-                    .foregroundStyle(OW.textDim)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-            }
+            OWOrb(size: 104, breathing: true)
+                .padding(.bottom, 28)
+            Text("Talk to your Mac.\nNothing leaves it.")
+                .font(OW.ui(30, weight: .bold))
+                .foregroundStyle(OW.text)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .padding(.bottom, 14)
+            Text("OpenWispr turns speech into clean text in any app — transcribed and polished entirely on this Mac. No cloud, no account.")
+                .font(OW.ui(15))
+                .foregroundStyle(OW.textDim)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .frame(maxWidth: 380)
+                .padding(.bottom, 30)
+            Button("Get started") { advance(1) }
+                .buttonStyle(OWPrimaryButtonStyle(large: true))
+            MonoLabel(text: "100% on-device · open source", color: OW.textMuted, size: 10, tracking: 1.4)
+                .padding(.top, 22)
             Spacer()
         }
     }
+
+    // MARK: - 1 · Microphone
 
     private var microphoneStep: some View {
         stepScaffold(
             icon: "mic.fill",
-            title: "Allow the microphone",
-            subtitle: "OpenWispr needs your microphone to hear you. Audio is transcribed on-device and never leaves your Mac."
+            title: "Let OpenWispr hear you",
+            subtitle: "macOS will ask once. You can also grant it under System Settings ▸ Privacy & Security ▸ Microphone. Audio is transcribed on-device and never saved."
         ) {
+            VStack(spacing: 14) {
+                switch micGrant {
+                case .granted:
+                    OWStatusChip(text: "Microphone allowed", tone: .ok, systemImage: "checkmark")
+                case .denied:
+                    OWStatusChip(text: "Access was denied", tone: .warn, systemImage: "exclamationmark")
+                    Button("Open System Settings") { MacPermissions.requestInputMonitoring(); openMicPane() }
+                        .buttonStyle(OWSecondaryButtonStyle())
+                case .unknown:
+                    EmptyView()
+                }
+            }
+        } footer: {
             switch micGrant {
             case .granted:
-                statusPill(ok: true, text: "Microphone access granted")
+                Button("Continue") { advance(1) }.buttonStyle(OWPrimaryButtonStyle(large: true))
             case .denied:
-                VStack(spacing: 10) {
-                    statusPill(ok: false, text: "Access was denied")
-                    Button("Open System Settings") {
-                        openPrivacyPane("Privacy_Microphone")
-                    }
-                    .buttonStyle(OWSecondaryButtonStyle())
-                }
+                Button("Continue") { advance(1) }.buttonStyle(OWPrimaryButtonStyle(large: true))
             case .unknown:
-                Button("Allow Microphone") {
+                Button("Allow microphone") {
                     Task {
                         let ok = await AppleSpeechSTT.requestMicrophoneAccess()
                         micGrant = ok ? .granted : .denied
                     }
                 }
                 .buttonStyle(OWPrimaryButtonStyle(large: true))
+                Button("Set up later") { advance(1) }.buttonStyle(OWGhostButtonStyle())
             }
         }
     }
+
+    // MARK: - 2 · Voice model
+
+    private var voiceStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer().frame(height: 8)
+            Text("Get a voice model")
+                .font(OW.ui(24, weight: .bold)).foregroundStyle(OW.text)
+            Text("Downloads once, then runs fully offline.")
+                .font(OW.ui(14)).foregroundStyle(OW.textDim)
+                .padding(.top, 4).padding(.bottom, 18)
+
+            VStack(spacing: 10) {
+                voiceModelRow(.base, tagline: "\(WhisperModel.base.approxSize) · accurate · recommended")
+                voiceModelRow(.tiny, tagline: "\(WhisperModel.tiny.approxSize) · fastest")
+                // Parakeet is Android-only today — there is no Mac (sherpa-onnx) Parakeet engine,
+                // so it's surfaced as "coming soon" and is not selectable. See report.
+                parakeetComingSoonRow
+            }
+
+            WhisperOnboardingDownload(settings: settings)
+                .padding(.top, 16)
+
+            Spacer()
+            HStack {
+                Spacer()
+                Button(voiceContinueTitle) { advance(1) }
+                    .buttonStyle(OWPrimaryButtonStyle(large: true))
+            }
+            Spacer().frame(height: 8)
+        }
+    }
+
+    private var voiceContinueTitle: String {
+        WhisperModelManager.shared.isDownloaded(settings.whisperModel) ? "Continue" : "Skip for now"
+    }
+
+    private func voiceModelRow(_ model: WhisperModel, tagline: String) -> some View {
+        let selected = settings.whisperModel == model
+        return Button {
+            settings.sttProvider = .whisper
+            settings.whisperModel = model
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(whisperTitle(model))
+                        .font(OW.ui(14.5, weight: .semibold)).foregroundStyle(OW.text)
+                    Text(tagline)
+                        .font(OW.mono(11)).foregroundStyle(OW.textMuted)
+                }
+                Spacer()
+                Circle()
+                    .strokeBorder(selected ? OW.coral : OW.border, lineWidth: selected ? 4 : 1.5)
+                    .frame(width: 13, height: 13)
+            }
+            .padding(14)
+            .background(selected ? OW.chip : OW.card, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(selected ? OW.coral : OW.border, lineWidth: selected ? 1.5 : 1))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func whisperTitle(_ model: WhisperModel) -> String {
+        switch model {
+        case .tiny:  return "Whisper Tiny"
+        case .base:  return "Whisper Base"
+        case .small: return "Whisper Small"
+        }
+    }
+
+    private var parakeetComingSoonRow: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Parakeet")
+                    .font(OW.ui(14.5, weight: .semibold)).foregroundStyle(OW.textMuted)
+                Text("~631 MB · most accurate")
+                    .font(OW.mono(11)).foregroundStyle(OW.textFaint)
+            }
+            Spacer()
+            OWStatusChip(text: "Coming soon", tone: .neutral)
+        }
+        .padding(14)
+        .background(OW.bgSunk, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(OW.border, lineWidth: 1))
+        .opacity(0.7)
+    }
+
+    // MARK: - 3 · Accessibility
 
     private var accessibilityStep: some View {
         stepScaffold(
             icon: "keyboard.fill",
-            title: "Enable auto-insert",
-            subtitle: "To type cleaned text straight into the app you're using, OpenWispr needs Accessibility access. Without it, dictations are copied to the clipboard instead."
+            title: axTrusted ? "Auto-insert is on" : "Let it type for you",
+            subtitle: axTrusted
+                ? "Finished text drops straight into whatever you're typing in."
+                : "OpenWispr uses Accessibility for one job: pasting finished text into the app you're in. Enable it under Privacy & Security ▸ Accessibility. It never reads your screen, and nothing leaves your Mac."
         ) {
             if axTrusted {
-                statusPill(ok: true, text: "Accessibility access granted")
+                OWStatusChip(text: "Accessibility granted", tone: .ok, systemImage: "checkmark")
             } else {
-                VStack(spacing: 12) {
-                    Button("Open Accessibility Settings") {
-                        TextInserter.requestAccess()
-                        openPrivacyPane("Privacy_Accessibility")
-                    }
+                EmptyView()
+            }
+        } footer: {
+            if axTrusted {
+                Button("Continue") { advance(1) }.buttonStyle(OWPrimaryButtonStyle(large: true))
+            } else {
+                Button("Open System Settings") { MacPermissions.requestAccessibility() }
                     .buttonStyle(OWPrimaryButtonStyle(large: true))
-                    Text("Toggle OpenWispr on in the list, then come back here.")
-                        .font(OW.ui(12))
-                        .foregroundStyle(OW.textMuted)
-                }
+                Button("Skip — paste manually") { advance(1) }.buttonStyle(OWGhostButtonStyle())
             }
         }
     }
 
-    private var engineStep: some View {
+    // MARK: - 4 · Shortcut / Input Monitoring
+
+    private var shortcutStep: some View {
         stepScaffold(
-            icon: "waveform",
-            title: "Choose a dictation engine",
-            subtitle: "Apple Speech works instantly. Whisper runs a small model fully offline for higher accuracy — it downloads once."
+            icon: "command",
+            title: "Your trigger is the shortcut",
+            subtitle: "Press \(settings.hotKeyDisplay) anywhere to start and stop dictation. It works system-wide with no extra permission. Input Monitoring is optional — grant it only if you want the system to recognize the keys everywhere."
         ) {
-            VStack(spacing: 16) {
-                OWSegmented(
-                    selection: $settings.sttProvider,
-                    options: [(.appleSpeech, "Apple Speech"), (.whisper, "Whisper (offline)")]
-                )
-                .frame(width: 320)
-
-                if settings.sttProvider == .whisper {
-                    WhisperModelDownload(settings: settings)
-                } else {
-                    Text("No download needed — you're ready to go.")
-                        .font(OW.ui(12))
-                        .foregroundStyle(OW.textMuted)
+            VStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    Text(settings.hotKeyDisplay)
+                        .font(OW.mono(18, weight: .semibold)).foregroundStyle(OW.text)
+                        .padding(.horizontal, 16).padding(.vertical, 9)
+                        .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
+                        .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+                }
+                HStack(spacing: 8) {
+                    Text("Input Monitoring")
+                        .font(OW.ui(13, weight: .medium)).foregroundStyle(OW.textDim)
+                    inputMonitoringChip
                 }
             }
+        } footer: {
+            if inputMonitoring == .granted {
+                Button("Continue") { advance(1) }.buttonStyle(OWPrimaryButtonStyle(large: true))
+            } else {
+                Button("Continue") { advance(1) }.buttonStyle(OWPrimaryButtonStyle(large: true))
+                Button("Open Input Monitoring") {
+                    MacPermissions.requestInputMonitoring()
+                    MacPermissions.openInputMonitoringPane()
+                }
+                .buttonStyle(OWGhostButtonStyle())
+            }
         }
     }
 
-    private var readyStep: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            OWOrb(size: 76, breathing: true)
-            VStack(spacing: 10) {
-                Text("You're all set")
-                    .font(OW.ui(24, weight: .semibold))
-                    .foregroundStyle(OW.text)
-                Text("Press your shortcut anywhere, speak, then press it again (or just pause).")
-                    .font(OW.ui(14))
-                    .foregroundStyle(OW.textDim)
-                    .multilineTextAlignment(.center)
-            }
+    private var inputMonitoringChip: some View {
+        switch inputMonitoring {
+        case .granted: return OWStatusChip(text: "Granted", tone: .ok, systemImage: "checkmark")
+        case .denied:  return OWStatusChip(text: "Optional", tone: .neutral)
+        case .unknown: return OWStatusChip(text: "Optional", tone: .neutral)
+        }
+    }
 
-            // The shortcut, shown as a key cap.
-            Text(settings.hotKeyDisplay)
-                .font(OW.mono(20, weight: .semibold))
-                .foregroundStyle(OW.text)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
-                .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+    // MARK: - 5 · First dictation
 
-            Text("Tip: turn on AI polish and personalize your vocabulary in Settings.")
-                .font(OW.ui(12))
-                .foregroundStyle(OW.textMuted)
+    private var dictateStep: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 10)
+            Text("Try it once")
+                .font(OW.ui(24, weight: .bold)).foregroundStyle(OW.text)
+            Text("Click below and read this aloud — watch it land as clean text.")
+                .font(OW.ui(14)).foregroundStyle(OW.textDim)
                 .multilineTextAlignment(.center)
+                .padding(.top, 6).padding(.bottom, 16)
+
+            Text("“um so send it to mark, I mean john, tomorrow at 2 period”")
+                .font(OW.ui(14)).italic().foregroundStyle(OW.textFaint)
+                .multilineTextAlignment(.center)
+                .padding(14)
+                .frame(maxWidth: .infinity)
+                .background(OW.chip, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .foregroundStyle(OW.border))
+
+            Spacer()
+            dictateBody
+            Spacer()
+
+            if dictation.phase == .done {
+                Button("That's the magic — continue") { advance(1) }
+                    .buttonStyle(OWPrimaryButtonStyle(large: true))
+            }
+            Spacer().frame(height: 10)
+        }
+    }
+
+    @ViewBuilder
+    private var dictateBody: some View {
+        switch dictation.phase {
+        case .idle, .error:
+            VStack(spacing: 14) {
+                Button(action: dictation.toggle) {
+                    OWOrb(size: 84, breathing: true)
+                }
+                .buttonStyle(.plain)
+                MonoLabel(text: "Click to talk", color: OW.textMuted, size: 11, tracking: 1.6)
+            }
+        case .listening:
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(OW.orbGradientBright).frame(width: 84, height: 84)
+                        .shadow(color: OW.coral.opacity(0.5), radius: 16, x: 0, y: 8)
+                    Image(systemName: "waveform").font(.system(size: 30)).foregroundStyle(.white)
+                }
+                Button(action: dictation.toggle) {
+                    MonoLabel(text: "Listening — click to stop", color: OW.coralDeep, size: 11, tracking: 1.4)
+                }
+                .buttonStyle(.plain)
+            }
+        case .transcribing:
+            VStack(spacing: 12) {
+                ProgressView().controlSize(.large).tint(OW.coral)
+                MonoLabel(text: "Working", color: OW.textMuted, size: 11, tracking: 1.6)
+            }
+        case .done:
+            VStack(spacing: 10) {
+                MonoLabel(text: "Inserted at your cursor", color: OW.textMuted, size: 9, tracking: 1.2)
+                Text(dictation.editableCleaned.isEmpty ? dictation.cleaned : dictation.editableCleaned)
+                    .font(OW.ui(17)).foregroundStyle(OW.text)
+                    .multilineTextAlignment(.center)
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                    .background(OW.card, in: RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(OW.border, lineWidth: 1))
+            }
+        }
+    }
+
+    // MARK: - 6 · Done
+
+    private var doneStep: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            OWOrb(size: 88, breathing: true).padding(.bottom, 20)
+            Text("You're all set.")
+                .font(OW.ui(28, weight: .bold)).foregroundStyle(OW.text)
+                .padding(.bottom, 11)
+            Text("Press \(settings.hotKeyDisplay) in any app and start talking. Everything stays on this Mac.")
+                .font(OW.ui(14.5)).foregroundStyle(OW.textDim)
+                .multilineTextAlignment(.center).lineSpacing(3)
+                .frame(maxWidth: 340)
+                .padding(.bottom, 22)
+
+            VStack(spacing: 0) {
+                recapRow("Microphone", ok: micGrant == .granted, alt: nil)
+                Divider().overlay(OW.divider)
+                recapRow("On-device voice model",
+                         ok: WhisperModelManager.shared.isDownloaded(settings.whisperModel), alt: nil)
+                Divider().overlay(OW.divider)
+                recapRow("Auto-insert", ok: axTrusted, alt: axTrusted ? nil : "Clipboard")
+                Divider().overlay(OW.divider)
+                recapRow("\(settings.hotKeyDisplay) shortcut", ok: true, alt: nil)
+            }
+            .background(OW.card, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(OW.border, lineWidth: 1))
+            .frame(maxWidth: 400)
+            .padding(.bottom, 22)
+
+            HStack(spacing: 16) {
+                Button("Replay") { withAnimation { step = .welcome } }
+                    .buttonStyle(OWGhostButtonStyle())
+                Button("Start using OpenWispr") { onFinish() }
+                    .buttonStyle(OWPrimaryButtonStyle(large: true))
+            }
             Spacer()
         }
     }
 
-    // MARK: - Footer
-
-    private var footer: some View {
-        HStack {
-            if step != .welcome {
-                Button("Back") { advance(-1) }
-                    .buttonStyle(OWGhostButtonStyle())
-            }
+    private func recapRow(_ label: String, ok: Bool, alt: String?) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: ok || alt != nil ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 16))
+                .foregroundStyle(ok ? OW.success : (alt != nil ? OW.coralDeep : OW.textMuted))
+            Text(label).font(OW.ui(14)).foregroundStyle(OW.text)
             Spacer()
-            if step != .ready {
-                Button("Skip setup") { onFinish() }
-                    .buttonStyle(OWGhostButtonStyle())
-            }
-            Button(primaryTitle) {
-                if step == .ready { onFinish() } else { advance(1) }
-            }
-            .buttonStyle(OWPrimaryButtonStyle())
-            .disabled(!canAdvance)
+            Text(ok ? "On" : (alt ?? "Later"))
+                .font(OW.mono(11))
+                .foregroundStyle(ok ? OW.success : (alt != nil ? OW.coralDeep : OW.textMuted))
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 15).padding(.vertical, 12)
     }
 
-    private var primaryTitle: String {
-        switch step {
-        case .welcome: return "Get started"
-        case .ready:   return "Start dictating"
-        default:       return "Continue"
+    // MARK: - Step scaffold
+
+    /// Shared centered scaffold for the permission/trigger steps: icon badge, title, subtitle,
+    /// the step's status content, then a footer of action buttons pinned near the bottom.
+    @ViewBuilder
+    private func stepScaffold<Content: View, Footer: View>(
+        icon: String, title: String, subtitle: String,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder footer: () -> Footer
+    ) -> some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 14)
+            VStack(alignment: .leading, spacing: 20) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 18).fill(OW.coralPill.opacity(0.5))
+                        .frame(width: 66, height: 66)
+                    Image(systemName: icon)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(OW.coralDeep)
+                }
+                VStack(alignment: .leading, spacing: 11) {
+                    Text(title)
+                        .font(OW.ui(24, weight: .bold)).foregroundStyle(OW.text)
+                    Text(subtitle)
+                        .font(OW.ui(14.5)).foregroundStyle(OW.textDim)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer()
+            HStack(spacing: 16) {
+                footer()
+                Spacer()
+            }
+            Spacer().frame(height: 14)
         }
     }
 
-    /// The microphone step is the one hard gate — you can't dictate without it. Everything else
-    /// is skippable (Accessibility falls back to clipboard; the engine has an instant default).
-    private var canAdvance: Bool {
-        step != .microphone || micGrant == .granted
-    }
-
-    // MARK: - Helpers
+    // MARK: - Navigation + helpers
 
     private func advance(_ delta: Int) {
         let next = step.rawValue + delta
-        guard let s = Step(rawValue: next) else { return }
-        withAnimation(.easeInOut(duration: 0.18)) { step = s }
+        guard let s = Step(rawValue: next) else {
+            if next > Step.done.rawValue { onFinish() }
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.2)) { step = s }
     }
 
     private func refreshMicStatus() {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized:   micGrant = .granted
+        case .authorized:          micGrant = .granted
         case .denied, .restricted: micGrant = .denied
-        default:            micGrant = .unknown
+        default:                   micGrant = .unknown
         }
     }
 
-    private func openPrivacyPane(_ anchor: String) {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)") {
+    private func openMicPane() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
             NSWorkspace.shared.open(url)
         }
     }
+}
 
-    /// Shared scaffold for the permission/engine steps: icon badge, title, subtitle, then the
-    /// step's interactive content.
-    @ViewBuilder
-    private func stepScaffold<Content: View>(
-        icon: String, title: String, subtitle: String, @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(spacing: 18) {
-            Spacer()
-            ZStack {
-                Circle().fill(OW.coralPill.opacity(0.5)).frame(width: 64, height: 64)
-                Image(systemName: icon)
-                    .font(.system(size: 26, weight: .medium))
-                    .foregroundStyle(OW.coralDeep)
-            }
-            VStack(spacing: 10) {
-                Text(title)
-                    .font(OW.ui(22, weight: .semibold))
-                    .foregroundStyle(OW.text)
-                Text(subtitle)
-                    .font(OW.ui(14))
-                    .foregroundStyle(OW.textDim)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            content()
-                .padding(.top, 6)
-            Spacer()
-        }
-    }
+// MARK: - Branded gradient backdrop
 
-    private func statusPill(ok: Bool, text: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .foregroundStyle(ok ? OW.success : OW.danger)
-            Text(text)
-                .font(OW.ui(13, weight: .medium))
-                .foregroundStyle(OW.text)
+/// The warm amber→coral→deep-brown gradient window backdrop from the onboarding design, with a
+/// soft top glow. Translated from the design's OKLCH gradient stops.
+private struct OnboardingBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(hex: 0xD9A05F), // oklch(0.74 0.10 70) warm amber
+                    Color(hex: 0xCB7A52), // oklch(0.66 0.13 44) coral
+                    Color(hex: 0x8E4736), // oklch(0.52 0.12 24) deep red-brown
+                    Color(hex: 0x523026), // oklch(0.36 0.08 28) dark brown
+                ],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            RadialGradient(
+                colors: [Color.white.opacity(0.28), .clear],
+                center: .top, startRadius: 0, endRadius: 420
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rPill))
-        .overlay(RoundedRectangle(cornerRadius: OW.rPill).strokeBorder(OW.border, lineWidth: 1))
+        .ignoresSafeArea()
     }
 }
 
-/// The Whisper model picker + one-tap download used inside the onboarding engine step. Reads
-/// live download progress from `WhisperModelManager`.
-private struct WhisperModelDownload: View {
+/// Compact Whisper model download control used inside the onboarding voice step. Reads live
+/// download state from `WhisperModelManager` for the currently selected model.
+private struct WhisperOnboardingDownload: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject private var manager = WhisperModelManager.shared
 
     var body: some View {
-        VStack(spacing: 12) {
-            OWMenuPicker(
-                selection: $settings.whisperModel,
-                options: WhisperModel.allCases.map { ($0, "\($0.label) · \($0.approxSize)") }
-            )
-
-            let model = settings.whisperModel
+        let model = settings.whisperModel
+        Group {
             if manager.isDownloaded(model) {
-                HStack(spacing: 7) {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(OW.success)
-                    Text("Downloaded — ready offline").font(OW.ui(12, weight: .medium)).foregroundStyle(OW.text)
-                }
+                OWStatusChip(text: "Model ready · works offline", tone: .ok, systemImage: "checkmark")
             } else if manager.downloadingModel == model {
-                VStack(spacing: 6) {
-                    ProgressView(value: manager.downloadProgress ?? 0)
-                        .frame(width: 240)
-                        .tint(OW.coral)
-                    Text("Downloading… \(Int((manager.downloadProgress ?? 0) * 100))%")
-                        .font(OW.mono(11)).foregroundStyle(OW.textDim)
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack {
+                        Text("Downloading…").font(OW.ui(13, weight: .semibold)).foregroundStyle(OW.textDim)
+                        Spacer()
+                        Text("\(Int((manager.downloadProgress ?? 0) * 100))%")
+                            .font(OW.mono(12)).foregroundStyle(OW.textMuted)
+                    }
+                    ProgressView(value: manager.downloadProgress ?? 0).tint(OW.coral)
                 }
             } else {
-                Button("Download \(model.label)") {
-                    Task { await manager.download(model) }
-                }
-                .buttonStyle(OWPrimaryButtonStyle())
-                if let err = manager.lastError {
-                    Text(err).font(OW.ui(11)).foregroundStyle(OW.danger).lineLimit(2)
+                HStack {
+                    Button("Download & continue") {
+                        Task { await manager.download(model) }
+                    }
+                    .buttonStyle(OWPrimaryButtonStyle())
+                    if let err = manager.lastError {
+                        Text(err).font(OW.ui(11)).foregroundStyle(OW.danger).lineLimit(2)
+                    }
+                    Spacer()
                 }
             }
         }
-        // Recompute when a download finishes (manager bumps `revision`).
         .id(manager.revision)
     }
 }
