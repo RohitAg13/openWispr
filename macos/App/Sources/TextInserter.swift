@@ -2,11 +2,18 @@ import AppKit
 import ApplicationServices
 
 /// Inserts cleaned dictation text into the focused field of the frontmost app the user was
-/// working in (not our menu-bar popover). Uses the Accessibility API as the primary path and
-/// a synthesized ⌘V paste as a fallback for apps that ignore AX `selectedText` writes.
+/// working in (not our menu-bar popover). Inserts via a synthesized ⌘V paste, which lands at the
+/// caret (replacing any selection) universally — native Cocoa fields, web content (browsers),
+/// terminals, and Electron apps alike.
 ///
-/// Requires the app to be (a) non-sandboxed and (b) granted Accessibility access by the user
-/// in System Settings ▸ Privacy & Security ▸ Accessibility. Never throws; degrades to `false`.
+/// We deliberately do *not* use the AX `kAXSelectedTextAttribute` write: it only works in native
+/// Cocoa text and, worse, many non-native apps (browsers, terminals) return `.success` from the
+/// write while silently dropping the text — so it can't even be used as a trustworthy primary with
+/// a paste fallback. Paste is the one path that works everywhere the user could paste by hand.
+///
+/// Requires the app to be (a) non-sandboxed and (b) granted Accessibility access by the user in
+/// System Settings ▸ Privacy & Security ▸ Accessibility (needed to post the synthetic keystroke).
+/// Never throws; degrades to `false`.
 enum TextInserter {
 
     /// Whether this process is currently trusted for Accessibility.
@@ -19,49 +26,24 @@ enum TextInserter {
         _ = AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Insert `text` into the focused field of `app`. Returns `true` if either the AX path or
-    /// the paste fallback was dispatched, `false` if we can't act (e.g. not trusted).
+    /// Insert `text` into the focused field of `app`. Returns `true` if the paste was dispatched,
+    /// `false` if we can't act (e.g. not trusted, or the keystroke couldn't be synthesized).
     @discardableResult
     static func insert(_ text: String, into app: NSRunningApplication?) -> Bool {
         guard isTrusted else { return false }
         guard !text.isEmpty else { return false }
 
-        // 1. Bring the target app forward and let focus settle before we touch it.
+        // Bring the target app forward and let focus settle before we paste into it.
         if let app = app, !app.isActive {
             app.activate(options: [])
             spin(milliseconds: 100)
         }
 
-        // 2. Primary path: write the AX selected text of the focused element. This inserts at
-        //    the caret (or replaces the current selection) without disturbing the pasteboard.
-        if insertViaAccessibility(text) {
-            return true
-        }
-
-        // 3. Fallback: paste via a synthesized ⌘V, preserving the user's pasteboard.
+        // Paste at the caret (replacing any selection), preserving the user's pasteboard.
         return insertViaPaste(text)
     }
 
-    // MARK: - AX path
-
-    private static func insertViaAccessibility(_ text: String) -> Bool {
-        let systemWide = AXUIElementCreateSystemWide()
-
-        var focused: CFTypeRef?
-        let copyResult = AXUIElementCopyAttributeValue(
-            systemWide, kAXFocusedUIElementAttribute as CFString, &focused
-        )
-        guard copyResult == .success, let focusedRef = focused else { return false }
-        // CFTypeRef from a UI element attribute is always an AXUIElement here.
-        let element = focusedRef as! AXUIElement
-
-        let setResult = AXUIElementSetAttributeValue(
-            element, kAXSelectedTextAttribute as CFString, text as CFString
-        )
-        return setResult == .success
-    }
-
-    // MARK: - Paste fallback
+    // MARK: - Paste
 
     private static func insertViaPaste(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
