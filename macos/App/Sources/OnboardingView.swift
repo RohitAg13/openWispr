@@ -309,12 +309,12 @@ struct OnboardingView: View {
     private var shortcutStep: some View {
         stepScaffold(
             icon: "command",
-            title: "Your trigger is the shortcut",
-            subtitle: "Press \(settings.hotKeyDisplay) anywhere to start and stop dictation. It works system-wide with no extra permission. Input Monitoring is optional — grant it only if you want the system to recognize the keys everywhere."
+            title: "Hold fn to talk",
+            subtitle: "Hold the 🌐 fn key anywhere to dictate, then release to insert. Double-tap fn for hands-free (it keeps listening until you tap again or pause). To make it work in every app, grant Input Monitoring below."
         ) {
             VStack(spacing: 12) {
                 HStack(spacing: 8) {
-                    Text(settings.hotKeyDisplay)
+                    Text(settings.triggerDisplay)
                         .font(OW.mono(18, weight: .semibold)).foregroundStyle(OW.text)
                         .padding(.horizontal, 16).padding(.vertical, 9)
                         .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
@@ -433,7 +433,7 @@ struct OnboardingView: View {
             Text("You're all set.")
                 .font(OW.ui(28, weight: .bold)).foregroundStyle(OW.text)
                 .padding(.bottom, 11)
-            Text("Press \(settings.hotKeyDisplay) in any app and start talking. Everything stays on this Mac.")
+            Text("\(settings.triggerHint) in any app. Everything stays on this Mac.")
                 .font(OW.ui(14.5)).foregroundStyle(OW.textDim)
                 .multilineTextAlignment(.center).lineSpacing(3)
                 .frame(maxWidth: 340)
@@ -447,7 +447,7 @@ struct OnboardingView: View {
                 Divider().overlay(OW.divider)
                 recapRow("Auto-insert", ok: axTrusted, alt: axTrusted ? nil : "Clipboard")
                 Divider().overlay(OW.divider)
-                recapRow("\(settings.hotKeyDisplay) shortcut", ok: true, alt: nil)
+                recapRow("\(settings.triggerDisplay) trigger", ok: true, alt: nil)
             }
             .background(OW.card, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(OW.border, lineWidth: 1))

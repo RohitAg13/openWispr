@@ -131,49 +131,22 @@ final class ParakeetModelManager: ObservableObject {
         }
     }
 
-    /// Stream one file to disk, reporting aggregate progress as
-    /// `(priorBytes + bytesIntoThisFile) / totalBytes`.
+    /// Download one file to disk via a native `URLSessionDownloadTask` (chunked, disk-backed —
+    /// fast), reporting aggregate progress as `(priorBytes + bytesIntoThisFile) / totalBytes`.
+    ///
+    /// The earlier implementation iterated `URLSession.bytes` one `UInt8` at a time, which for the
+    /// ~652 MB encoder meant hundreds of millions of async iterations — CPU-bound and glacially slow
+    /// regardless of network speed. The download task streams in OS-sized chunks instead.
     private func downloadFile(
         from url: URL, to destination: URL,
         fileBytes: Int64, priorBytes: Int64, totalBytes: Int64
     ) async throws {
-        let (bytes, response) = try await URLSession.shared.bytes(from: url)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
+        try await ModelDownload.file(from: url, to: destination) { [weak self] fileFraction in
+            // Scale this file's bytes to its share of the (approx) total.
+            let done = Double(priorBytes) + fileFraction * Double(fileBytes)
+            let p = done / Double(totalBytes)
+            Task { @MainActor in self?.downloadProgress = min(0.999, p) }
         }
-        let expected = http.expectedContentLength // -1 if unknown
-
-        let tmp = destination.appendingPathExtension("partial")
-        FileManager.default.createFile(atPath: tmp.path, contents: nil)
-        let handle = try FileHandle(forWritingTo: tmp)
-        defer { try? handle.close() }
-
-        var received: Int64 = 0
-        var buffer = Data()
-        buffer.reserveCapacity(1 << 20)
-        for try await byte in bytes {
-            buffer.append(byte)
-            if buffer.count >= (1 << 20) {
-                try handle.write(contentsOf: buffer)
-                received += Int64(buffer.count)
-                buffer.removeAll(keepingCapacity: true)
-                // Scale this file's bytes to its share of the (approx) total.
-                let fileFraction = expected > 0 ? Double(received) / Double(expected) : 0
-                let done = Double(priorBytes) + fileFraction * Double(fileBytes)
-                let p = done / Double(totalBytes)
-                await MainActor.run { self.downloadProgress = min(0.999, p) }
-            }
-            try Task.checkCancellation()
-        }
-        if !buffer.isEmpty {
-            try handle.write(contentsOf: buffer)
-        }
-        try handle.close()
-
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
-        }
-        try FileManager.default.moveItem(at: tmp, to: destination)
     }
 
     /// Cancel an in-flight download.

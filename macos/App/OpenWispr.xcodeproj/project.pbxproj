@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C10BF4D0947B49560874EC6 /* ModelDownload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 043C6CF5C15E7E56DD61546A /* ModelDownload.swift */; };
 		0C46E60281CEEC51228E45EE /* STTFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F2CA4BD75D571287E0329E /* STTFactory.swift */; };
 		128DC48D49D0F4186446610D /* AppleSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */; };
 		12C77C17FEF02DC0A3DD3C84 /* VADFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C4B9AA37D433AAE380041B /* VADFactory.swift */; };
@@ -32,6 +33,8 @@
 		960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */; };
 		9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7478C1EA9682B72F53EB0E31 /* HomeView.swift */; };
 		AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6955227F30F04FA604BF89A /* PersonalizationStores.swift */; };
+		B07D1CCA4046E3F14EA45D55 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7150F741F726C1DB4597A459 /* Assets.xcassets */; };
+		B9BF8381EA7F44983DD50DB1 /* FnTriggerMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88649EBDF72A03A9C61D7284 /* FnTriggerMonitor.swift */; };
 		C35117437ED96CF5EB93746D /* AudioCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2D84AD9AD20EEDD40B00EB /* AudioCapture.swift */; };
 		C9E8BB50864A9E410F4BC11B /* SherpaOnnxFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 4128EBE63C315B246A50288B /* SherpaOnnxFramework */; };
 		CF0936F2F734305831815C23 /* HotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7C8EE5B1CD881D96AF429D /* HotKey.swift */; };
@@ -46,6 +49,7 @@
 
 /* Begin PBXFileReference section */
 		03546B9C4D76CA0E26468882 /* AppleSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechSTT.swift; sourceTree = "<group>"; };
+		043C6CF5C15E7E56DD61546A /* ModelDownload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownload.swift; sourceTree = "<group>"; };
 		04C4B9AA37D433AAE380041B /* VADFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VADFactory.swift; sourceTree = "<group>"; };
 		1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWisprApp.swift; sourceTree = "<group>"; };
 		27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyRecorder.swift; sourceTree = "<group>"; };
@@ -63,10 +67,12 @@
 		5D7A0B81F90560BCFE601C5C /* StyleMemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleMemoryView.swift; sourceTree = "<group>"; };
 		6994CE01136A2B690BB52D3B /* LlmModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlmModel.swift; sourceTree = "<group>"; };
 		6FD83732B416F83A22F9F882 /* LlamaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaContext.swift; sourceTree = "<group>"; };
+		7150F741F726C1DB4597A459 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7478C1EA9682B72F53EB0E31 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		76AE78CAEE8553945C7C44BF /* DictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationView.swift; sourceTree = "<group>"; };
 		7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperSTT.swift; sourceTree = "<group>"; };
 		83F7A241C06B014563A413FD /* LocalLLMEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngine.swift; sourceTree = "<group>"; };
+		88649EBDF72A03A9C61D7284 /* FnTriggerMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FnTriggerMonitor.swift; sourceTree = "<group>"; };
 		8D58E56F2D386A113D12352B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "ggml-silero-v5.1.2.bin"; sourceTree = "<group>"; };
 		9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetModel.swift; sourceTree = "<group>"; };
@@ -101,6 +107,7 @@
 		13B373E3DD4116C3105C87B1 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				7150F741F726C1DB4597A459 /* Assets.xcassets */,
 				928FF4FDA9473DB6BF05FCD1 /* ggml-silero-v5.1.2.bin */,
 			);
 			path = Resources;
@@ -124,12 +131,14 @@
 				5529E735DF4428D7F33BDE96 /* DictationCoordinator.swift */,
 				D98CA29CAE9BA8BB6E0BBCB1 /* DictationHistoryStore.swift */,
 				76AE78CAEE8553945C7C44BF /* DictationView.swift */,
+				88649EBDF72A03A9C61D7284 /* FnTriggerMonitor.swift */,
 				7478C1EA9682B72F53EB0E31 /* HomeView.swift */,
 				3D7C8EE5B1CD881D96AF429D /* HotKey.swift */,
 				27F5E5F4104627457D6890F0 /* HotKeyRecorder.swift */,
 				6FD83732B416F83A22F9F882 /* LlamaContext.swift */,
 				6994CE01136A2B690BB52D3B /* LlmModel.swift */,
 				83F7A241C06B014563A413FD /* LocalLLMEngine.swift */,
+				043C6CF5C15E7E56DD61546A /* ModelDownload.swift */,
 				F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */,
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 				9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */,
@@ -243,6 +252,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B07D1CCA4046E3F14EA45D55 /* Assets.xcassets in Resources */,
 				25F4CD230BD6B058E836BCF0 /* ggml-silero-v5.1.2.bin in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -261,12 +271,14 @@
 				960C7EF3D76DF6121DBBB15F /* DictationCoordinator.swift in Sources */,
 				91D543311076B601F0D30C86 /* DictationHistoryStore.swift in Sources */,
 				F518E1F0A9280091C700FCD5 /* DictationView.swift in Sources */,
+				B9BF8381EA7F44983DD50DB1 /* FnTriggerMonitor.swift in Sources */,
 				9FE8ED034112D22A7E034FD2 /* HomeView.swift in Sources */,
 				CF0936F2F734305831815C23 /* HotKey.swift in Sources */,
 				955D21A0109F3B61CED8D3BD /* HotKeyRecorder.swift in Sources */,
 				1AA45ACABE366CEE2DC552ED /* LlamaContext.swift in Sources */,
 				E9DE7AA0B08B18923660CD01 /* LlmModel.swift in Sources */,
 				34A8BAF37B99E8450734F5C8 /* LocalLLMEngine.swift in Sources */,
+				0C10BF4D0947B49560874EC6 /* ModelDownload.swift in Sources */,
 				675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */,
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 				515AA42779AD16A9261120DD /* ParakeetModel.swift in Sources */,

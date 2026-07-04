@@ -150,8 +150,10 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 30)
             .padding(.vertical, 28)
-            .frame(maxWidth: 640, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // Cap the reading width, then center the column so a wide window doesn't leave the
+            // content hugging the left with a large empty void on the right.
+            .frame(maxWidth: 680, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .background(OW.bg)
     }
@@ -496,25 +498,37 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var triggerSection: some View {
-        group(header: "Global shortcut") {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 10) {
-                    HotKeyRecorder(
-                        keyCode: $settings.hotKeyCode,
-                        modifiers: $settings.hotKeyModifiers
-                    )
-                    .frame(width: 150, height: 26)
+        group(header: "Trigger") {
+            VStack(alignment: .leading, spacing: 12) {
+                OWSegmented(
+                    selection: $settings.triggerKind,
+                    options: TriggerKind.allCases.map { ($0, $0.label) }
+                )
 
-                    Text(settings.hotKeyDisplay)
-                        .font(OW.mono(13, weight: .medium))
-                        .foregroundStyle(OW.textDim)
+                switch settings.triggerKind {
+                case .fnKey:
+                    infoNote("Hold the 🌐 fn key to talk — release to insert. Double-tap fn for hands-free (it keeps listening; tap fn again, or pause, to stop).")
+                case .hotkey:
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 10) {
+                            HotKeyRecorder(
+                                keyCode: $settings.hotKeyCode,
+                                modifiers: $settings.hotKeyModifiers
+                            )
+                            .frame(width: 150, height: 26)
 
-                    Spacer()
+                            Text(settings.hotKeyDisplay)
+                                .font(OW.mono(13, weight: .medium))
+                                .foregroundStyle(OW.textDim)
 
-                    Button("Reset") { settings.resetHotKeyToDefault() }
-                        .buttonStyle(OWSecondaryButtonStyle())
+                            Spacer()
+
+                            Button("Reset") { settings.resetHotKeyToDefault() }
+                                .buttonStyle(OWSecondaryButtonStyle())
+                        }
+                        infoNote("Click the field, then press a combo (needs at least one modifier). Press it anywhere to start and stop dictation. Esc cancels.")
+                    }
                 }
-                infoNote("Click the field, then press a combo (needs at least one modifier). Press it anywhere to start and stop dictation. Esc cancels.")
             }
             .padding(14)
         }
@@ -550,12 +564,8 @@ struct SettingsView: View {
                         .font(OW.ui(11.5)).foregroundStyle(OW.textMuted)
                 }
                 Rectangle().fill(OW.divider).frame(height: 1)
-                toggleRow("Hold to talk",
-                          subtitle: "Push-to-talk: dictate only while the shortcut is held. (Coming soon)",
-                          isOn: $settings.holdToTalk)
-                Rectangle().fill(OW.divider).frame(height: 1)
                 toggleRow("Show indicator in the notch",
-                          subtitle: "Place the listening indicator near the notch instead of the cursor. (Coming soon)",
+                          subtitle: "Place the listening indicator at the top-center (notch area) instead of above the Dock.",
                           isOn: $settings.useNotchHud)
             }
             .padding(14)
@@ -567,7 +577,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Input Monitoring")
                     .font(OW.ui(14, weight: .medium)).foregroundStyle(OW.text)
-                Text("Optional — the shortcut works without it. Needed only for a future system-wide push-to-talk.")
+                Text("Lets OpenWispr see the fn key from other apps — required for fn hold / double-tap to work everywhere. A custom shortcut works without it.")
                     .font(OW.ui(11.5)).foregroundStyle(OW.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }

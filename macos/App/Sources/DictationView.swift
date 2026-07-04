@@ -354,8 +354,8 @@ struct DictationView: View {
 
     private var hotkeyHint: some View {
         HStack(spacing: 8) {
-            keyCap(AppSettings.shared.hotKeyDisplay)
-            Text("to dictate anywhere")
+            keyCap(AppSettings.shared.triggerDisplay)
+            Text(AppSettings.shared.triggerKind == .fnKey ? "hold to dictate anywhere" : "to dictate anywhere")
                 .font(OW.ui(12))
                 .foregroundStyle(OW.textMuted)
             Spacer()
