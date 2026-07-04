@@ -12,8 +12,8 @@ android {
         applicationId = "com.voicerewriter"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         ndk {
             // Device is arm64; the whisper/llm/mlc4j native libs and the sherpa-onnx AAR
             // all ship arm64-v8a. Restricting here keeps the APK from bundling unused ABIs
