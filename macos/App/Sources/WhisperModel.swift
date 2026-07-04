@@ -101,44 +101,10 @@ final class WhisperModelManager: ObservableObject {
         let url = model.downloadURL
 
         let task = Task<URL, Error> {
-            let (bytes, response) = try await URLSession.shared.bytes(from: url)
-            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-                throw URLError(.badServerResponse)
+            // Native chunked download task — not per-byte `URLSession.bytes` (see `ModelDownload`).
+            try await ModelDownload.file(from: url, to: destination) { fraction in
+                Task { @MainActor in self.downloadProgress = min(0.999, fraction) }
             }
-            let expected = http.expectedContentLength // -1 if unknown
-
-            let tmp = destination.appendingPathExtension("partial")
-            FileManager.default.createFile(atPath: tmp.path, contents: nil)
-            let handle = try FileHandle(forWritingTo: tmp)
-            defer { try? handle.close() }
-
-            var received: Int64 = 0
-            var buffer = Data()
-            buffer.reserveCapacity(1 << 20)
-            for try await byte in bytes {
-                buffer.append(byte)
-                if buffer.count >= (1 << 20) {
-                    try handle.write(contentsOf: buffer)
-                    received += Int64(buffer.count)
-                    buffer.removeAll(keepingCapacity: true)
-                    if expected > 0 {
-                        let p = Double(received) / Double(expected)
-                        await MainActor.run { self.downloadProgress = min(0.999, p) }
-                    }
-                }
-                try Task.checkCancellation()
-            }
-            if !buffer.isEmpty {
-                try handle.write(contentsOf: buffer)
-                received += Int64(buffer.count)
-            }
-            try handle.close()
-
-            // Atomic swap into place.
-            if FileManager.default.fileExists(atPath: destination.path) {
-                try FileManager.default.removeItem(at: destination)
-            }
-            try FileManager.default.moveItem(at: tmp, to: destination)
             return destination
         }
         activeTask = task
