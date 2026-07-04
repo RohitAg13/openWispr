@@ -20,6 +20,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 22) {
                 hero
                 transcriptCard
+                statSection
                 recentsSection
             }
             .padding(28)
@@ -288,12 +289,81 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Recent dictations
+    // MARK: - Today at a glance (stat band)
+
+    private var statSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Today at a glance")
+                    .font(OW.ui(20, weight: .bold))
+                    .foregroundStyle(OW.text)
+                Spacer()
+                HStack(spacing: 7) {
+                    Circle().fill(OW.orbGradient).frame(width: 10, height: 10)
+                    MonoLabel(text: controller.isListening ? "Listening" : "Ready",
+                              color: OW.textDim, size: 10, tracking: 1.4)
+                }
+            }
+            statBand
+        }
+    }
+
+    private var statBand: some View {
+        let s = history.stats
+        return VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                statCell("Words dictated", s.wordsLabel)
+                statDivider
+                statCell("Time saved", s.timeSavedLabel)
+                statDivider
+                statCell("Day streak", "\(s.streakDays)")
+            }
+            Rectangle().fill(OW.divider).frame(height: 1).padding(.vertical, 18)
+            HStack(spacing: 10) {
+                statChip("Accept rate", DictationStats.rateLabel(s.acceptRate))
+                statChip("On-device", DictationStats.rateLabel(s.onDeviceRate))
+                Spacer()
+            }
+        }
+        .padding(EdgeInsets(top: 22, leading: 24, bottom: 22, trailing: 24))
+        .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rCard + 2))
+        .overlay(RoundedRectangle(cornerRadius: OW.rCard + 2).strokeBorder(OW.border, lineWidth: 1))
+    }
+
+    private func statCell(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            RoundedRectangle(cornerRadius: 2).fill(OW.coral).frame(width: 24, height: 3)
+            Text(value)
+                .font(OW.ui(34, weight: .semibold))
+                .foregroundStyle(OW.text)
+                .padding(.top, 12)
+            MonoLabel(text: label, color: OW.textDim, size: 10, tracking: 1.2)
+                .padding(.top, 10)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var statDivider: some View {
+        Rectangle().fill(OW.divider).frame(width: 1, height: 64).padding(.horizontal, 22)
+    }
+
+    private func statChip(_ label: String, _ value: String) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(OW.coral).frame(width: 7, height: 7)
+            MonoLabel(text: label, color: OW.textDim, size: 10, tracking: 0.8)
+            Text(value).font(OW.ui(13, weight: .semibold)).foregroundStyle(OW.text)
+        }
+        .padding(.horizontal, 13)
+        .padding(.vertical, 7)
+        .background(OW.chip, in: Capsule())
+    }
+
+    // MARK: - History
 
     private var recentsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                MonoLabel(text: "Recent dictations", color: OW.textDim, size: 11, tracking: 1.4)
+                MonoLabel(text: "History", color: OW.textDim, size: 11, tracking: 1.4)
                 Spacer()
                 if !history.records.isEmpty {
                     Button("Clear") { history.clear() }
