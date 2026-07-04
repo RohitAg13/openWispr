@@ -45,10 +45,15 @@ final class DictationCoordinator {
     private var audio: AudioCapture
     /// Resolved per-session from settings (Apple Speech or warm-cached Whisper).
     private let hud = RecordingHUD()
+    /// Carbon toggle hotkey — used only when the trigger is `.hotkey`.
     private var hotKey: HotKey?
+    /// fn press/release watcher — used only when the trigger is `.fnKey` (hold + double-tap).
+    private var fnMonitor: FnTriggerMonitor?
     private var cancellables: Set<AnyCancellable> = []
 
     private var state: State = .idle
+    /// A finish requested before the (async) `start()` went live; applied once it does.
+    private var pendingFinish = false
     /// The app/field we'll insert back into — captured at session start. The HUD is
     /// non-activating so this stays the user's app for the whole session.
     private var targetApp: NSRunningApplication?
@@ -69,22 +74,28 @@ final class DictationCoordinator {
         hud.state.onCancel = { [weak self] in self?.cancel() }
         hud.state.onStop = { [weak self] in self?.finish() }
 
-        // Register the global hotkey from the user's binding; toggles a session.
-        registerHotKey()
+        // Install whichever trigger the user picked (fn hold/double-tap, or a toggle hotkey).
+        installTrigger()
         observeSettings()
     }
 
     // MARK: - Live settings (Combine)
 
-    /// Re-register the hotkey whenever the binding changes, and rebuild the VAD when
-    /// sensitivity changes (only while idle — never mid-session).
+    /// Re-install the trigger whenever the kind or the hotkey binding changes, and rebuild the VAD
+    /// when sensitivity changes (only while idle — never mid-session).
     private func observeSettings() {
-        // Re-register on either keycode or modifier change. `dropFirst` skips the initial
-        // value publish so we don't immediately re-register what `init` already set.
+        // Re-install on trigger-kind change or on either keycode/modifier change. `dropFirst` skips
+        // the initial value publish so we don't immediately re-install what `init` already set.
+        settings.$triggerKind
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.installTrigger() }
+            .store(in: &cancellables)
+
         Publishers.CombineLatest(settings.$hotKeyCode, settings.$hotKeyModifiers)
             .dropFirst()
             .receive(on: RunLoop.main)
-            .sink { [weak self] _, _ in self?.registerHotKey() }
+            .sink { [weak self] _, _ in self?.installTrigger() }
             .store(in: &cancellables)
 
         settings.$vadSensitivity
@@ -94,14 +105,27 @@ final class DictationCoordinator {
             .store(in: &cancellables)
     }
 
-    /// Drop the old `HotKey` (its `deinit` unregisters the Carbon hotkey) and register a
-    /// fresh one from the current binding.
-    private func registerHotKey() {
+    /// Tear down both triggers and install the one the user selected. `.fnKey` gives hold-to-talk +
+    /// double-tap hands-free; `.hotkey` gives a press-to-toggle global shortcut.
+    private func installTrigger() {
+        // Drop both first (HotKey's deinit unregisters Carbon; the monitor removes its NSEvent taps).
         hotKey = nil
-        hotKey = HotKey(
-            keyCode: settings.hotKeyCode,
-            modifiers: settings.hotKeyModifiers
-        ) { [weak self] in self?.toggle() }
+        fnMonitor?.stop()
+        fnMonitor = nil
+
+        switch settings.triggerKind {
+        case .fnKey:
+            let monitor = FnTriggerMonitor()
+            monitor.onStart = { [weak self] in self?.start() }
+            monitor.onFinish = { [weak self] in self?.finish() }
+            monitor.start()
+            fnMonitor = monitor
+        case .hotkey:
+            hotKey = HotKey(
+                keyCode: settings.hotKeyCode,
+                modifiers: settings.hotKeyModifiers
+            ) { [weak self] in self?.toggle() }
+        }
     }
 
     /// Rebuild `audio` from the new sensitivity ratios. Only safe while idle — swapping the
@@ -127,6 +151,10 @@ final class DictationCoordinator {
     // MARK: - Session lifecycle
 
     private func start() {
+        // Idempotent: the fn monitor may call start() again (e.g. a double-tap's second press)
+        // while a session is already live or transcribing — ignore all but a fresh idle start.
+        guard state == .idle else { return }
+        pendingFinish = false
         // Capture the target field's app now; our non-activating HUD won't change it.
         targetApp = NSWorkspace.shared.frontmostApplication
 
@@ -161,8 +189,10 @@ final class DictationCoordinator {
                 hud.show()
                 startLevelTimer()
                 startMaxDurationTimer()
+                // A push-to-talk release that beat the async mic bring-up — finish now.
+                if pendingFinish { pendingFinish = false; finish() }
             } catch {
-                state = .idle
+                returnToIdle()
                 hud.update(.error("Couldn't start the microphone."))
                 hud.show()
                 autoHide(after: 2.5)
@@ -173,13 +203,18 @@ final class DictationCoordinator {
     /// Stop capture and run transcribe → clean → insert. Reached by manual stop
     /// (hotkey) or VAD auto-stop; guarded so only the first call proceeds.
     private func finish() {
-        guard state == .listening, !isFinishing else { return }
+        guard !isFinishing else { return }
+        guard state == .listening else {
+            // Released before the async `start()` went live; finish the moment it does.
+            if state == .idle { pendingFinish = true }
+            return
+        }
         isFinishing = true
         stopLevelTimer()
 
         let samples = audio.stop()
         guard let samples = samples, !samples.isEmpty else {
-            state = .idle
+            returnToIdle()
             hud.update(.error("Didn't catch anything."))
             autoHide(after: 1.8)
             return
@@ -209,11 +244,11 @@ final class DictationCoordinator {
                 )
                 deliver(polished)
             } catch let error as STTError {
-                state = .idle
+                returnToIdle()
                 hud.update(.error(Self.message(for: error)))
                 autoHide(after: 2.0)
             } catch {
-                state = .idle
+                returnToIdle()
                 hud.update(.error(error.localizedDescription))
                 autoHide(after: 2.0)
             }
@@ -245,7 +280,7 @@ final class DictationCoordinator {
     /// Insert (when trusted) or copy (when not), then auto-hide and return to idle.
     private func deliver(_ cleaned: String) {
         if cleaned.isEmpty {
-            state = .idle
+            returnToIdle()
             hud.update(.error("Didn't catch anything."))
             autoHide(after: 1.5)
             return
@@ -267,7 +302,7 @@ final class DictationCoordinator {
             hud.update(.message("Copied — grant Accessibility to auto-insert."))
             autoHide(after: 2.5)
         }
-        state = .idle
+        returnToIdle()
     }
 
     /// Cancel button: abandon a listening session without transcribing.
@@ -276,11 +311,19 @@ final class DictationCoordinator {
         isFinishing = true
         stopLevelTimer()
         _ = audio.stop()
-        state = .idle
+        returnToIdle()
         hud.hide()
     }
 
     // MARK: - Helpers
+
+    /// Return to idle and tell the fn monitor the session is over, so a latched hands-free session
+    /// that ended on its own (VAD auto-stop, error, max duration) doesn't leave the monitor stale.
+    private func returnToIdle() {
+        state = .idle
+        pendingFinish = false
+        fnMonitor?.sessionDidEnd()
+    }
 
     private func autoHide(after seconds: Double) {
         Task { @MainActor in

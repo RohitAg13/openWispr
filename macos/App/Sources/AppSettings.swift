@@ -28,6 +28,23 @@ enum STTProvider: String, CaseIterable {
     }
 }
 
+/// What activates a dictation session.
+/// - `.fnKey`: **hold** the 🌐/fn key to talk (release to insert); **double-tap** for hands-free
+///   (tap again, or pause, to stop). The default — most Mac-native, no combo to remember.
+/// - `.hotkey`: a custom global shortcut (the `hotKeyCode`/`hotKeyModifiers` combo) that toggles
+///   a session — press once to start, again to stop. For users who'd rather not use fn.
+enum TriggerKind: String, CaseIterable {
+    case fnKey
+    case hotkey
+
+    var label: String {
+        switch self {
+        case .fnKey:  return "Fn key"
+        case .hotkey: return "Custom shortcut"
+        }
+    }
+}
+
 /// How aggressively to clean up / rewrite the transcript. Only `.off` (deterministic-only)
 /// works today; the LLM-backed levels are scaffolding for a later step.
 enum PolishLevel: String, CaseIterable {
@@ -118,6 +135,7 @@ final class AppSettings: ObservableObject {
     private let defaults: UserDefaults
 
     private enum Key {
+        static let triggerKind = "triggerKind"
         static let hotKeyCode = "hotKeyCode"
         static let hotKeyModifiers = "hotKeyModifiers"
         static let sttProvider = "sttProvider"
@@ -137,6 +155,11 @@ final class AppSettings: ObservableObject {
     }
 
     // MARK: - Persisted properties
+
+    /// What activates dictation — the fn key (hold / double-tap) or a custom toggle shortcut.
+    @Published var triggerKind: TriggerKind {
+        didSet { defaults.set(triggerKind.rawValue, forKey: Key.triggerKind) }
+    }
 
     @Published var hotKeyCode: UInt32 {
         didSet { defaults.set(Int(hotKeyCode), forKey: Key.hotKeyCode) }
@@ -203,14 +226,14 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(antiAiGuardrails, forKey: Key.antiAiGuardrails) }
     }
 
-    /// Show the recording indicator in the notch area. Persisted preference; the notch HUD
-    /// placement is not implemented yet (the HUD floats near the cursor today).
+    /// Place the listening indicator at the top-center (notch area) instead of near the Dock.
+    /// On by default — `RecordingHUD` reads this to pick its anchor.
     @Published var useNotchHud: Bool {
         didSet { defaults.set(useNotchHud, forKey: Key.useNotchHud) }
     }
 
-    /// Hold-to-talk (push-to-talk) instead of press-to-toggle. Persisted preference; the hold
-    /// trigger is not wired yet (the global hotkey toggles a session today).
+    /// Legacy preference retained for migration. With the fn trigger, hold-to-talk is always on
+    /// (hold = talk, double-tap = hands-free); this no longer gates behavior.
     @Published var holdToTalk: Bool {
         didSet { defaults.set(holdToTalk, forKey: Key.holdToTalk) }
     }
@@ -231,6 +254,10 @@ final class AppSettings: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+
+        // Trigger: fn key (hold / double-tap) by default; any prior explicit choice is preserved.
+        triggerKind = defaults.string(forKey: Key.triggerKind)
+            .flatMap(TriggerKind.init(rawValue:)) ?? .fnKey
 
         // Hotkey: stored as Int (UserDefaults has no UInt32). 0 / absent → default.
         if defaults.object(forKey: Key.hotKeyCode) != nil {
@@ -265,7 +292,7 @@ final class AppSettings: ObservableObject {
         keepHistory = defaults.object(forKey: Key.keepHistory) as? Bool ?? true
         llmCreativity = defaults.object(forKey: Key.llmCreativity) as? Double ?? 0.2
         antiAiGuardrails = defaults.object(forKey: Key.antiAiGuardrails) as? Bool ?? true
-        useNotchHud = defaults.object(forKey: Key.useNotchHud) as? Bool ?? false
+        useNotchHud = defaults.object(forKey: Key.useNotchHud) as? Bool ?? true
         holdToTalk = defaults.object(forKey: Key.holdToTalk) as? Bool ?? false
         showMenuBarIcon = defaults.object(forKey: Key.showMenuBarIcon) as? Bool ?? true
         dictationLanguage = defaults.string(forKey: Key.dictationLanguage) ?? "English"
@@ -286,6 +313,22 @@ final class AppSettings: ObservableObject {
     /// then the key character (letters/digits/space mapped; otherwise "Key <code>").
     var hotKeyDisplay: String {
         Self.display(keyCode: hotKeyCode, modifiers: hotKeyModifiers)
+    }
+
+    /// Short label for the active trigger — "🌐 fn" for the fn key, or the custom combo.
+    var triggerDisplay: String {
+        switch triggerKind {
+        case .fnKey:  return "🌐 fn"
+        case .hotkey: return hotKeyDisplay
+        }
+    }
+
+    /// One-line instruction for how to invoke dictation with the active trigger.
+    var triggerHint: String {
+        switch triggerKind {
+        case .fnKey:  return "Hold 🌐 fn to talk · double-tap for hands-free"
+        case .hotkey: return "Press \(hotKeyDisplay) to start and stop"
+        }
     }
 
     /// Render an arbitrary keycode+Carbon-modifier mask as a combo string.

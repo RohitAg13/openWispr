@@ -81,7 +81,9 @@ final class RecordingHUD {
         self.panel = panel
     }
 
-    /// Bottom-center of the screen that currently has the cursor / key — fall back to main.
+    /// Anchor on the screen that currently has the cursor / key — fall back to main. By default the
+    /// pill tucks under the top-center (notch area); the "Show indicator in the notch" setting can
+    /// move it back to just above the Dock.
     private func position() {
         guard let panel = panel else { return }
         let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
@@ -90,7 +92,13 @@ final class RecordingHUD {
 
         let size = panel.frame.size
         let x = visible.midX - size.width / 2
-        let y = visible.minY + 80 // a little above the Dock
+        let y: CGFloat
+        if AppSettings.shared.useNotchHud {
+            // Hang just under the menu bar / notch. `visibleFrame.maxY` sits below the menu bar.
+            y = visible.maxY - size.height - 6
+        } else {
+            y = visible.minY + 80 // a little above the Dock
+        }
         panel.setFrameOrigin(NSPoint(x: x, y: y))
     }
 }

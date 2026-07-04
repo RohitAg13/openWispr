@@ -120,8 +120,10 @@ struct HomeView: View {
 
     private var hotkeyHint: some View {
         HStack(spacing: 8) {
-            keyCap(settings.hotKeyDisplay)
-            Text("to dictate in any app")
+            keyCap(settings.triggerDisplay)
+            Text(settings.triggerKind == .fnKey
+                 ? "hold to talk · double-tap for hands-free"
+                 : "to dictate in any app")
                 .font(OW.ui(12))
                 .foregroundStyle(OW.textMuted)
         }
