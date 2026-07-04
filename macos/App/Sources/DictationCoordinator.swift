@@ -71,8 +71,12 @@ final class DictationCoordinator {
         let built = VADFactory.make(sensitivity: settings.vadSensitivity)
         audio = AudioCapture(vad: built.vad, config: built.config)
 
+        hud.state.onStart = { [weak self] in self?.start() }
         hud.state.onCancel = { [weak self] in self?.cancel() }
         hud.state.onStop = { [weak self] in self?.finish() }
+
+        // Show the resting "Tap to talk" notch pill (when notch mode is on).
+        hud.configure(persistent: settings.useNotchHud)
 
         // Install whichever trigger the user picked (fn hold/double-tap, or a toggle hotkey).
         installTrigger()
@@ -102,6 +106,13 @@ final class DictationCoordinator {
             .dropFirst()
             .receive(on: RunLoop.main)
             .sink { [weak self] sensitivity in self?.rebuildVAD(for: sensitivity) }
+            .store(in: &cancellables)
+
+        // Show/hide the resting notch pill (and re-anchor the HUD) when the setting toggles.
+        settings.$useNotchHud
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] on in self?.hud.configure(persistent: on) }
             .store(in: &cancellables)
     }
 
