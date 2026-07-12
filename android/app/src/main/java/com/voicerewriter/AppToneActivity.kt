@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -69,7 +70,7 @@ class AppToneActivity : ComponentActivity() {
         if (!loaded) return
 
         Column(
-            Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()),
+            Modifier.fillMaxSize().systemBarsPadding().padding(20.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("Tone by app", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)

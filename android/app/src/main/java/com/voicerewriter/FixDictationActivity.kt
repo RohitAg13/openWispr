@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +60,7 @@ class FixDictationActivity : ComponentActivity() {
         var correction by remember { mutableStateOf("") }
         val words = remember(text) { Regex("[\\p{L}\\p{N}'’.@/-]+").findAll(text).map { it.value }.toList() }
 
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().systemBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Fix a word", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             if (words.isEmpty()) {
                 Text("No recent dictation to fix.", color = MaterialTheme.colorScheme.onSurfaceVariant)
