@@ -1,0 +1,6 @@
+First Play Store release of OpenWispr.
+
+• On-device voice dictation — speak in any app, get clean text back.
+• Floating tap-to-talk bubble and a "Rewrite" action for selected text.
+• Auto-insert straight into the field you're focused on.
+• Private by default: your audio and text stay on your device. Optional cloud providers if you want them.

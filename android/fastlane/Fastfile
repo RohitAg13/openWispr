@@ -1,0 +1,58 @@
+# fastlane pipeline for OpenWispr (Google Play).
+#
+# Auth: the service-account JSON path comes from PLAY_JSON_KEY_FILE (set in the Appfile). Never
+# commit the key. Locally: export PLAY_JSON_KEY_FILE=/path/to/play.json before running a lane.
+#
+# The very FIRST upload must be done by hand in the Play Console — Google only opens the API for a
+# package after an app exists and one build has been uploaded manually. After that, these lanes work.
+
+default_platform(:android)
+
+DEFAULT_AAB = "app/build/outputs/bundle/release/app-release.aab".freeze
+
+platform :android do
+  desc "Validate the Play service-account key (auth smoke test)"
+  lane :whoami do
+    validate_play_store_json_key
+  end
+
+  desc "Build (if needed) and upload the release AAB to the internal testing track"
+  lane :internal do
+    aab = ENV["AAB_PATH"] # CI passes the already-built AAB to skip a rebuild
+    if aab.nil? || aab.empty?
+      gradle(task: "bundle", build_type: "Release")
+      aab = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || DEFAULT_AAB
+    end
+    upload_to_play_store(
+      track: "internal",
+      aab: aab,
+      skip_upload_apk: true,
+      release_status: "completed",
+      # Store listing/screenshots are managed by the `metadata` lane, not on every binary upload.
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Promote the current internal-track release to production"
+  lane :promote_production do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Push store listing text + images (no binary)"
+  lane :metadata do
+    upload_to_play_store(
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+    )
+  end
+end

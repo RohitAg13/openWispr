@@ -1,0 +1,2 @@
+json_key_file(ENV["PLAY_JSON_KEY_FILE"]) # Google Play service-account key (path via env; never committed)
+package_name("com.voicerewriter")
