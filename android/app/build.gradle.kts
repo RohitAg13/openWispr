@@ -44,6 +44,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Embed native (whisper/llama/sherpa) debug symbols in the AAB so Play Console can
+            // symbolicate native crash/ANR stack traces. Stripped from the delivered APKs.
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             if (releaseKeystore != null) {
                 signingConfig = signingConfigs.getByName("release")
             }

@@ -7,7 +7,7 @@ fastlane** once the one-time setup below is done.
 - App: **OpenWispr**, package **`com.voicerewriter`**
 - Build: `versionName 1.0.0`, `versionCode 3`, `targetSdk 35`, arm64-v8a only
 - Store listing (copy + graphics) lives in `android/fastlane/metadata/android/en-US/`
-- Privacy policy: `website/privacy.html` → hosted at `https://<your-site-domain>/privacy.html`
+- Privacy policy: `website/privacy.html` → hosted at `https://openwispr.up.railway.app/privacy.html`
 
 ---
 
@@ -56,7 +56,7 @@ add tester emails → **Save & publish**. (You can also grab the AAB from a tagg
   ```
 
 ### 5. Publish the privacy policy
-Deploy the website (Railway auto-deploys on push). Confirm `https://<your-site-domain>/privacy.html`
+Deploy the website (Railway auto-deploys on push). Confirm `https://openwispr.up.railway.app/privacy.html`
 loads, and paste that URL into Play Console → **App content → Privacy policy**.
 
 ---
