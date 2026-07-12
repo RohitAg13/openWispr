@@ -64,10 +64,12 @@ jobs:
       - name: Stage APK + AAB
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk \
-             "dist/OpenWispr-${GITHUB_REF_NAME:-dev}.apk"
-          cp android/app/build/outputs/bundle/release/app-release.aab \
-             "dist/OpenWispr-${GITHUB_REF_NAME:-dev}.aab"
+          # Sanitize the ref: workflow_dispatch on a branch (e.g. feat/x) has slashes in
+          # GITHUB_REF_NAME, which would be read as directories. Tags (v1.0.0) are unaffected.
+          NAME="${GITHUB_REF_NAME:-dev}"
+          NAME="${NAME//\//-}"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/OpenWispr-${NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/OpenWispr-${NAME}.aab"
 
       - uses: actions/upload-artifact@v4
         with:
