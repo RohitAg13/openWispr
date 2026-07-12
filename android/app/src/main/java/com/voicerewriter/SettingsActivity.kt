@@ -101,6 +101,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     // permissions / setup
     var bubbleOn by remember { mutableStateOf(BubbleService.isRunning) }
     var a11yEnabled by remember { mutableStateOf(false) }
+    var showA11yConsent by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
     var micGranted by remember { mutableStateOf(false) }
 
@@ -142,6 +143,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     val a11yLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         a11yEnabled = SetupUtils.accessibilityEnabled(context)
     }
+    fun openA11ySettings() = a11yLauncher.launch(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
 
     fun enableBubble() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notifOn) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -237,10 +239,23 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                     }
                     StatusRow("Auto-insert", if (a11yEnabled) "On" else "Types text into the field you're in", a11yEnabled) {
                         PillButton(if (a11yEnabled) "Manage" else "Enable") {
-                            a11yLauncher.launch(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                            // Enabling is a first-time grant → show the required disclosure first.
+                            // "Manage" (already enabled) goes straight to system settings.
+                            if (a11yEnabled) openA11ySettings() else showA11yConsent = true
                         }
                     }
                 }
+            }
+
+            if (showA11yConsent) {
+                AccessibilityConsentDialog(
+                    onConfirm = {
+                        showA11yConsent = false
+                        AccessibilityConsent.record(context)
+                        openA11ySettings()
+                    },
+                    onDismiss = { showA11yConsent = false },
+                )
             }
 
             // ---------------- VOICE · TRANSCRIPTION ----------------

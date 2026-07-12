@@ -12,8 +12,13 @@ permissions:
 
 jobs:
   android:
-    name: Android APK
+    name: Android APK + AAB
     runs-on: ubuntu-latest
+    env:
+      # Present only once the Play service account is configured (see .github/RELEASING.md).
+      # Referenced in the guarded fastlane step's `if:` — secrets aren't visible to `if` directly,
+      # so we surface it here as a job-level env var.
+      PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,25 +52,56 @@ jobs:
           fi
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
 
-      - name: Build signed release APK
+      - name: Build signed release APK + AAB
         working-directory: android
         env:
           OPENWISPR_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
           OPENWISPR_KEYSTORE_PASSWORD: ${{ secrets.OPENWISPR_KEYSTORE_PASSWORD }}
           OPENWISPR_KEY_ALIAS: ${{ secrets.OPENWISPR_KEY_ALIAS }}
           OPENWISPR_KEY_PASSWORD: ${{ secrets.OPENWISPR_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease --no-daemon
+        run: ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
 
-      - name: Stage APK
+      - name: Stage APK + AAB
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk \
-             "dist/OpenWispr-${GITHUB_REF_NAME:-dev}.apk"
+          # Sanitize the ref: workflow_dispatch on a branch (e.g. feat/x) has slashes in
+          # GITHUB_REF_NAME, which would be read as directories. Tags (v1.0.0) are unaffected.
+          NAME="${GITHUB_REF_NAME:-dev}"
+          NAME="${NAME//\//-}"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/OpenWispr-${NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/OpenWispr-${NAME}.aab"
 
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: dist/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: dist/*.aab
+
+      # ---- Play Store upload (internal track) ----
+      # Runs only on a tag build AND once the PLAY_SERVICE_ACCOUNT_JSON secret exists. The very
+      # first upload must be done manually in the Play Console (Google requires it) — after that,
+      # every tagged release auto-publishes the AAB to the internal testing track via fastlane.
+      - name: Set up Ruby (fastlane)
+        if: ${{ startsWith(github.ref, 'refs/tags/') && env.PLAY_JSON != '' }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Upload AAB to Play internal track (fastlane)
+        if: ${{ startsWith(github.ref, 'refs/tags/') && env.PLAY_JSON != '' }}
+        working-directory: android
+        env:
+          AAB_PATH: ${{ github.workspace }}/android/app/build/outputs/bundle/release/app-release.aab
+        run: |
+          printf '%s' "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          export PLAY_JSON_KEY_FILE="$RUNNER_TEMP/play.json"
+          bundle exec fastlane internal
 
   macos:
     name: macOS DMG

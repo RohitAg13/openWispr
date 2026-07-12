@@ -144,6 +144,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
 
     var cloudKey by remember { mutableStateOf("") }
     var a11yPhase by remember { mutableStateOf("restricted") }
+    var showA11yConsent by remember { mutableStateOf(false) }
 
     var notif by remember { mutableStateOf(SetupUtils.notificationsGranted(ctx)) }
     var history by remember { mutableStateOf(DictationHistory.keepHistory(ctx)) }
@@ -268,7 +269,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                         phase = a11yPhase,
                         onOpenRestricted = { ctx.startActivity(SetupUtils.appInfoIntent(ctx)) },
                         onNotGreyed = { a11yPhase = "list" },
-                        onOpenA11y = { ctx.startActivity(SetupUtils.accessibilitySettingsIntent()) },
+                        onOpenA11y = { showA11yConsent = true },
                         onConfirm = { a11yGranted = SetupUtils.accessibilityEnabled(ctx); if (a11yGranted) a11yPhase = "on" },
                         onSkip = { a11yPhase = "skipped" },
                         onNext = { next() },
@@ -296,6 +297,17 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 }
             }
         }
+    }
+
+    if (showA11yConsent) {
+        AccessibilityConsentDialog(
+            onConfirm = {
+                showA11yConsent = false
+                AccessibilityConsent.record(ctx)
+                ctx.startActivity(SetupUtils.accessibilitySettingsIntent())
+            },
+            onDismiss = { showA11yConsent = false },
+        )
     }
 }
 

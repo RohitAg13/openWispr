@@ -1,0 +1,1 @@
+On-device voice typing. Speak in any app, get clean text. Private by default.

@@ -1,0 +1,29 @@
+Speak. It types.
+
+OpenWispr is open-source voice dictation that turns your speech into clean, in-your-voice text and drops it straight into whatever app you're typing in — and the whole pipeline can run fully on your device.
+
+Most dictation apps ship your voice to the cloud. OpenWispr doesn't have to. By default it listens, transcribes, tidies up the transcript, and inserts the result without any of it leaving your phone. No account. No subscription. No tracking.
+
+WHAT IT DOES
+• Speak in any app — messaging, email, notes, browser, code — and get formatted text back.
+• On-device speech-to-text (Whisper / Parakeet) and optional on-device clean-up and polish.
+• A floating bubble for tap-to-talk over any app, plus a "Rewrite" action on selected text.
+• Auto-insert: your finished text lands right in the field you're focused on.
+• Learns the names, terms, and style you use — all stored on your device.
+
+PRIVATE BY DEFAULT
+• Runs 100% on-device out of the box — your audio and text stay local.
+• Your personal dictionary and style examples never leave the phone.
+• No analytics, no ads, no accounts.
+• Prefer the cloud? You can optionally plug in your own provider key (Groq, OpenAI, Anthropic, and more). Nothing is sent anywhere unless you choose it.
+
+OPEN SOURCE
+OpenWispr is MIT-licensed. Read exactly what it does, swap the models, or build it yourself.
+
+ABOUT PERMISSIONS
+• Microphone — to hear you when you dictate.
+• Accessibility — used for one thing only: typing your finished text into the field you're focused on. It is never used to read your screen for any other purpose, and nothing is collected, stored, or sent off your device. You can skip it and paste manually.
+• Overlay & notifications — for the floating tap-to-talk bubble.
+• Contacts (optional) — matched on-device to spell names correctly; import is opt-in.
+
+Requires a 64-bit (arm64) device. Speech and language models are downloaded on first use.

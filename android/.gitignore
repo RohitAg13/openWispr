@@ -9,3 +9,14 @@
 .externalNativeBuild/
 .cxx/
 .kotlin/
+
+# fastlane: never commit the Play service-account key or generated run artifacts.
+*.jks
+play*.json
+service-account*.json
+fastlane/report.xml
+fastlane/README.md
+fastlane/Preview.html
+fastlane/test_output/
+vendor/bundle/
+.bundle/

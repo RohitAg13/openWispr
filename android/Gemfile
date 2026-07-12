@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+# fastlane drives the Google Play uploads (see fastlane/Fastfile). Pinned loosely; CI caches gems.
+gem "fastlane"

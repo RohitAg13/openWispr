@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — OpenWispr</title>
+<meta name="description" content="OpenWispr's privacy policy. Voice dictation that runs on-device by default — your audio and text stay on your device unless you explicitly choose a cloud provider.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Mulish', sans-serif;
+    background: oklch(0.972 0.014 78);
+    color: oklch(0.32 0.03 47);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.65;
+  }
+  a { color: oklch(0.55 0.13 40); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.brand { display: flex; align-items: center; gap: 11px; margin-bottom: 40px; }
+  header.brand .name { font-size: 17px; font-weight: 700; color: oklch(0.3 0.03 45); }
+  h1 { font-size: 40px; line-height: 1.12; font-weight: 800; letter-spacing: -0.025em; color: oklch(0.28 0.03 45); margin: 0 0 8px; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(0.6 0.08 45); margin-bottom: 14px; }
+  .updated { font-size: 14px; color: oklch(0.55 0.025 55); margin: 0 0 34px; }
+  h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; color: oklch(0.3 0.03 45); margin: 40px 0 12px; }
+  h3 { font-size: 17px; font-weight: 700; color: oklch(0.33 0.03 46); margin: 24px 0 6px; }
+  p { margin: 0 0 14px; font-size: 16.5px; }
+  ul { margin: 0 0 16px; padding-left: 22px; }
+  li { margin: 0 0 9px; font-size: 16.5px; }
+  strong { color: oklch(0.3 0.03 45); font-weight: 700; }
+  .callout { background: oklch(0.985 0.012 74); border: 1px solid oklch(0.9 0.014 72); border-left: 4px solid oklch(0.66 0.13 40); border-radius: 12px; padding: 18px 22px; margin: 0 0 28px; }
+  .callout p:last-child { margin-bottom: 0; }
+  footer { border-top: 1px solid oklch(0.9 0.014 72); margin-top: 56px; padding-top: 22px; font-size: 14px; color: oklch(0.55 0.025 55); display: flex; gap: 22px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="brand">
+      <svg viewBox="0 0 100 100" style="width:26px;height:26px;display:block;color:oklch(0.66 0.13 42);">
+        <path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path>
+        <path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;"></path>
+      </svg>
+      <span class="name">OpenWispr</span>
+    </header>
+
+    <div class="eyebrow">Legal</div>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: July 12, 2026</p>
+
+    <div class="callout">
+      <p><strong>The short version:</strong> OpenWispr runs entirely on your device by default. Your
+      voice recordings and the text you dictate stay on your device and are not sent to us or anyone
+      else — unless <em>you</em> explicitly turn on a cloud provider. We have no servers, no accounts,
+      no analytics, and no ads. We never see your data.</p>
+    </div>
+
+    <p>OpenWispr ("the app") is open-source voice-dictation software for Android and macOS. This
+    policy explains what the app does with your information. It applies to the OpenWispr apps
+    published by the OpenWispr project.</p>
+
+    <h2>1. Data processed on your device</h2>
+    <p>By default, everything the app does happens locally on your device:</p>
+    <ul>
+      <li><strong>Voice recordings.</strong> When you dictate, the app records audio from your
+      microphone and transcribes it using a speech model that runs <strong>on your device</strong>.
+      The audio is held only for as long as needed to produce the transcript and is then discarded.
+      It is not uploaded anywhere by default.</li>
+      <li><strong>Transcripts and text.</strong> Your transcribed text is cleaned up and (optionally)
+      refined by a language model that also runs <strong>on your device</strong>. The finished text
+      is inserted into whatever app you are using.</li>
+      <li><strong>Dictation history.</strong> If you keep history enabled, past dictations are stored
+      locally on your device so you can review them. You can clear individual items, wipe all history,
+      or turn history off entirely in Settings.</li>
+      <li><strong>Personal dictionary &amp; style memory.</strong> Names, terms, and writing-style
+      examples the app learns from your use are stored on your device and are <strong>never
+      uploaded</strong>.</li>
+      <li><strong>Contacts (optional).</strong> If you choose to import contacts, contact names are
+      matched <strong>on your device</strong> to help the app spell names correctly. This is opt-in,
+      and your contacts are not uploaded.</li>
+    </ul>
+
+    <h2>2. Optional cloud providers</h2>
+    <p>OpenWispr lets you optionally use a third-party cloud service for speech-to-text and/or text
+    refinement instead of the on-device models. This is <strong>off by default</strong> and only
+    happens if you choose it and enter your own API key. If you enable a cloud provider:</p>
+    <ul>
+      <li>The relevant audio or text is sent directly from your device to the provider you selected
+      (for example Groq, OpenAI, Anthropic, OpenRouter, or a custom endpoint you configure) so it can
+      be processed and returned.</li>
+      <li>That data is handled under <strong>that provider's</strong> privacy policy and terms, not
+      ours. We are not an intermediary — the request goes from your device to them.</li>
+      <li>Your API keys are stored on your device and are used only to talk to the provider you chose.</li>
+    </ul>
+    <p>You can switch back to fully on-device processing at any time in Settings.</p>
+
+    <h2>3. Permissions and how they're used</h2>
+    <ul>
+      <li><strong>Microphone</strong> — to capture your voice when you dictate.</li>
+      <li><strong>Accessibility service</strong> — used for one purpose only: to type your finished,
+      dictated or rewritten text into the text field you are currently focused on. It is
+      <strong>not</strong> used to read your screen for any other purpose, and it does not collect,
+      store, log, or transmit the content of your screen or other apps. You can decline it and paste
+      your text manually instead.</li>
+      <li><strong>Display over other apps (overlay)</strong> — to show the floating tap-to-talk bubble.</li>
+      <li><strong>Notifications</strong> — to show the status of the dictation service.</li>
+      <li><strong>Contacts</strong> (optional) — as described above; opt-in and processed on-device.</li>
+      <li><strong>Internet</strong> — to download the speech and language models on first use, and, if
+      you enable a cloud provider, to send requests to that provider.</li>
+    </ul>
+
+    <h2>4. What we do not do</h2>
+    <ul>
+      <li>We do <strong>not</strong> run any servers that receive your data.</li>
+      <li>We do <strong>not</strong> require an account or sign-in.</li>
+      <li>We do <strong>not</strong> include analytics, tracking, or advertising SDKs.</li>
+      <li>We do <strong>not</strong> sell or share your personal data. There is nothing to sell — your
+      data stays on your device.</li>
+    </ul>
+
+    <h2>5. Data retention and deletion</h2>
+    <p>Because your data lives on your device, you are in control of it. You can clear your dictation
+    history, personal dictionary, and learned style at any time from within the app's Settings.
+    Uninstalling the app removes all of its locally stored data from your device.</p>
+
+    <h2>6. Children</h2>
+    <p>OpenWispr is a general-purpose productivity tool and is not directed to children under 13. We
+    do not knowingly collect personal information from children.</p>
+
+    <h2>7. Changes to this policy</h2>
+    <p>If we make material changes to this policy, we will update the "Last updated" date above and
+    publish the revised policy at this URL. Because OpenWispr is open source, the full history of this
+    document is also available in the project's public repository.</p>
+
+    <h2>8. Contact</h2>
+    <p>OpenWispr is developed in the open. If you have any questions about this policy or the app's
+    privacy practices, please open an issue on our
+    <a href="https://github.com/RohitAg13/openWispr">GitHub repository</a>.</p>
+
+    <footer>
+      <a href="/">← Back to OpenWispr</a>
+      <a href="https://github.com/RohitAg13/openWispr">GitHub</a>
+      <span>MIT © 2026 OpenWispr</span>
+    </footer>
+  </div>
+</body>
+</html>
