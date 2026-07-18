@@ -111,6 +111,28 @@ object DictationHistory {
         }
     }
 
+    /**
+     * Replace the kept text of one entry (found by [id]), recomputing its word count.
+     * Used when the user corrects a past dictation from the Recent feed. The all-time
+     * counters in SharedPreferences are left untouched — they were tallied at record
+     * time and shouldn't shift on a later edit.
+     */
+    fun update(c: Context, id: String, newAfter: String) {
+        val f = file(c)
+        if (!f.exists()) return
+        runCatching {
+            val lines = f.readLines().filter { it.isNotBlank() }.map { line ->
+                val o = runCatching { JSONObject(line) }.getOrNull() ?: return@map line
+                if (o.optString("id") != id) return@map line
+                DictationEntry.fromJson(o).copy(
+                    after = newAfter,
+                    words = newAfter.trim().split(Regex("\\s+")).count { it.isNotBlank() },
+                ).toJson().toString()
+            }
+            f.writeText(lines.joinToString("\n"))
+        }
+    }
+
     /** Clear the feed (counters are left intact — all-time totals shouldn't reset on a feed clear). */
     fun clearFeed(c: Context) {
         runCatching { file(c).delete() }

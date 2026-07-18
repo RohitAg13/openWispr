@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -38,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,7 +48,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -108,6 +115,7 @@ class HomeActivity : ComponentActivity() {
         var data by remember { mutableStateOf<HomeData?>(null) }
         var viewBefore by remember { mutableStateOf(setOf<String>()) }
         var teachOpen by remember { mutableStateOf<String?>(null) }
+        var editOpen by remember { mutableStateOf<String?>(null) }
         var toast by remember { mutableStateOf<String?>(null) }
 
         fun reload() {
@@ -165,6 +173,7 @@ class HomeActivity : ComponentActivity() {
                                         entry = e,
                                         showBefore = viewBefore.contains(e.id),
                                         teachOpen = teachOpen == e.id,
+                                        editOpen = editOpen == e.id,
                                         onToggleBefore = { before ->
                                             viewBefore = if (before) viewBefore + e.id else viewBefore - e.id
                                         },
@@ -172,11 +181,43 @@ class HomeActivity : ComponentActivity() {
                                             val txt = if (viewBefore.contains(e.id)) e.before else e.after
                                             copyToClipboard(txt); showToast("Copied to clipboard")
                                         },
-                                        onTeach = { teachOpen = if (teachOpen == e.id) null else e.id },
+                                        onEdit = {
+                                            editOpen = if (editOpen == e.id) null else e.id
+                                            if (editOpen == e.id) teachOpen = null
+                                        },
+                                        onSaveEdit = { newText, pairs ->
+                                            val old = e.after
+                                            if (newText.isNotBlank() && newText != old) {
+                                                scope.launch {
+                                                    withContext(Dispatchers.IO) {
+                                                        DictationHistory.update(ctx, e.id, newText)
+                                                        val repo = VocabRepository(ctx)
+                                                        pairs.forEach { (from, to) -> runCatching { repo.learnAlias(from, to) } }
+                                                        runCatching { repo.learnFromEdit(old, newText) }
+                                                        runCatching {
+                                                            CorrectionCorpus.record(ctx, CorrectionSample(
+                                                                ts = System.currentTimeMillis(), category = "generic",
+                                                                cleaned = old, final = newText, edited = true,
+                                                            ))
+                                                        }
+                                                    }
+                                                    editOpen = null
+                                                    reload(); showToast("Saved & learned")
+                                                }
+                                            } else {
+                                                editOpen = null
+                                            }
+                                        },
+                                        onCloseEdit = { editOpen = null },
+                                        onTeach = {
+                                            teachOpen = if (teachOpen == e.id) null else e.id
+                                            if (teachOpen == e.id) editOpen = null
+                                        },
                                         onDelete = {
                                             scope.launch {
                                                 withContext(Dispatchers.IO) { DictationHistory.delete(ctx, e.id) }
                                                 if (teachOpen == e.id) teachOpen = null
+                                                if (editOpen == e.id) editOpen = null
                                                 reload(); showToast("Dictation deleted")
                                             }
                                         },
@@ -344,8 +385,12 @@ class HomeActivity : ComponentActivity() {
         entry: DictationEntry,
         showBefore: Boolean,
         teachOpen: Boolean,
+        editOpen: Boolean,
         onToggleBefore: (Boolean) -> Unit,
         onCopy: () -> Unit,
+        onEdit: () -> Unit,
+        onSaveEdit: (String, List<Pair<String, String>>) -> Unit,
+        onCloseEdit: () -> Unit,
         onTeach: () -> Unit,
         onDelete: () -> Unit,
         onSaveTeach: (List<Pair<String, String>>) -> Unit,
@@ -387,26 +432,33 @@ class HomeActivity : ComponentActivity() {
                     if (entry.onDevice) MetaChip("on-device", dot = true)
                 }
 
-                // text (before / after)
-                Text(
-                    if (showBefore) entry.before else entry.after,
-                    fontFamily = Mulish,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    color = if (showBefore) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                    fontStyle = if (showBefore) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
-                )
+                // text (before / after) — or the inline editor when editing
+                if (editOpen) {
+                    EditForm(entry = entry, onSave = onSaveEdit, onCancel = onCloseEdit)
+                } else {
+                    Text(
+                        if (showBefore) entry.before else entry.after,
+                        fontFamily = Mulish,
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        color = if (showBefore) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        fontStyle = if (showBefore) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
+                    )
+                }
 
                 if (teachOpen) TeachForm(onSave = onSaveTeach, onCancel = onCloseTeach)
 
-                // footer: before/after toggle + actions
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                    BeforeAfterToggle(showBefore, onToggleBefore)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ActionText("Copy", onClick = onCopy)
-                        ActionText("Teach", onClick = onTeach)
-                        ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
+                // footer: before/after toggle + actions (hidden while the inline editor is open)
+                if (!editOpen) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        BeforeAfterToggle(showBefore, onToggleBefore)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ActionText("Edit", onClick = onEdit)
+                            ActionText("Copy", onClick = onCopy)
+                            ActionText("Teach", onClick = onTeach)
+                            ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }
@@ -449,7 +501,7 @@ class HomeActivity : ComponentActivity() {
             fontWeight = FontWeight.Medium,
             fontSize = 12.5.sp,
             color = color,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(10.dp, 6.dp),
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(8.dp, 6.dp),
         )
     }
 
@@ -495,6 +547,143 @@ class HomeActivity : ComponentActivity() {
                     Text("Cancel", fontFamily = Mulish, fontWeight = FontWeight.Medium, fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onCancel).padding(14.dp, 9.dp))
+                }
+            }
+        }
+    }
+
+    /**
+     * Inline editor for a past dictation's kept text. Primary mode renders the sentence
+     * with each word individually tappable — tap a mis-transcribed word and fix just that
+     * word in place (no retyping the rest). A "full text" fallback exposes the whole string
+     * for bigger changes. On save the caller updates the stored entry and teaches the fix.
+     */
+    @Composable
+    private fun EditForm(
+        entry: DictationEntry,
+        onSave: (String, List<Pair<String, String>>) -> Unit,
+        onCancel: () -> Unit,
+    ) {
+        val cs = MaterialTheme.colorScheme
+        val wordRe = remember { Regex("[\\p{L}\\p{N}'’.@/-]+") }
+        var working by remember(entry.id) { mutableStateOf(entry.after) }
+        var fullText by remember(entry.id) { mutableStateOf(false) }
+        var editIdx by remember(entry.id) { mutableStateOf<Int?>(null) }
+        var draft by remember(entry.id) { mutableStateOf("") }
+        val pairs = remember(entry.id) { mutableStateListOf<Pair<String, String>>() }
+
+        val tokens = remember(working) { wordRe.findAll(working).toList() }
+
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(11.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, cs.outline),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                Eyebrow(if (fullText) "Edit full text" else "Tap a word to fix it", size = 10f, tracking = 0.1)
+
+                if (fullText) {
+                    Surface(
+                        color = cs.surface, shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, cs.outline),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Box(Modifier.padding(11.dp, 9.dp)) {
+                            BasicTextField(
+                                value = working, onValueChange = { working = it },
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    fontFamily = Mulish, fontSize = 15.sp, lineHeight = 22.sp, color = cs.onSurface,
+                                ),
+                                cursorBrush = SolidColor(cs.primary),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                } else {
+                    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+                    val annotated = buildAnnotatedString {
+                        append(working)
+                        editIdx?.let { i ->
+                            tokens.getOrNull(i)?.let { m ->
+                                addStyle(SpanStyle(color = cs.primary, fontWeight = FontWeight.Bold), m.range.first, m.range.last + 1)
+                            }
+                        }
+                    }
+                    Text(
+                        annotated,
+                        fontFamily = Mulish, fontSize = 15.sp, lineHeight = 22.sp, color = cs.onSurface,
+                        onTextLayout = { layout = it },
+                        modifier = Modifier.fillMaxWidth().pointerInput(tokens) {
+                            detectTapGestures { pos ->
+                                val lr = layout ?: return@detectTapGestures
+                                val off = lr.getOffsetForPosition(pos)
+                                val idx = tokens.indexOfFirst { off >= it.range.first && off <= it.range.last + 1 }
+                                if (idx >= 0) { editIdx = idx; draft = tokens[idx].value }
+                            }
+                        },
+                    )
+
+                    if (editIdx != null) {
+                        val original = tokens.getOrNull(editIdx!!)?.value ?: ""
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("Fix “$original”", fontFamily = Mulish, fontSize = 11.sp, color = cs.onSurfaceVariant)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Surface(
+                                    color = cs.surface, shape = RoundedCornerShape(8.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, cs.outline),
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Box(Modifier.padding(11.dp, 9.dp)) {
+                                        BasicTextField(
+                                            value = draft, onValueChange = { draft = it }, singleLine = true,
+                                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                                fontFamily = Mulish, fontSize = 14.sp, color = cs.onSurface,
+                                            ),
+                                            cursorBrush = SolidColor(cs.primary),
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
+                                Text(
+                                    "Set", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = cs.primary,
+                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+                                        val i = editIdx
+                                        val m = i?.let { tokens.getOrNull(it) }
+                                        val fixed = draft.trim()
+                                        if (m != null && fixed.isNotEmpty() && !fixed.equals(m.value, ignoreCase = true)) {
+                                            pairs.add(m.value to fixed)
+                                            working = working.replaceRange(m.range, fixed)
+                                        }
+                                        editIdx = null
+                                    }.padding(10.dp, 8.dp),
+                                )
+                                Text(
+                                    "Cancel", fontFamily = Mulish, fontSize = 13.sp, color = cs.onSurfaceVariant,
+                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { editIdx = null }.padding(8.dp, 8.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    if (fullText) "Fix words" else "Edit full text",
+                    fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = cs.primary,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { fullText = !fullText; editIdx = null }.padding(6.dp, 4.dp),
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier.clip(RoundedCornerShape(20.dp)).background(cs.primary)
+                            .clickable { onSave(working, pairs.toList()) }.padding(18.dp, 9.dp),
+                    ) {
+                        Text("Save", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = cs.onPrimary)
+                    }
+                    Text(
+                        "Cancel", fontFamily = Mulish, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = cs.onSurfaceVariant,
+                        modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onCancel).padding(14.dp, 9.dp),
+                    )
                 }
             }
         }
