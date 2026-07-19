@@ -184,35 +184,33 @@ class OpenWisprAccessibilityService : AccessibilityService() {
     // ---------------- insertion ----------------
 
     private fun startInsert(text: String) {
-        setClipboard(text)
+        // Note: we deliberately do NOT stage the clipboard here. The common insert path
+        // writes the text straight into the field (ACTION_SET_TEXT) without touching the
+        // clipboard, so a successful dictation no longer clobbers what the user had copied.
+        // The clipboard is only used as a fallback (see attemptInsert / the give-up branch).
         pendingText = text
         main.removeCallbacksAndMessages(null)
         // Backstop retries in case the focus event doesn't arrive.
         for (delay in retryDelays) main.postDelayed({ attemptInsert() }, delay)
-        // Give up after the last retry: leave it on the clipboard.
+        // Give up after the last retry: no field ever focused — fall back to a clipboard copy.
         main.postDelayed({
-            if (pendingText != null) {
+            val t = pendingText
+            if (t != null) {
                 pendingText = null
+                setClipboard(t)
                 toast("No text field focused — copied instead")
             }
         }, retryDelays.last() + 300)
     }
 
-    /** Try once to paste into the host app's focused editable field. */
+    /** Try once to insert into the host app's focused editable field. */
     private fun attemptInsert() {
-        if (pendingText == null) return
+        val text = pendingText ?: return
         val node = findHostFocusedEditable() ?: return
         val ok = try {
-            // Paste honors cursor position and replaces any active selection.
-            node.performAction(AccessibilityNodeInfo.ACTION_PASTE) || run {
-                val args = Bundle().apply {
-                    putCharSequence(
-                        AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                        pendingText,
-                    )
-                }
-                node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-            }
+            // Prefer a clipboard-free splice at the cursor; fall back to paste only when
+            // we can't determine the cursor (e.g. some WebView fields).
+            insertAtCursor(node, text) || pasteViaClipboard(node, text)
         } catch (e: Exception) {
             Log.e(TAG, "insert action failed", e); false
         } finally {
@@ -225,6 +223,43 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             vibrateTick()
             toast("Inserted")
         }
+    }
+
+    /**
+     * Clipboard-free insert: splice [insert] in at the cursor (replacing any active
+     * selection) via ACTION_SET_TEXT, then place the cursor after it. Returns false when
+     * the cursor can't be determined in a non-empty field, so the caller can fall back to
+     * paste. This is the path that keeps the clipboard untouched on a normal dictation.
+     */
+    private fun insertAtCursor(node: AccessibilityNodeInfo, insert: String): Boolean {
+        val current = node.text?.toString() ?: ""
+        val selA = node.textSelectionStart
+        val selB = node.textSelectionEnd
+        val (start, end) = when {
+            selA in 0..current.length && selB in 0..current.length ->
+                minOf(selA, selB) to maxOf(selA, selB)
+            current.isEmpty() -> 0 to 0
+            else -> return false // unknown cursor in a non-empty field — let paste handle it
+        }
+        val newText = current.substring(0, start) + insert + current.substring(end)
+        val setArgs = Bundle().apply {
+            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, newText)
+        }
+        if (!node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, setArgs)) return false
+        val cursor = start + insert.length
+        val selArgs = Bundle().apply {
+            putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, cursor)
+            putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, cursor)
+        }
+        node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs)
+        return true
+    }
+
+    /** Fallback insert: stage on the clipboard and paste. Honors cursor position, but the
+     *  text is necessarily left on the clipboard (only used when [insertAtCursor] can't). */
+    private fun pasteViaClipboard(node: AccessibilityNodeInfo, text: String): Boolean {
+        setClipboard(text)
+        return node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
     }
 
     /** Focused editable node in the active window, only if it's NOT our own app. */
