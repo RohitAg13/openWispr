@@ -23,6 +23,26 @@
     @keyframes ow-ripple  { 0% { transform: scale(.55); opacity:.5; } 100% { transform: scale(2.5); opacity:0; } }
     @keyframes ow-wave    { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
     @keyframes ow-float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* ---- Responsive overrides (inline styles win unless we use !important) ---- */
+    @media (max-width: 900px) {
+      .ow-nav-links { display: none !important; }
+    }
+    @media (max-width: 860px) {
+      .ow-stack { grid-template-columns: 1fr !important; }
+      .ow-stack-flex { flex-direction: column !important; }
+      .ow-hero { padding: 44px 22px 56px !important; gap: 38px !important; }
+      .ow-shot { min-height: 340px !important; }
+      h1 { font-size: 40px !important; }
+      h2 { font-size: 30px !important; line-height: 1.14 !important; }
+    }
+    @media (max-width: 560px) {
+      .ow-star { display: none !important; }
+      .ow-shot-card { width: 100% !important; max-width: 320px !important; }
+      .ow-trust { gap: 14px 22px !important; }
+      .ow-cmp > div > div { padding-left: 12px !important; padding-right: 12px !important; }
+      h1 { font-size: 33px !important; }
+    }
   </style>
 </head>
 <body>
@@ -41,7 +61,7 @@
       </a>
 
       <!-- center: links -->
-      <div style="display:flex; align-items:center; gap:2px;">
+      <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
         <a href="#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Privacy</a>
         <a href="#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">Features</a>
         <a href="#how" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px; white-space:nowrap; transition:background .16s, color .16s;" data-sh="background:oklch(0.955 0.022 68); color:oklch(0.3 0.03 45);">How it works</a>
@@ -51,7 +71,7 @@
 
       <!-- right: actions -->
       <div style="display:flex; align-items:center; gap:9px;">
-        <a href="https://github.com/RohitAg13/openWispr" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70); transition:background .16s;" data-sh="background:oklch(0.94 0.016 70);">
+        <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70); transition:background .16s;" data-sh="background:oklch(0.94 0.016 70);">
           <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
           <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
         </a>
@@ -74,7 +94,7 @@
     <div style="position:relative; overflow:hidden;">
         <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
         <div style="position:absolute; top:60px; right:-120px; width:420px; height:420px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.74 0.13 30 / 0.22), transparent); pointer-events:none;"></div>
-        <div style="position:relative; max-width:1180px; margin:0 auto; padding:78px 32px 88px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;">
+        <div class="ow-hero ow-stack" style="position:relative; max-width:1180px; margin:0 auto; padding:78px 32px 88px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;">
           <div>
             <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
               <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
@@ -101,10 +121,10 @@
 
           <!-- ABSTRACT PRODUCT SHOT -->
           <div style="position:relative;">
-            <div style="position:relative; width:100%; min-height:420px; display:flex; align-items:center; justify-content:center; font-family:'Mulish',sans-serif;">
+            <div class="ow-shot" style="position:relative; width:100%; min-height:420px; display:flex; align-items:center; justify-content:center; font-family:'Mulish',sans-serif;">
 
   <!-- main transcription card -->
-  <div style="position:relative; width:380px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:20px; box-shadow:0 30px 70px -24px oklch(0.4 0.08 35 / 0.5), 0 6px 16px -8px rgba(0,0,0,0.1); padding:22px; animation:ow-float 7s ease-in-out infinite;">
+  <div class="ow-shot-card" style="position:relative; width:380px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:20px; box-shadow:0 30px 70px -24px oklch(0.4 0.08 35 / 0.5), 0 6px 16px -8px rgba(0,0,0,0.1); padding:22px; animation:ow-float 7s ease-in-out infinite;">
     <!-- title row -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
       <div style="display:flex; align-items:center; gap:9px;">
@@ -160,7 +180,7 @@
 
   <!-- ===================== TRUST STRIP ===================== -->
   <div style="border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72); background:oklch(0.96 0.012 74);">
-    <div style="max-width:1180px; margin:0 auto; padding:22px 32px; display:flex; align-items:center; justify-content:center; gap:42px; flex-wrap:wrap;">
+    <div class="ow-trust" style="max-width:1180px; margin:0 auto; padding:22px 32px; display:flex; align-items:center; justify-content:center; gap:42px; flex-wrap:wrap;">
       <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:oklch(0.55 0.025 52); text-transform:uppercase;">Runs locally on</span>
       <span style="font-size:15px; font-weight:600; color:oklch(0.42 0.03 48);">macOS</span>
       <span style="font-size:15px; font-weight:600; color:oklch(0.42 0.03 48);">Android</span>
@@ -180,7 +200,7 @@
         <p style="font-size:17.5px; line-height:1.6; color:oklch(0.82 0.03 70); margin:0;">Most voice tools stream your microphone to a company's servers. OpenWispr does the entire job — listening, transcribing, polishing — on the device in your hands. The difference isn't a promise. It's architecture.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
+      <div class="ow-stack" style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch;">
         <!-- cloud path -->
         <div style="background:oklch(0.26 0.04 26); border:1px solid oklch(0.4 0.05 30); border-radius:18px; padding:30px;">
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:22px;">
@@ -247,7 +267,7 @@
       </div>
 
       <!-- spotlight -->
-      <div style="background:linear-gradient(150deg, oklch(0.955 0.025 68), oklch(0.93 0.032 56)); border:1px solid oklch(0.9 0.022 64); border-radius:22px; padding:38px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:36px; align-items:center; margin-bottom:18px;">
+      <div class="ow-stack" style="background:linear-gradient(150deg, oklch(0.955 0.025 68), oklch(0.93 0.032 56)); border:1px solid oklch(0.9 0.022 64); border-radius:22px; padding:38px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:36px; align-items:center; margin-bottom:18px;">
         <div>
           <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; color:oklch(0.62 0.12 42); text-transform:uppercase;">The core</div>
           <h3 style="font-size:31px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; color:oklch(0.29 0.03 44); margin:14px 0 14px;">Every word stays on the machine in front of you.</h3>
@@ -279,7 +299,7 @@
       </div>
 
       <!-- capability explorer -->
-      <div style="display:grid; grid-template-columns:336px 1fr; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:20px; overflow:hidden;">
+      <div class="ow-stack" style="display:grid; grid-template-columns:336px 1fr; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:20px; overflow:hidden;">
         <div style="border-right:1px solid oklch(0.92 0.012 72); padding:12px; display:flex; flex-direction:column; gap:2px; background:oklch(0.978 0.012 74);">
           <div data-cap-btn="0" style="position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:12px; cursor:pointer; background:oklch(0.965 0.02 70); transition:background .15s;">
             <div data-cap-bar="0" style="display:block; position:absolute; left:0; top:11px; bottom:11px; width:3px; border-radius:0 3px 3px 0; background:oklch(0.66 0.13 40);"></div>
@@ -358,7 +378,7 @@
 </div>
           <div data-cap-feat="5" style="display:none; flex-direction:column; gap:12px;">
   <div style="font-size:13px; color:oklch(0.5 0.03 50);">One spoken line — “handle the null case before we deref the pointer” — three destinations:</div>
-  <div style="display:flex; gap:10px;">
+  <div class="ow-stack-flex" style="display:flex; gap:10px;">
     <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Editor</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); font-family:'IBM Plex Mono',monospace; font-size:11.5px;">// handle the null case before<br>// we deref the pointer</div></div>
     <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Email</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); ">Please handle the null case before we dereference the pointer.</div></div>
     <div style="flex:1; background:oklch(0.97 0.01 74); border:1px solid oklch(0.91 0.012 70); border-radius:11px; padding:13px;"><div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.13em; color:oklch(0.58 0.025 52); text-transform:uppercase; margin-bottom:8px;">Chat</div><div style="font-size:13px; line-height:1.5; color:oklch(0.34 0.03 46); ">handle the null case before we deref the pointer</div></div>
@@ -402,7 +422,7 @@
         <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">How it works</div>
         <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0; color:oklch(0.3 0.03 45);">From thought to text in a single breath.</h2>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
+      <div class="ow-stack" style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
         <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:30px;">
           <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">1</div>
           <div style="font-size:19px; font-weight:600; color:oklch(0.3 0.03 45); margin-bottom:10px; letter-spacing:-0.01em;">Hold a key</div>
@@ -431,7 +451,7 @@
         <p style="font-size:17px; line-height:1.6; color:oklch(0.5 0.03 50); margin:0;">OpenWispr strips the “ums,” fixes punctuation, and respects how you actually talk. Then refine any selection with a local LLM.</p>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+      <div class="ow-stack" style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
         <!-- voice cleanup -->
         <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; padding:28px;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
@@ -475,7 +495,7 @@
         <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0; color:oklch(0.3 0.03 45);">OpenWispr vs. cloud dictation</h2>
       </div>
 
-      <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
+      <div class="ow-cmp" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
         <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr;">
           <div style="padding:18px 24px; border-bottom:1px solid oklch(0.92 0.012 72);"></div>
           <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; background:oklch(0.97 0.018 72);">
@@ -495,7 +515,7 @@
 
   <!-- ===================== PRIVACY DEEP-DIVE (DARK) ===================== -->
   <div style="background:linear-gradient(170deg, oklch(0.22 0.04 24), oklch(0.28 0.05 28)); color:oklch(0.95 0.012 82);">
-    <div style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:center;">
+    <div class="ow-stack" style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:center;">
 
       <!-- left: statement -->
       <div>
@@ -587,7 +607,7 @@
 
   <!-- ===================== OPEN SOURCE ===================== -->
   <div id="opensource" style="background:oklch(0.972 0.014 78);">
-    <div style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center;">
+    <div class="ow-stack" style="max-width:1180px; margin:0 auto; padding:90px 32px; display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center;">
       <div>
         <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Open source</div>
         <h2 style="font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-0.025em; margin:0 0 18px; color:oklch(0.3 0.03 45);">Owned by everyone.<br>Beholden to no one.</h2>
