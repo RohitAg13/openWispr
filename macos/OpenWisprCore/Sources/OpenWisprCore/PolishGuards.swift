@@ -118,6 +118,35 @@ public enum PolishGuards {
         return kept.count == parts.count ? t : kept.joined(separator: " ")
     }
 
+    // MARK: - Hallucinated scaffold tail
+
+    /// One "form cell" a runaway tiny model emits when it drifts into a fake template: an
+    /// empty (or x-checked) bracket, or a ballot-box / white-square glyph — plus U+FFFD in case
+    /// the box glyph arrived mangled.
+    private static let scaffoldCell =
+        "(?:\\[\\s*[xX]?\\s*\\]|[\u{2610}\u{2611}\u{2612}\u{25A1}\u{25A2}\u{25FB}\u{25FC}\u{2751}\u{FFFD}])"
+
+    /// A trailing run of ≥3 such cells, optionally introduced by a short invented "Label:"
+    /// (e.g. "Capitalization responses:"), anchored to the end of the output.
+    private static let scaffoldTailRe =
+        KRegex("\\s*(?:[^\\n]{0,80}:)?\\s*" + scaffoldCell + "(?:\\s*" + scaffoldCell + "){2,}\\s*$")
+
+    /// Two consecutive cells anywhere — enough to tell the model has started scaffolding.
+    private static let scaffoldRunRe = KRegex(scaffoldCell + "\\s*" + scaffoldCell)
+
+    /// Strip a hallucinated form/scaffold tail. Tiny local models sometimes append a label plus
+    /// a long run of empty checkbox/bracket cells ("Capitalization responses: ☐ [] [] [] …") —
+    /// it's almost pure punctuation, so [preservesContent] is blind to it. Deterministic.
+    public static func stripScaffoldTail(_ s: String) -> String {
+        scaffoldTailRe.replace(s, "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// True once the output has begun emitting a bracket/checkbox scaffold run — a signal to
+    /// stop generation early, before the model burns its budget on "[] [] [] …".
+    public static func looksLikeScaffold(_ text: String) -> Bool {
+        scaffoldRunRe.find(text) != nil
+    }
+
     // MARK: - Output cleanup
 
     private static let thinkClosed = KRegex("(?s)<think>.*?</think>")
@@ -149,6 +178,10 @@ public enum PolishGuards {
                 break
             }
         }
+        // Tiny local models sometimes hallucinate a trailing form/scaffold ("Capitalization
+        // responses: ☐ [] [] […]") — a label plus a run of empty checkbox/bracket cells. It's
+        // almost pure punctuation, so the content guards can't see it; cut it before collapsing.
+        t = stripScaffoldTail(t)
         // Tiny local models loop on their own output; keep the unique leading run.
         t = collapseRepetition(t)
         return t
