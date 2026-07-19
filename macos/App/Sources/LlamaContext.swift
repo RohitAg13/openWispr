@@ -113,8 +113,9 @@ actor LlamaContext {
                 pieces.removeAll(keepingCapacity: true)
             }
 
-            // Early stop: tiny models loop on their own output. Check occasionally (cheap-ish).
-            if generated % 8 == 0 && PolishGuards.looksRepeating(output) { break }
+            // Early stop: tiny models loop on their own output, or drift into a hallucinated
+            // bracket/checkbox form ("Capitalization responses: [] [] []"). Check occasionally.
+            if generated % 8 == 0 && (PolishGuards.looksRepeating(output) || PolishGuards.looksLikeScaffold(output)) { break }
 
             clearBatch()
             addToBatch(tokenId, pos: nCur, logits: true)

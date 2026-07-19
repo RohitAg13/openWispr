@@ -109,6 +109,39 @@ final class PolishGuardsTests: XCTestCase {
         XCTAssertEqual(PolishGuards.cleanOutput(s), s)
     }
 
+    // MARK: - Hallucinated scaffold tail
+
+    func testCleanOutputStripsHallucinatedScaffoldWithLabel() {
+        let s = "Send it to John tomorrow at 2.\nCapitalization responses:\n\u{2610} [] [] [] [] [] []"
+        XCTAssertEqual(PolishGuards.cleanOutput(s), "Send it to John tomorrow at 2.")
+    }
+
+    func testCleanOutputStripsBracketRunWithoutLabel() {
+        let s = "The plan is ready. [] [] [] [] []"
+        XCTAssertEqual(PolishGuards.cleanOutput(s), "The plan is ready.")
+    }
+
+    func testCleanOutputStripsCheckboxRun() {
+        let s = "Buy milk and eggs.\n\u{2610} \u{2610} \u{2610} \u{2610}"
+        XCTAssertEqual(PolishGuards.cleanOutput(s), "Buy milk and eggs.")
+    }
+
+    func testCleanOutputKeepsLegitCitationBracket() {
+        // A single bracket with content (citation) is not a scaffold cell.
+        let s = "See reference [1] for details."
+        XCTAssertEqual(PolishGuards.cleanOutput(s), s)
+    }
+
+    func testLooksLikeScaffoldDetectsRun() {
+        XCTAssertTrue(PolishGuards.looksLikeScaffold("good text [] []"))
+        XCTAssertTrue(PolishGuards.looksLikeScaffold("good text \u{2610} \u{2610}"))
+    }
+
+    func testLooksLikeScaffoldIgnoresNormalText() {
+        XCTAssertFalse(PolishGuards.looksLikeScaffold("Let's meet at three. Bring the slides."))
+        XCTAssertFalse(PolishGuards.looksLikeScaffold("See reference [1] for details."))
+    }
+
     // MARK: - Prompt builder
 
     func testOffLevelHasNoPrompt() {
