@@ -145,16 +145,27 @@ Fill the IARC questionnaire as a **Utility / Productivity** app:
 > `env.PLAY_JSON != ''`, so if `PLAY_SERVICE_ACCOUNT_JSON` is not set the tagged build still
 > produces the APK/AAB and the GitHub Release, and the Play upload is **skipped without
 > failing**. A green run is therefore not proof anything reached Play — check that the
-> "Upload AAB to Play internal track" step actually ran. Add the secret via Part A step 4.
+> "Upload AAB to Play internal track" and "Promote to production" steps actually ran. Add the
+> secret via Part A step 4.
 
 After Part A is done, each release is:
 1. Bump `versionCode` (and `versionName`) in `android/app/build.gradle.kts`. Play rejects a
-   duplicate `versionCode`, so this bump is mandatory even for a no-op rebuild.
-2. Update `android/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
-3. Push a `vX.Y.Z` tag. CI builds the signed AAB and runs `fastlane internal` → uploads to the
-   **internal** track automatically.
-4. Test via the internal opt-in link, then promote:
-   ```bash
-   cd android && export PLAY_JSON_KEY_FILE=/path/to/play-service-account.json
-   bundle exec fastlane promote_production
-   ```
+   duplicate `versionCode`, so this bump is mandatory even for a no-op rebuild. Keep
+   `versionName`, the git tag, and macOS `MARKETING_VERSION` on the same number.
+2. Update `android/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (500 chars max).
+3. Push a `vX.Y.Z` tag. CI builds the signed AAB, runs `fastlane internal` → **internal** track,
+   then `fastlane promote_production` → **production at a 20% staged rollout**.
+
+**The tag reaches real users.** There is no manual gate between pushing it and a fifth of the
+install base getting the build, so treat a tag as a ship decision, not a build trigger. Test on a
+device *before* tagging.
+
+Play has no rollback — the only recoveries are halting the rollout or shipping a higher
+`versionCode`. Both need a *staged* release to act on, which is why the rollout is a fraction and
+not `completed`. Watch the Play Console vitals, then raise the percentage there when it looks sane.
+
+To ship at 100% in one go (deliberate, no halt path):
+```bash
+cd android && export PLAY_JSON_KEY_FILE=/path/to/play-service-account.json
+bundle exec fastlane promote_production rollout:1.0
+```

@@ -35,16 +35,29 @@ platform :android do
     )
   end
 
-  desc "Promote the current internal-track release to production"
-  lane :promote_production do
+  # Staged by default. A promotion is the only step in this pipeline that reaches real users,
+  # and it is one-way — Play has no rollback, only a halt and a higher versionCode. Shipping to
+  # a fraction first means a bad build is haltable instead of universal. Override deliberately:
+  #   fastlane promote_production rollout:1.0
+  desc "Promote the current internal-track release to production (staged rollout)"
+  lane :promote_production do |options|
+    rollout = options.fetch(:rollout, "0.2").to_s
+    full = rollout.to_f >= 1.0
     upload_to_play_store(
       track: "internal",
       track_promote_to: "production",
+      # "inProgress" is what makes a rollout staged; "completed" ignores the fraction and
+      # goes to everyone, which is the trap this lane is trying to avoid.
+      release_status: full ? "completed" : "inProgress",
+      rollout: full ? nil : rollout,
       skip_upload_apk: true,
       skip_upload_aab: true,
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
+      # The notes were already attached to this versionCode by the `internal` lane. Re-sending
+      # them here is what makes supply hunt for a release that doesn't exist yet at promote time.
+      skip_upload_changelogs: true,
     )
   end
 

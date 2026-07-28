@@ -26,8 +26,9 @@ packages:
     path: ../SherpaOnnxFramework
 settings:
   base:
-    MARKETING_VERSION: "0.2.1"
-    CURRENT_PROJECT_VERSION: "3"
+    # Matches the git tag and Android versionName from 1.1.0 on — see android/app/build.gradle.kts.
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: "4"
     SWIFT_VERSION: "5.10"
     # Stable self-signed identity so the app's code identity (and its Accessibility /
     # Microphone grants) survive rebuilds — unlike ad-hoc ("-"), which changes every build.

@@ -1,0 +1,9 @@
+A failed dictation no longer costs you the recording.
+
+• Audio is saved on this device before transcription starts, so nothing is lost if it fails.
+• Failed takes appear under "Unfinished" on the home screen — one tap to run them again.
+• Retry re-runs the audio on your other on-device model.
+• Choose how long recordings are kept: 7, 30, 90 days or forever. Never uploaded.
+• Ready for Android 16.
+
+Still on-device by default, no account, no ads, MIT-licensed.
