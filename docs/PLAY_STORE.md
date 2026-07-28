@@ -5,7 +5,7 @@ already set up to **build a signed AAB** and **auto-upload to the internal testi
 fastlane** once the one-time setup below is done.
 
 - App: **OpenWispr**, package **`com.voicerewriter`**
-- Build: `versionName 1.0.1`, `versionCode 4`, `targetSdk 35`, arm64-v8a only
+- Build: `versionName 1.0.1`, `versionCode 4`, `targetSdk 36`, arm64-v8a only
 - Store listing (copy + graphics) lives in `android/fastlane/metadata/android/en-US/`
 - Graphics are generated from HTML — see `tools/store-assets/`, not a design tool
 - Privacy policy: `website/privacy.html` → hosted at `https://openwispr.up.railway.app/privacy.html`
