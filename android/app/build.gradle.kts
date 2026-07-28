@@ -6,12 +6,15 @@ plugins {
 
 android {
     namespace = "com.voicerewriter"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.voicerewriter"
         minSdk = 24
-        targetSdk = 35
+        // Play requires targetSdk 36 for every update from 31 Aug 2026. See the API 36
+        // behaviour changes handled in this migration (edge-to-edge, predictive back,
+        // 16 KB native page alignment) noted at each site.
+        targetSdk = 36
         versionCode = 4
         versionName = "1.0.1"
         ndk {
@@ -108,7 +111,10 @@ dependencies {
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2") // Silero VAD (ai.onnxruntime Java API)
+    // Silero VAD (ai.onnxruntime Java API). 1.22.0 is the first release whose arm64 .so files —
+    // both libonnxruntime.so and libonnxruntime4j_jni.so — are 16 KB page aligned; 1.19.2 shipped
+    // 4 KB, which Android 16 devices with 16 KB pages can only run in compatibility mode.
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.22.0")
     // On-device Parakeet/Moonshine STT (transducer). Vendored static-link AAR (onnxruntime baked
     // into libsherpa-onnx-jni.so, so no libonnxruntime.so collision with the VAD ORT above).
     implementation(group = "", name = "sherpa-onnx-static-link-onnxruntime-1.13.3", ext = "aar")
