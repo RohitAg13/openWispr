@@ -5,8 +5,9 @@ already set up to **build a signed AAB** and **auto-upload to the internal testi
 fastlane** once the one-time setup below is done.
 
 - App: **OpenWispr**, package **`com.voicerewriter`**
-- Build: `versionName 1.0.0`, `versionCode 3`, `targetSdk 35`, arm64-v8a only
+- Build: `versionName 1.0.1`, `versionCode 4`, `targetSdk 35`, arm64-v8a only
 - Store listing (copy + graphics) lives in `android/fastlane/metadata/android/en-US/`
+- Graphics are generated from HTML — see `tools/store-assets/`, not a design tool
 - Privacy policy: `website/privacy.html` → hosted at `https://openwispr.up.railway.app/privacy.html`
 
 ---
@@ -70,16 +71,26 @@ Managed as code in `android/fastlane/metadata/android/en-US/`:
 | App name | `title.txt` | 30 chars |
 | Short description | `short_description.txt` | 80 chars |
 | Full description | `full_description.txt` | 4000 chars |
-| Release notes | `changelogs/3.txt` | 500 chars |
+| Release notes | `changelogs/<versionCode>.txt` | 500 chars |
 | App icon (512×512) | `images/icon.png` | required |
 | Feature graphic (1024×500) | `images/featureGraphic.png` | required |
 | Phone screenshots | `images/phoneScreenshots/` | 2–8, ≥320px |
 
-Push these to Play (after Part A) with:
+Screenshots and the feature graphic are **generated**, not hand-exported — edit the HTML in
+`tools/store-assets/` and re-run `node tools/store-assets/render.mjs`. They render at
+1080×1920 (9:16), which is what keeps the listing eligible for Play's promotional surfaces
+(min 4 screenshots at 1080px+); see that directory's README.
+
+Push the listing to Play (after Part A) either from the **Play store listing** GitHub
+Action (`workflow_dispatch`, defaults to a dry run) or locally:
 ```bash
 cd android && export PLAY_JSON_KEY_FILE=/path/to/play-service-account.json
-bundle exec fastlane metadata
+bundle exec fastlane metadata validate_only:true   # dry run
+bundle exec fastlane metadata                      # publish
 ```
+
+> The listing is **only** pushed by that lane. A tagged release uploads the binary and its
+> release notes, and deliberately leaves the listing copy and artwork alone.
 
 ---
 
@@ -130,8 +141,15 @@ Fill the IARC questionnaire as a **Utility / Productivity** app:
 
 ## Part F — Ongoing releases (automated)
 
+> **The Play upload is gated on a secret.** In `release.yml` the fastlane steps are guarded by
+> `env.PLAY_JSON != ''`, so if `PLAY_SERVICE_ACCOUNT_JSON` is not set the tagged build still
+> produces the APK/AAB and the GitHub Release, and the Play upload is **skipped without
+> failing**. A green run is therefore not proof anything reached Play — check that the
+> "Upload AAB to Play internal track" step actually ran. Add the secret via Part A step 4.
+
 After Part A is done, each release is:
-1. Bump `versionCode` (and `versionName`) in `android/app/build.gradle.kts`.
+1. Bump `versionCode` (and `versionName`) in `android/app/build.gradle.kts`. Play rejects a
+   duplicate `versionCode`, so this bump is mandatory even for a no-op rebuild.
 2. Update `android/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
 3. Push a `vX.Y.Z` tag. CI builds the signed AAB and runs `fastlane internal` → uploads to the
    **internal** track automatically.

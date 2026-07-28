@@ -1,0 +1,7 @@
+Store listing refresh — same app, easier to find.
+
+• New store screenshots showing offline dictation, the floating bubble, and what stays on your device.
+• Clearer description of what OpenWispr does and what it never uploads.
+• Housekeeping under the hood; no changes to dictation behaviour.
+
+As always: 100% on-device by default, no account, no ads, MIT-licensed.

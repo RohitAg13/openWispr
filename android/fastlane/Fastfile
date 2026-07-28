@@ -48,11 +48,17 @@ platform :android do
     )
   end
 
+  # `fastlane metadata validate_only:true` dry-runs against Play without publishing.
   desc "Push store listing text + images (no binary)"
-  lane :metadata do
+  lane :metadata do |options|
     upload_to_play_store(
+      validate_only: options.fetch(:validate_only, false).to_s == "true",
       skip_upload_apk: true,
       skip_upload_aab: true,
+      # Release notes are keyed to a versionCode, so they ride along with the binary in
+      # the `internal` lane. Uploading them here — with no release to attach them to —
+      # makes supply fail with "Unable to find the requested release".
+      skip_upload_changelogs: true,
     )
   end
 end

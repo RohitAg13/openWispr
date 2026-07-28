@@ -1,0 +1,13 @@
+{
+  "name": "openwispr-store-assets",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Renders Google Play screenshots + feature graphic from HTML",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.62.0"
+  }
+}
