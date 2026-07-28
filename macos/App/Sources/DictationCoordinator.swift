@@ -62,6 +62,10 @@ final class DictationCoordinator {
     /// Guards `finish()` against the hotkey + VAD auto-stop both firing.
     private var isFinishing = false
 
+    /// The durable recording this session is working on (see `PendingAudioStore`). Cleared on
+    /// delivery; handed back on failure so Home can offer a retry.
+    private var pendingID: UUID?
+
     /// Backstop: force-finish a session that runs too long (e.g. if VAD never detects a pause).
     private var maxDurationTimer: Timer?
     private let maxSessionSeconds: TimeInterval = 30
@@ -231,10 +235,25 @@ final class DictationCoordinator {
             return
         }
 
+        // Write-ahead: the take is on disk before the first transcription attempt, so a failure
+        // from here on leaves a recording the user can run again instead of an error toast and
+        // nothing else. Not coupled to this attempt's success — nothing below deletes it.
+        let recording = PendingAudioStore.shared.begin(
+            samples: samples,
+            durationSec: max(1, samples.count / WavFile.sampleRate),
+            app: targetApp.map { NSRunningApplicationLike(bundleID: $0.bundleIdentifier, localizedName: $0.localizedName) },
+            engine: STTFactory.resolvedProvider().rawValue
+        )
+        pendingID = recording?.id
+
         state = .transcribing
         hud.update(.transcribing)
+        transcribe(samples, using: STTFactory.make())
+    }
 
-        let stt = STTFactory.make()
+    /// Transcribe → clean → polish → deliver. Split out of `finish()` so a retry from saved
+    /// audio runs the identical pipeline rather than a second, subtly different one.
+    private func transcribe(_ samples: [Float], using stt: STT) {
         // Personalization L1: bias STT toward the user's vocab, then snap mis-hearings back.
         let bias = VocabStore.shared.biasTerms
         let vocab = VocabStore.shared.entries
@@ -255,14 +274,27 @@ final class DictationCoordinator {
                 )
                 deliver(polished)
             } catch let error as STTError {
-                returnToIdle()
-                hud.update(.error(Self.message(for: error)))
-                autoHide(after: 2.0)
+                fail(Self.message(for: error))
             } catch {
-                returnToIdle()
-                hud.update(.error(error.localizedDescription))
-                autoHide(after: 2.0)
+                fail(error.localizedDescription)
             }
+        }
+    }
+
+    /// A failed attempt. The saved recording is deliberately left alone — this is precisely
+    /// what it was written for — and handed back so Home lists it as unfinished with a retry.
+    /// A failed attempt. The saved recording is deliberately left alone — this is precisely
+    /// what it was written for — and handed back so Home lists it as unfinished with a retry.
+    private func fail(_ message: String) {
+        returnToIdle()
+        if let id = pendingID {
+            PendingAudioStore.shared.release(id)
+            pendingID = nil
+            hud.update(.error("\(message) Your recording is saved — retry it from OpenWispr."))
+            autoHide(after: 3.5)
+        } else {
+            hud.update(.error(message))
+            autoHide(after: 2.0)
         }
     }
 
@@ -289,11 +321,14 @@ final class DictationCoordinator {
     }
 
     /// Insert (when trusted) or copy (when not), then auto-hide and return to idle.
+    ///
+    /// History is written *before* the insert is attempted and regardless of how it goes: the
+    /// transcript's survival must not depend on a synthetic keystroke landing in someone else's
+    /// app. When the paste can't be confirmed the text is left on the clipboard and the HUD
+    /// says so — a clipboard the user can clear beats words they can never get back.
     private func deliver(_ cleaned: String) {
         if cleaned.isEmpty {
-            returnToIdle()
-            hud.update(.error("Didn't catch anything."))
-            autoHide(after: 1.5)
+            fail("Didn't catch anything.")
             return
         }
 
@@ -303,15 +338,28 @@ final class DictationCoordinator {
             DictationHistoryStore.shared.add(cleaned)
         }
 
-        if TextInserter.isTrusted {
-            TextInserter.insert(cleaned, into: targetApp)
+        switch TextInserter.isTrusted ? TextInserter.insert(cleaned, into: targetApp) : .failed {
+        case .inserted:
             hud.update(.inserted)
             autoHide(after: 1.0)
-        } else {
+        case .unverified:
+            hud.update(.message("Couldn't confirm the insert — it's on your clipboard."))
+            autoHide(after: 3.0)
+        case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
-            hud.update(.message("Copied — grant Accessibility to auto-insert."))
+            hud.update(.message(
+                TextInserter.isTrusted ? "Copied to your clipboard."
+                                       : "Copied — grant Accessibility to auto-insert."
+            ))
             autoHide(after: 2.5)
+        }
+
+        // Delivered and in history — only now may the recording be settled (and so become
+        // eligible for retention pruning).
+        if let id = pendingID {
+            PendingAudioStore.shared.settle(id, result: cleaned)
+            pendingID = nil
         }
         returnToIdle()
     }

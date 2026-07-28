@@ -14,10 +14,9 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Captures raw 16 kHz mono PCM16 from the mic with AudioRecord. The single
- * recording feeds either backend:
- *  - on-device Whisper wants a FloatArray of 16 kHz mono samples  → [stopToFloats]
- *  - cloud Whisper wants an audio file                            → [stopToWav]
+ * Captures raw 16 kHz mono PCM16 from the mic with AudioRecord. [stop] hands back the
+ * take as plain samples; persisting it is [PendingAudio]'s job, and every backend is fed
+ * from that durable copy rather than from a buffer that only exists in this process.
  *
  * Requires the RECORD_AUDIO permission (the activity checks before start()).
  */
@@ -129,7 +128,7 @@ class AudioRecorder(private val context: Context) {
     }
 
     /** Stop and return all captured samples (null if nothing usable was recorded). */
-    private fun stopSamples(): ShortArray? {
+    fun stop(): ShortArray? {
         if (!recording && record == null) return null
         recording = false
         try { worker?.join(500) } catch (_: InterruptedException) {}
@@ -156,50 +155,7 @@ class AudioRecorder(private val context: Context) {
         return full
     }
 
-    /** Stop → normalized float samples for on-device Whisper. */
-    fun stopToFloats(): FloatArray? {
-        val s = stopSamples() ?: return null
-        return FloatArray(s.size) { s[it] / 32768f }
-    }
-
-    /** Stop → a 16 kHz mono WAV file for cloud transcription upload. */
-    fun stopToWav(): File? {
-        val s = stopSamples() ?: return null
-        val file = File(context.cacheDir, "dictation_${System.nanoTime()}.wav")
-        FileOutputStream(file).use { out ->
-            writeWavHeader(out, s.size)
-            val bytes = ByteArray(s.size * 2)
-            var j = 0
-            for (sample in s) {
-                bytes[j++] = (sample.toInt() and 0xFF).toByte()
-                bytes[j++] = ((sample.toInt() shr 8) and 0xFF).toByte()
-            }
-            out.write(bytes)
-        }
-        return file
-    }
-
     fun cancel() {
-        stopSamples()
-    }
-
-    private fun writeWavHeader(out: FileOutputStream, numSamples: Int) {
-        val channels = 1
-        val bits = 16
-        val byteRate = SAMPLE_RATE * channels * bits / 8
-        val dataSize = numSamples * bits / 8
-        val totalSize = 36 + dataSize
-        fun int(v: Int) = byteArrayOf(
-            (v and 0xFF).toByte(),
-            ((v shr 8) and 0xFF).toByte(),
-            ((v shr 16) and 0xFF).toByte(),
-            ((v shr 24) and 0xFF).toByte(),
-        )
-        fun short(v: Int) = byteArrayOf((v and 0xFF).toByte(), ((v shr 8) and 0xFF).toByte())
-        out.write("RIFF".toByteArray()); out.write(int(totalSize)); out.write("WAVE".toByteArray())
-        out.write("fmt ".toByteArray()); out.write(int(16)); out.write(short(1)) // PCM
-        out.write(short(channels)); out.write(int(SAMPLE_RATE)); out.write(int(byteRate))
-        out.write(short(channels * bits / 8)); out.write(short(bits))
-        out.write("data".toByteArray()); out.write(int(dataSize))
+        stop()
     }
 }

@@ -29,6 +29,11 @@ final class DictationController: ObservableObject {
     /// The id of the history record for the current result, so an inline edit (learn-from-edit)
     /// updates the same row. The persisted list lives in `DictationHistoryStore.shared`.
     private var currentRecordID: UUID?
+    /// The durable recording behind the current result (see `PendingAudioStore`).
+    private var pendingID: UUID?
+    /// Set when an insert couldn't be confirmed, so the UI can say where the text ended up
+    /// instead of leaving the user guessing.
+    @Published var deliveryNote: String?
 
     // MARK: - Learn-from-edit (additive)
 
@@ -105,16 +110,26 @@ final class DictationController: ObservableObject {
     }
 
     /// Insert the cleaned text into the remembered target app's focused field.
+    ///
+    /// The transcript is already in history and on screen, so a failed or unconfirmable paste
+    /// only ever costs the user a paste they have to do themselves — never the words.
     func insertCleaned() {
         guard !cleaned.isEmpty else { return }
-        let ok = TextInserter.insert(cleaned, into: lastTargetApp)
-        if ok {
+        deliveryNote = nil
+        switch TextInserter.insert(cleaned, into: lastTargetApp) {
+        case .inserted:
             didInsert = true
             // Clear the confirmation after a beat.
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
                 self.didInsert = false
             }
+        case .unverified:
+            deliveryNote = "Couldn't confirm the insert — the text is on your clipboard."
+        case .failed:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(cleaned, forType: .string)
+            deliveryNote = "Couldn't insert — the text is on your clipboard."
         }
     }
 
@@ -229,8 +244,25 @@ final class DictationController: ObservableObject {
             return
         }
 
+        // Write-ahead: the take is on disk before the first transcription attempt, so a failure
+        // below leaves a recording to run again rather than an error message and nothing else.
+        let recording = PendingAudioStore.shared.begin(
+            samples: samples,
+            durationSec: max(1, samples.count / WavFile.sampleRate),
+            app: lastTargetApp.map {
+                NSRunningApplicationLike(bundleID: $0.bundleIdentifier, localizedName: $0.localizedName)
+            },
+            engine: STTFactory.resolvedProvider().rawValue
+        )
+        transcribe(samples, using: STTFactory.make(), recordingID: recording?.id)
+    }
+
+    /// Transcribe → clean → publish. Shared by the first attempt and by `retry`, so re-running
+    /// saved audio is the same code path, not a parallel one.
+    private func transcribe(_ samples: [Float], using stt: STT, recordingID: UUID?) {
+        pendingID = recordingID
+        deliveryNote = nil
         phase = .transcribing
-        let stt = STTFactory.make()
         Task {
             do {
                 let rawText = try await stt.transcribe(samples, sampleRate: 16000)
@@ -245,12 +277,42 @@ final class DictationController: ObservableObject {
                 if AppSettings.shared.keepHistory {
                     currentRecordID = DictationHistoryStore.shared.add(cleanedText)
                 }
+                // The result is on screen and in history — only now is the recording settled.
+                if let id = pendingID {
+                    PendingAudioStore.shared.settle(id, result: cleanedText)
+                    pendingID = nil
+                }
             } catch let error as STTError {
-                phase = .error(Self.message(for: error))
+                fail(Self.message(for: error))
             } catch {
-                phase = .error(error.localizedDescription)
+                fail(error.localizedDescription)
             }
         }
+    }
+
+    /// A failed attempt. The saved recording is deliberately left untouched — this is what it
+    /// was written for — and released so it lists as unfinished with a retry.
+    private func fail(_ message: String) {
+        if let id = pendingID {
+            PendingAudioStore.shared.release(id)
+            pendingID = nil
+            phase = .error("\(message) Your recording is saved below — you can run it again.")
+        } else {
+            phase = .error(message)
+        }
+    }
+
+    /// Re-run a saved recording, optionally on a different engine.
+    func retry(_ id: UUID, using provider: STTProvider? = nil) {
+        guard !isBusy else { return }
+        guard let samples = PendingAudioStore.shared.samples(for: id) else {
+            PendingAudioStore.shared.discard(id)
+            return
+        }
+        let stt = provider.flatMap { STTFactory.make($0) } ?? STTFactory.make()
+        PendingAudioStore.shared.claim(id)
+        raw = ""; cleaned = ""; editableCleaned = ""; didInsert = false; didTeach = false
+        transcribe(samples, using: stt, recordingID: id)
     }
 
     private static func message(for error: STTError) -> String {
@@ -393,6 +455,11 @@ struct DictationView: View {
                 Label("Inserted into the active app", systemImage: "checkmark.circle.fill")
                     .font(OW.ui(12, weight: .semibold))
                     .foregroundStyle(OW.success)
+            } else if let note = controller.deliveryNote {
+                Label(note, systemImage: "doc.on.clipboard")
+                    .font(OW.ui(11))
+                    .foregroundStyle(OW.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if !controller.canInsert {
                 Text(
                     "Grant OpenWispr access under System Settings ▸ Privacy & Security ▸ "

@@ -1,4 +1,5 @@
 import AppKit
+import OpenWisprCore
 import SwiftUI
 
 /// The OpenWispr "Home" screen — the brand's Home adapted to a desktop window.
@@ -14,12 +15,14 @@ struct HomeView: View {
     @ObservedObject var controller: DictationController
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var history = DictationHistoryStore.shared
+    @ObservedObject private var pending = PendingAudioStore.shared
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 hero
                 transcriptCard
+                unfinishedSection
                 statSection
                 recentsSection
             }
@@ -234,6 +237,13 @@ struct HomeView: View {
             Label("Inserted into the active app", systemImage: "checkmark.circle.fill")
                 .font(OW.ui(12, weight: .semibold))
                 .foregroundStyle(OW.success)
+        } else if let note = controller.deliveryNote {
+            // The paste couldn't be confirmed, so we left the transcript on the clipboard
+            // rather than restoring over it. Say where it went.
+            Label(note, systemImage: "doc.on.clipboard")
+                .font(OW.ui(11))
+                .foregroundStyle(OW.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
         } else if controller.canInsert {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.shield.fill")
@@ -287,6 +297,63 @@ struct HomeView: View {
 
             Spacer()
         }
+    }
+
+    // MARK: - Unfinished recordings (retry)
+
+    /// Recordings whose transcription never landed. Derived from the store — a recording with
+    /// no result that nothing is currently working on — so after a crash this list is right
+    /// with no repair pass behind it.
+    @ViewBuilder
+    private var unfinishedSection: some View {
+        if !pending.unfinished.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                MonoLabel(text: "Unfinished", color: OW.textDim, size: 11, tracking: 1.4)
+                ForEach(pending.unfinished) { record in
+                    unfinishedRow(record)
+                }
+            }
+        }
+    }
+
+    private func unfinishedRow(_ record: PendingRecording) -> some View {
+        let failedOn = STTProvider(rawValue: record.engine)
+        let alternative = failedOn.flatMap { STTFactory.alternative(to: $0) }
+        return HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(record.appName ?? "Dictation") · \(record.durationSec)s")
+                    .font(OW.ui(13, weight: .semibold))
+                    .foregroundStyle(OW.text)
+                Text("This one didn't finish transcribing. The audio is still here — run it again.")
+                    .font(OW.ui(12))
+                    .foregroundStyle(OW.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(Self.relativeTime(record.ts))
+                    .font(OW.mono(10))
+                    .foregroundStyle(OW.textFaint)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Button("Retry") { controller.retry(record.id) }
+                    .buttonStyle(OWPrimaryButtonStyle())
+                    .disabled(controller.isBusy)
+                // Whisper and Parakeet mis-hear different things, so a second pass on the
+                // other engine is a genuinely different attempt, not just a repeat.
+                if let alternative = alternative {
+                    Button("Retry on \(alternative.shortLabel)") {
+                        controller.retry(record.id, using: alternative)
+                    }
+                    .buttonStyle(OWSecondaryButtonStyle())
+                    .disabled(controller.isBusy)
+                }
+                Button("Delete") { pending.discard(record.id) }
+                    .buttonStyle(OWGhostButtonStyle())
+            }
+        }
+        .padding(14)
+        .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rCard))
+        .overlay(RoundedRectangle(cornerRadius: OW.rCard).strokeBorder(OW.coral.opacity(0.55), lineWidth: 1))
     }
 
     // MARK: - Today at a glance (stat band)

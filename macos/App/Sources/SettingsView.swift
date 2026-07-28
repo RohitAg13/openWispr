@@ -13,6 +13,7 @@ struct SettingsView: View {
     @ObservedObject private var history = DictationHistoryStore.shared
     @ObservedObject private var corpus = CorpusStore.shared
     @ObservedObject private var vocab = VocabStore.shared
+    @ObservedObject private var pending = PendingAudioStore.shared
 
     @State private var pane: Pane = .voice
     @State private var showAdvancedPolish = false
@@ -621,13 +622,24 @@ struct SettingsView: View {
                 toggleRow("Keep history",
                           subtitle: "Save finished dictations to the on-device list shown on Home.",
                           isOn: $settings.keepHistory)
+                if settings.keepHistory {
+                    Rectangle().fill(OW.divider).frame(height: 1)
+                    audioRetentionRow
+                }
             }
             .padding(14)
+            .onChange(of: settings.keepHistory) { keep in
+                // "Nothing is saved to disk" has to include the audio, so turning history off
+                // takes the retained recordings with it.
+                if !keep { pending.purgeAll() }
+            }
         }
 
         group(header: "Clear data") {
             VStack(alignment: .leading, spacing: 10) {
                 clearRow("Dictation history", count: history.records.count) { history.clear() }
+                Rectangle().fill(OW.divider).frame(height: 1)
+                clearRow("Saved audio", count: pending.all().count) { pending.purgeAll() }
                 Rectangle().fill(OW.divider).frame(height: 1)
                 clearRow("Style memory", count: corpus.samples.count) { corpus.clear() }
                 Rectangle().fill(OW.divider).frame(height: 1)
@@ -637,6 +649,31 @@ struct SettingsView: View {
         }
 
         infoNote("Everything OpenWispr stores stays on this Mac. Nothing is uploaded.")
+    }
+
+    /// How long recordings are kept so a dictation that failed can still be run again. Kept
+    /// generous by default — the audio never leaves this Mac, so retention costs only disk.
+    private var audioRetentionRow: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Keep audio").font(OW.ui(14, weight: .medium)).foregroundStyle(OW.text)
+                Text("Recordings stay on this Mac so a dictation that fails can be run again.")
+                    .font(OW.ui(11.5)).foregroundStyle(OW.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Picker("", selection: Binding(
+                get: { pending.keepDays },
+                set: { pending.keepDays = $0 }
+            )) {
+                Text("7 days").tag(7)
+                Text("30 days").tag(30)
+                Text("90 days").tag(90)
+                Text("Forever").tag(0)
+            }
+            .labelsHidden()
+            .frame(width: 130)
+        }
     }
 
     private func clearRow(_ label: String, count: Int, action: @escaping () -> Void) -> some View {

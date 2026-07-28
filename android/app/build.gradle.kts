@@ -105,6 +105,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     testImplementation("junit:junit:4.13.2")
+    // Real org.json on the unit-test classpath: `isReturnDefaultValues` turns the stubbed
+    // android.jar version into silent nulls, which would make a JSON round-trip test pass
+    // while proving nothing.
+    testImplementation("org.json:json:20240303")
 
     implementation(project(":lib")) // on-device whisper.cpp
     implementation(project(":llm")) // on-device llama.cpp (ARM aichat)

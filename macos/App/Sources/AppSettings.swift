@@ -17,6 +17,15 @@ enum STTProvider: String, CaseIterable {
         }
     }
 
+    /// Bare engine name, for tight spots like a "Retry on Whisper" button.
+    var shortLabel: String {
+        switch self {
+        case .appleSpeech: return "Apple Speech"
+        case .whisper:     return "Whisper"
+        case .parakeet:    return "Parakeet"
+        }
+    }
+
     /// Whether this provider is selectable. All are wired up — but the on-device engines still
     /// need their model downloaded before a session can use them (the Settings UI prompts for that).
     var isAvailable: Bool {
