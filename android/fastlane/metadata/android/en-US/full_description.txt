@@ -1,29 +1,45 @@
-Speak. It types.
+Offline voice to text that types for you.
 
-OpenWispr is open-source voice dictation that turns your speech into clean, in-your-voice text and drops it straight into whatever app you're typing in — and the whole pipeline can run fully on your device.
+OpenWispr is free, open-source voice dictation that turns speech into clean, punctuated text and drops it straight into whatever app you're typing in. No internet, no account, no subscription.
 
-Most dictation apps ship your voice to the cloud. OpenWispr doesn't have to. By default it listens, transcribes, tidies up the transcript, and inserts the result without any of it leaving your phone. No account. No subscription. No tracking.
+Most speech to text apps ship your voice to a server. OpenWispr doesn't. The speech-to-text model downloads once and then runs entirely on your phone — so dictation keeps working on a plane, on the metro, or in a dead zone, and your audio never leaves the device.
 
 WHAT IT DOES
-• Speak in any app — messaging, email, notes, browser, code — and get formatted text back.
-• On-device speech-to-text (Whisper / Parakeet) and optional on-device clean-up and polish.
-• A floating bubble for tap-to-talk over any app, plus a "Rewrite" action on selected text.
-• Auto-insert: your finished text lands right in the field you're focused on.
-• Learns the names, terms, and style you use — all stored on your device.
+• Voice typing in any app — messaging, email, notes, browser, docs, code.
+• A floating bubble for tap-to-talk over whatever is on screen.
+• Auto-insert — the finished text lands in the field you're focused on. No copy-paste.
+• Cleans up as it transcribes: the ums, false starts and run-ons come out as proper sentences, with punctuation.
+• "Rewrite" any text you've selected — fix the tone, tighten it, or turn notes into a message.
+• Learns the names, jargon and style you use, and remembers your corrections.
+
+WORKS OFFLINE
+• On-device speech recognition powered by Parakeet and Whisper.
+• One-time model download, then no network needed to transcribe.
+• Optional on-device clean-up and polish — also offline.
+• Whisper models cover many languages beyond English.
 
 PRIVATE BY DEFAULT
-• Runs 100% on-device out of the box — your audio and text stay local.
+• 100% on-device out of the box — audio and transcripts stay local.
 • Your personal dictionary and style examples never leave the phone.
-• No analytics, no ads, no accounts.
-• Prefer the cloud? You can optionally plug in your own provider key (Groq, OpenAI, Anthropic, and more). Nothing is sent anywhere unless you choose it.
+• No analytics, no trackers, no ads, no account.
+• We run no servers, so there is nowhere for your dictation to be sent.
+• Prefer the cloud? You can optionally add your own provider key (Groq, OpenAI, Anthropic and more). Nothing is sent anywhere unless you choose it.
 
-OPEN SOURCE
-OpenWispr is MIT-licensed. Read exactly what it does, swap the models, or build it yourself.
+FREE AND OPEN SOURCE
+OpenWispr is MIT-licensed. No paywalled words, no trial, no pro tier. Read exactly what it does, swap the models, or build it yourself from source.
+
+GOOD FOR
+• Long messages and emails you'd rather talk than thumb-type.
+• Notes, journals and to-do capture on the move.
+• Anyone who finds typing slow, awkward or painful.
+• Dictating where you'd rather not send audio to a company's servers.
 
 ABOUT PERMISSIONS
 • Microphone — to hear you when you dictate.
-• Accessibility — used for one thing only: typing your finished text into the field you're focused on. It is never used to read your screen for any other purpose, and nothing is collected, stored, or sent off your device. You can skip it and paste manually.
+• Accessibility — used for one thing only: typing your finished text into the field you're focused on. It is never used to read your screen for any other purpose, and nothing is collected, stored, or sent off your device. You can skip it and paste manually instead.
 • Overlay & notifications — for the floating tap-to-talk bubble.
-• Contacts (optional) — matched on-device to spell names correctly; import is opt-in.
+• Contacts (optional) — matched on-device so names are spelled right; import is opt-in.
 
 Requires a 64-bit (arm64) device. Speech and language models are downloaded on first use.
+
+Source code and issues: https://github.com/RohitAg13/openWispr

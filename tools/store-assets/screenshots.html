@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenWispr — Play Store screenshots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ------------------------------------------------------------------
+     Google Play phone screenshots — 1080x1920 (9:16).
+     >=1080px on the short side + 9:16 keeps the listing eligible for
+     Play's promotional/featured surfaces (min 4 shots at that spec).
+     Colours are the app's real theme tokens from ui/Theme.kt so the
+     store art matches what users actually see.
+     ------------------------------------------------------------------ */
+  :root {
+    --cream-bg:   #F6EFE6;  /* Theme.kt background   */
+    --card:       #FFFDFA;  /* Theme.kt surface      */
+    --tint:       #F3E6D6;  /* Theme.kt surfaceVariant */
+    --ink:        #4B3A2E;  /* Theme.kt onBackground */
+    --ink-soft:   #7E6B5B;  /* Theme.kt onSurfaceVariant */
+    --hairline:   #E7DECF;  /* Theme.kt outline      */
+    --amber:      #EDB079;
+    --coral:      #E07B52;  /* primary               */
+    --coral-deep: #C7623C;
+    --rose:       #C16560;
+    --plum:       #4A2E27;
+    --cream-mark: #FCF8F4;
+    --green:      #5C8A5E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #999;
+    font-family: 'Mulish', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- the 1080x1920 canvas ---------- */
+  .shot {
+    position: relative;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: var(--cream-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* warm sunset wash behind the device */
+  .shot::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 420px;
+    width: 1500px; height: 1500px;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(237,176,121,0.42), rgba(224,123,82,0.10) 62%, transparent);
+    pointer-events: none;
+  }
+
+  /* ---------- caption block ---------- */
+  .cap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 100px 88px 0;
+    text-align: center;
+  }
+  .cap .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 24px;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--coral-deep);
+    margin-bottom: 26px;
+  }
+  .cap h2 {
+    font-size: 72px;
+    line-height: 1.06;
+    font-weight: 800;
+    letter-spacing: -0.032em;
+    color: #3B2A22;
+  }
+  .cap p {
+    margin-top: 22px;
+    font-size: 31px;
+    line-height: 1.42;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- device frame ---------- */
+  /* Inner UI is authored at a 393px phone width (a Pixel-class viewport) and
+     scaled up to fill the frame. .ui height MUST equal the screen height divided
+     by the scale, otherwise anything anchored with `bottom: 0` — the nav bar, the
+     chat input, the "Stop & insert" button — lands below the visible area. */
+  .device {
+    position: relative;
+    z-index: 2;
+    margin-top: 66px;
+    width: 700px;          /* 674 screen + 2x13 bezel */
+    height: 1380px;
+    border-radius: 58px;
+    padding: 13px;
+    background: linear-gradient(160deg, #43302A, #241713);
+    box-shadow: 0 44px 90px -34px rgba(74,46,39,0.62),
+                0 0 0 1px rgba(255,255,255,0.10) inset;
+  }
+  .screen {
+    position: relative;
+    width: 674px;
+    height: 1354px;
+    border-radius: 47px;
+    overflow: hidden;
+    background: var(--cream-bg);
+  }
+  /* 674 / 393 = 1.715  →  1354 / 1.715 = 789 */
+  .ui {
+    position: absolute;
+    top: 0; left: 0;
+    width: 393px;
+    height: 789px;
+    transform: scale(1.715);
+    transform-origin: top left;
+  }
+
+  /* ---------- in-app chrome ---------- */
+  .statusbar {
+    height: 30px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .statusbar .icons { display: flex; align-items: center; gap: 5px; }
+  .notch {
+    position: absolute;
+    top: 15px; left: 50%;
+    transform: translateX(-50%);
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #16100E;
+    z-index: 5;
+  }
+
+  .appbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand .mark {
+    width: 22px; height: 22px;
+    color: var(--coral);
+  }
+  .brand .name { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; color: #3B2A22; }
+  .pill-ready {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); }
+
+  /* ---------- generic bits ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 15px;
+    margin: 0 16px 11px;
+    padding: 14px;
+  }
+  .mono {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    background: #F5EEE4;
+    padding: 3px 7px;
+    border-radius: 6px;
+  }
+  .mono.on {
+    color: var(--coral-deep);
+    background: #FAE8DC;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sect {
+    font-size: 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 0 18px 7px;
+  }
+  .h-sect { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; color: #3B2A22; padding: 4px 16px 8px; }
+
+  /* bottom nav */
+  .nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 62px;
+    background: rgba(255,253,250,0.96);
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: 8px;
+  }
+  .nav .item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 600; color: var(--ink-soft); }
+  .nav .item.on { color: var(--coral-deep); }
+  .nav .fab {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--amber), var(--coral) 52%, var(--rose));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream-mark);
+    box-shadow: 0 8px 18px -6px rgba(199,98,60,0.75);
+    margin-bottom: 14px;
+  }
+
+  /* checkmark rows */
+  .crow { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; }
+  .crow svg { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--green); }
+  .crow .t { font-size: 13.5px; font-weight: 700; color: #3B2A22; }
+  .crow .s { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     1 — HERO: listening
+     ============================================================ -->
+<div class="shot" id="s1">
+  <div class="cap">
+    <div class="eyebrow">Speak · it types</div>
+    <h2>Talk instead<br>of typing.</h2>
+    <p>Tap, speak, done. Your words land as clean,<br>punctuated text — in any app.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui" style="background:linear-gradient(178deg,#3E231C,#2A1512 62%,#24110F);">
+      <div class="statusbar" style="color:#E8D6C9;">
+        <span>9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V4h-3v16zm5 0h3v-9h-3v9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <div style="text-align:center; margin-top:66px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.24em; text-transform:uppercase; color:#D99B72;">Listening</div>
+
+      <!-- orb -->
+      <div style="position:relative; height:320px; display:flex; align-items:center; justify-content:center; margin-top:6px;">
+        <div style="position:absolute; width:186px; height:186px; border-radius:50%; border:1px solid rgba(224,123,82,0.30);"></div>
+        <div style="position:absolute; width:240px; height:240px; border-radius:50%; border:1px solid rgba(224,123,82,0.15);"></div>
+        <div style="position:relative; width:124px; height:124px; border-radius:50%; background:linear-gradient(140deg,#F0AE7B,#E07B52 52%,#C16560); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 0 60px -6px rgba(224,123,82,0.85);">
+          <span style="width:5px;height:22px;border-radius:3px;background:#FCF8F4;"></span>
+          <span style="width:5px;height:40px;border-radius:3px;background:#FCF8F4;"></span>
+          <span style="width:5px;height:54px;border-radius:3px;background:#FCF8F4;"></span>
+          <span style="width:5px;height:32px;border-radius:3px;background:#FCF8F4;"></span>
+          <span style="width:5px;height:16px;border-radius:3px;background:#FCF8F4;"></span>
+        </div>
+      </div>
+
+      <div style="padding:0 34px; text-align:center;">
+        <div style="font-size:19px; line-height:1.45; font-weight:600; color:#FBF1E9;">“Let's push the release on Friday and tell the team on Monday”</div>
+        <div style="margin-top:20px; display:inline-flex; align-items:center; gap:7px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.13em; text-transform:uppercase; color:#C99A78;">
+          <span class="dot"></span> On-device · nothing uploaded
+        </div>
+      </div>
+
+      <div style="position:absolute; bottom:44px; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:16px;">
+        <div style="display:inline-flex; align-items:center; gap:9px; background:#FCF8F4; color:#3B2A22; font-size:14px; font-weight:700; padding:13px 26px; border-radius:999px; box-shadow:0 10px 26px -10px rgba(0,0,0,0.6);">
+          <span style="width:11px;height:11px;border-radius:3px;background:var(--coral);"></span> Stop &amp; insert
+        </div>
+        <div style="font-size:11px; font-weight:500; color:#A5765C;">Auto-stops when you pause</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================
+     2 — types into any app (bubble)
+     ============================================================ -->
+<div class="shot" id="s2">
+  <div class="cap">
+    <div class="eyebrow">Floating bubble</div>
+    <h2>Dictate into<br>any app.</h2>
+    <p>Tap the bubble anywhere — messages, email,<br>notes, docs. The text inserts itself.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui" style="background:#ECE4DA;">
+      <div class="statusbar" style="color:#4B3A2E;">
+        <span>9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V4h-3v16zm5 0h3v-9h-3v9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <!-- generic host app chrome -->
+      <div style="background:#FFFFFF; padding:10px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #E3DAD0;">
+        <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:#6B5A4C;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="15 5 8 12 15 19"/></svg>
+        <div style="width:27px;height:27px;border-radius:50%;background:#D9CFC3;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#6B5A4C;">A</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:700;color:#33281F;">Team chat</div>
+          <div style="font-size:10px;color:#8A7B6C;">online</div>
+        </div>
+      </div>
+
+      <!-- messages -->
+      <div style="padding:14px 14px 0; display:flex; flex-direction:column; gap:9px;">
+        <div style="align-self:flex-start; max-width:74%; background:#FFFFFF; border-radius:14px 14px 14px 4px; padding:9px 12px; font-size:12.5px; line-height:1.45; color:#3A2E25;">Are we still shipping this week?</div>
+        <div style="align-self:flex-end; max-width:78%; background:linear-gradient(140deg,#E9975F,#DD7550); border-radius:14px 14px 4px 14px; padding:9px 12px; font-size:12.5px; line-height:1.45; color:#FFF8F3;">
+          Let's push the release to Friday and tell the team on Monday.
+          <div style="margin-top:5px; font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:0.1em; color:rgba(255,248,243,0.85);">DICTATED ✓</div>
+        </div>
+      </div>
+
+      <!-- input field, being filled -->
+      <div style="position:absolute; bottom:0; left:0; right:0; background:#FFFFFF; border-top:1px solid #E3DAD0; padding:11px 14px 20px; display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; background:#F1EAE1; border:1.5px solid var(--coral); border-radius:999px; padding:9px 14px; font-size:12.5px; color:#3A2E25; display:flex; align-items:center;">
+          Sounds good, I'll update the doc<span style="display:inline-block;width:1.5px;height:15px;background:var(--coral);margin-left:2px;"></span>
+        </div>
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#C9BDB0;"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </div>
+
+      <!-- the floating bubble -->
+      <div style="position:absolute; right:16px; bottom:104px; display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+        <div style="background:rgba(35,20,16,0.92); color:#F3E3D6; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.12em; text-transform:uppercase; padding:6px 11px; border-radius:9px;">Transcribing…</div>
+        <div style="position:relative; width:56px; height:56px;">
+          <div style="position:absolute; inset:-9px; border-radius:50%; border:1.5px solid rgba(224,123,82,0.35);"></div>
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(140deg,#F0AE7B,#E07B52 52%,#C16560); display:flex;align-items:center;justify-content:center;gap:2.5px; box-shadow:0 10px 24px -6px rgba(199,98,60,0.85);">
+            <span style="width:3px;height:11px;border-radius:2px;background:#FCF8F4;"></span>
+            <span style="width:3px;height:20px;border-radius:2px;background:#FCF8F4;"></span>
+            <span style="width:3px;height:26px;border-radius:2px;background:#FCF8F4;"></span>
+            <span style="width:3px;height:15px;border-radius:2px;background:#FCF8F4;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================
+     3 — offline
+     ============================================================ -->
+<div class="shot" id="s3">
+  <div class="cap">
+    <div class="eyebrow">No internet needed</div>
+    <h2>Works fully<br>offline.</h2>
+    <p>The speech model downloads once, then runs<br>on your phone. Plane, metro, dead zone — fine.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui">
+      <div class="statusbar" style="color:#4B3A2E;">
+        <span>9:41</span>
+        <span class="icons">
+          <!-- airplane mode on -->
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:var(--coral-deep);"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <div class="appbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 100 100" style="fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+          <span class="name">Settings</span>
+        </div>
+      </div>
+
+      <div class="sect">Engine</div>
+
+      <!-- on-device, selected -->
+      <div class="card" style="border-color:var(--coral); border-width:1.5px; background:#FFF7F1;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="font-size:14.5px; font-weight:800; color:#3B2A22;">On-device</div>
+            <div style="font-size:11.5px; font-weight:500; color:var(--ink-soft); margin-top:3px;">Private &amp; offline · Parakeet</div>
+          </div>
+          <div style="width:19px;height:19px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;flex:none;">
+            <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:#FCF8F4;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          </div>
+        </div>
+        <div style="margin-top:12px; padding-top:11px; border-top:1px solid var(--hairline); display:flex; align-items:center; gap:7px;">
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          <span style="font-size:11.5px; font-weight:700; color:var(--green);">Model ready · works offline</span>
+        </div>
+      </div>
+
+      <!-- cloud, unselected -->
+      <div class="card">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="font-size:14.5px; font-weight:800; color:#3B2A22;">Cloud transcription</div>
+            <div style="font-size:11.5px; font-weight:500; color:var(--ink-soft); margin-top:3px;">Bring your own key · optional</div>
+          </div>
+          <div style="width:19px;height:19px;border-radius:50%;border:1.5px solid var(--hairline);flex:none;"></div>
+        </div>
+      </div>
+
+      <div style="padding:6px 20px 0; font-size:11.5px; line-height:1.5; color:var(--ink-soft);">
+        Models download once, then run fully offline.
+      </div>
+
+      <div class="sect" style="padding-top:20px;">Cleanup &amp; polish</div>
+      <div class="card" style="padding:0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-bottom:1px solid var(--hairline);">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#3B2A22;">AI polish</div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">On-device · never uploaded</div>
+          </div>
+          <div style="width:36px;height:21px;border-radius:999px;background:var(--coral);position:relative;flex:none;">
+            <div style="position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#FCF8F4;"></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 14px;">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#3B2A22;">Auto-stop on pause</div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">End recording when you stop talking</div>
+          </div>
+          <div style="width:36px;height:21px;border-radius:999px;background:var(--coral);position:relative;flex:none;">
+            <div style="position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#FCF8F4;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sect" style="padding-top:14px;">General</div>
+      <div class="card" style="padding:0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-bottom:1px solid var(--hairline);">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#3B2A22;">Floating bubble</div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">Appear only when you can type</div>
+          </div>
+          <div style="width:36px;height:21px;border-radius:999px;background:var(--coral);position:relative;flex:none;">
+            <div style="position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#FCF8F4;"></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 14px; border-bottom:1px solid var(--hairline);">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#3B2A22;">Auto-insert</div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">Only on text fields</div>
+          </div>
+          <div style="width:36px;height:21px;border-radius:999px;background:var(--coral);position:relative;flex:none;">
+            <div style="position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#FCF8F4;"></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 14px;">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#3B2A22;">Keep history</div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">On-device only · never uploaded</div>
+          </div>
+          <div style="width:36px;height:21px;border-radius:999px;background:var(--coral);position:relative;flex:none;">
+            <div style="position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;background:#FCF8F4;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================
+     4 — cleanup (before / after)
+     ============================================================ -->
+<div class="shot" id="s4">
+  <div class="cap">
+    <div class="eyebrow">Cleanup &amp; polish</div>
+    <h2>Ramble in.<br>Clean text out.</h2>
+    <p>The ums, false starts and run-ons come out as<br>proper sentences — punctuation included.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui">
+      <div class="statusbar" style="color:#4B3A2E;">
+        <span>9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V4h-3v16zm5 0h3v-9h-3v9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <div class="appbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 100 100" style="fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+          <span class="name">OpenWispr</span>
+        </div>
+        <span class="pill-ready"><span class="dot"></span> Ready</span>
+      </div>
+
+      <div class="h-sect">Recent</div>
+
+      <!-- before / after card -->
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:13px 14px 12px; background:#FBF4EC; border-bottom:1px solid var(--hairline);">
+          <div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; color:#A08A76;">Before</span>
+            <span style="flex:1; height:1px; background:var(--hairline);"></span>
+          </div>
+          <div style="font-size:12.5px; line-height:1.55; color:#9A8877;">um so like i think we should uh probably push the release to friday and then you know tell the team on monday</div>
+        </div>
+        <div style="padding:13px 14px 14px;">
+          <div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--coral-deep);">After</span>
+            <span style="flex:1; height:1px; background:var(--hairline);"></span>
+          </div>
+          <div style="font-size:13.5px; line-height:1.55; font-weight:600; color:#3B2A22;">Let's push the release to Friday and tell the team on Monday.</div>
+          <div style="display:flex; gap:6px; margin-top:12px;">
+            <span class="mono">0:09</span>
+            <span class="mono">19 words</span>
+            <span class="mono on"><span class="dot" style="width:5px;height:5px;"></span>on-device</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- second, collapsed item -->
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px;">
+          <span style="font-size:12.5px; font-weight:700; color:#3B2A22;">Notes</span>
+          <span style="font-size:10px; color:var(--ink-soft);">9:24 AM</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4B3A2E;">Pick up the dry cleaning, then book the flights for the offsite.</div>
+        <div style="display:flex; gap:12px; margin-top:11px; font-size:11.5px; font-weight:700;">
+          <span style="color:var(--ink-soft);">Copy</span>
+          <span style="color:var(--ink-soft);">Teach</span>
+          <span style="color:var(--rose);">Delete</span>
+        </div>
+      </div>
+
+      <!-- teaches names / vocabulary -->
+      <div class="card" style="background:var(--tint); border-color:#E4D2BC;">
+        <div style="display:flex; align-items:flex-start; gap:9px;">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex:none;margin-top:1px;fill:none;stroke:var(--coral-deep);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 3l2.4 5.4L20 9.6l-4 4 1 5.9-5-2.8-5 2.8 1-5.9-4-4 5.6-1.2z"/></svg>
+          <div>
+            <div style="font-size:12.5px; font-weight:700; color:#3B2A22;">Got a name wrong? Tap to fix.</div>
+            <div style="font-size:11px; line-height:1.45; color:#6B5546; margin-top:3px;">It remembers the spelling — stored on your phone, never uploaded.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="item on">
+          <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+          Home
+        </div>
+        <div class="fab">
+          <svg viewBox="0 0 100 100" style="width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+        </div>
+        <div class="item">
+          <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+          Settings
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================
+     5 — privacy
+     ============================================================ -->
+<div class="shot" id="s5">
+  <div class="cap">
+    <div class="eyebrow">Private by default</div>
+    <h2>Your voice never<br>leaves your phone.</h2>
+    <p>No account, no servers, no analytics.<br>Nothing to upload, because there's nowhere to upload it.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui">
+      <div class="statusbar" style="color:#4B3A2E;">
+        <span>9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V4h-3v16zm5 0h3v-9h-3v9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <div class="appbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 100 100" style="fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+          <span class="name">Privacy</span>
+        </div>
+      </div>
+
+      <!-- hero panel -->
+      <div style="margin:4px 16px 14px; border-radius:18px; padding:22px 18px; background:linear-gradient(150deg,#F6DCC6,#F0C3A9 55%,#E5AE9C); text-align:center;">
+        <div style="width:54px;height:54px;margin:0 auto 13px; border-radius:50%; background:linear-gradient(140deg,#F0AE7B,#E07B52 52%,#C16560); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -8px rgba(150,60,30,0.7);">
+          <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:none;stroke:#FCF8F4;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 2.6l7.4 3v6c0 4.6-3.1 8.3-7.4 9.8-4.3-1.5-7.4-5.2-7.4-9.8v-6z"/><polyline points="8.6 12 11.2 14.6 15.6 9.6"/></svg>
+        </div>
+        <div style="font-size:17px; font-weight:800; letter-spacing:-0.02em; color:#4A2E27;">100% on-device</div>
+        <div style="font-size:11.5px; font-weight:600; color:#7C4F3E; margin-top:5px;">Audio · transcripts · your dictionary</div>
+      </div>
+
+      <div class="card" style="padding:6px 14px 8px;">
+        <div class="crow">
+          <svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          <div><div class="t">No account, ever</div><div class="s">Install and start talking</div></div>
+        </div>
+        <div class="crow" style="border-top:1px solid var(--hairline);">
+          <svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          <div><div class="t">No ads, no trackers</div><div class="s">No analytics SDKs at all</div></div>
+        </div>
+        <div class="crow" style="border-top:1px solid var(--hairline);">
+          <svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          <div><div class="t">Nothing leaves the device</div><div class="s">We run no servers to send it to</div></div>
+        </div>
+        <div class="crow" style="border-top:1px solid var(--hairline);">
+          <svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 9.5 17.5 20 6.5"/></svg>
+          <div><div class="t">Open source (MIT)</div><div class="s">Read every line on GitHub</div></div>
+        </div>
+      </div>
+
+      <div style="margin:0 16px 13px; border-radius:13px; background:var(--tint); padding:12px 14px; display:flex; align-items:center; gap:9px;">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex:none;fill:none;stroke:var(--coral-deep);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg>
+        <div style="font-size:11px; line-height:1.45; color:#6B5546;">Prefer the cloud? Add your own provider key — strictly opt-in.</div>
+      </div>
+
+      <div class="sect">Stored on this phone</div>
+      <div class="card" style="padding:0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--hairline);">
+          <span style="font-size:13px; font-weight:700; color:#3B2A22;">Dictation history</span>
+          <span class="mono">on-device</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--hairline);">
+          <span style="font-size:13px; font-weight:700; color:#3B2A22;">Names &amp; terms you taught it</span>
+          <span class="mono">on-device</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px;">
+          <span style="font-size:13px; font-weight:700; color:var(--rose);">Clear all data</span>
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:var(--rose);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="9 5 16 12 9 19"/></svg>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================
+     6 — free / open source / home stats
+     ============================================================ -->
+<div class="shot" id="s6">
+  <div class="cap">
+    <div class="eyebrow">MIT licensed</div>
+    <h2>Free, forever.<br>And open source.</h2>
+    <p>No subscription, no paywalled words,<br>no trial. Just install it.</p>
+  </div>
+  <div class="device"><div class="screen">
+    <div class="notch"></div>
+    <div class="ui">
+      <div class="statusbar" style="color:#4B3A2E;">
+        <span>9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V4h-3v16zm5 0h3v-9h-3v9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M4 7h13v10H4z M18 10h2v4h-2z"/></svg>
+        </span>
+      </div>
+
+      <div class="appbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 100 100" style="fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+          <span class="name">OpenWispr</span>
+        </div>
+        <span class="pill-ready"><span class="dot"></span> Ready</span>
+      </div>
+
+      <!-- stats -->
+      <div class="card" style="padding:17px 14px 14px;">
+        <div style="display:flex; justify-content:space-between; text-align:center;">
+          <div style="flex:1;">
+            <div style="width:19px;height:2.5px;border-radius:2px;background:var(--coral);margin:0 auto 9px;"></div>
+            <div style="font-size:25px; font-weight:800; letter-spacing:-0.03em; color:#3B2A22;">48,210</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px;">Words</div>
+          </div>
+          <div style="width:1px;background:var(--hairline);margin:4px 0;"></div>
+          <div style="flex:1;">
+            <div style="width:19px;height:2.5px;border-radius:2px;background:var(--coral);margin:0 auto 9px;"></div>
+            <div style="font-size:25px; font-weight:800; letter-spacing:-0.03em; color:#3B2A22;">14.2h</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px;">Saved</div>
+          </div>
+          <div style="width:1px;background:var(--hairline);margin:4px 0;"></div>
+          <div style="flex:1;">
+            <div style="width:19px;height:2.5px;border-radius:2px;background:var(--coral);margin:0 auto 9px;"></div>
+            <div style="font-size:25px; font-weight:800; letter-spacing:-0.03em; color:#3B2A22;">12</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px;">Streak</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:7px; margin-top:15px; padding-top:13px; border-top:1px solid var(--hairline);">
+          <span class="mono on"><span class="dot" style="width:5px;height:5px;"></span>on-device 100%</span>
+          <span class="mono">$0 spent</span>
+          <span class="mono">no account</span>
+        </div>
+      </div>
+
+      <div class="h-sect">Recent</div>
+      <div class="sect" style="padding-bottom:5px;">Today</div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:21px;height:21px;border-radius:7px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7E6B5B;">M</div>
+            <span style="font-size:12.5px; font-weight:700; color:#3B2A22;">Messages</span>
+          </div>
+          <span style="font-size:10px; color:var(--ink-soft);">9:24 AM</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4B3A2E;">Let's push the release to Friday and tell the team on Monday.</div>
+        <div style="display:flex; gap:6px; margin-top:11px;">
+          <span class="mono">0:09</span>
+          <span class="mono">19 words</span>
+          <span class="mono on"><span class="dot" style="width:5px;height:5px;"></span>on-device</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:21px;height:21px;border-radius:7px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7E6B5B;">E</div>
+            <span style="font-size:12.5px; font-weight:700; color:#3B2A22;">Email</span>
+          </div>
+          <span style="font-size:10px; color:var(--ink-soft);">11:02 AM</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4B3A2E;">Thanks for the notes — I'll review the draft tonight and send comments.</div>
+        <div style="display:flex; gap:6px; margin-top:11px;">
+          <span class="mono">0:14</span>
+          <span class="mono">22 words</span>
+          <span class="mono on"><span class="dot" style="width:5px;height:5px;"></span>on-device</span>
+        </div>
+      </div>
+
+      <div class="sect" style="padding-top:6px; padding-bottom:5px;">Yesterday</div>
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:21px;height:21px;border-radius:7px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7E6B5B;">N</div>
+            <span style="font-size:12.5px; font-weight:700; color:#3B2A22;">Notes</span>
+          </div>
+          <span style="font-size:10px; color:var(--ink-soft);">6:41 PM</span>
+        </div>
+        <div style="font-size:12.5px; line-height:1.5; color:#4B3A2E;">Pick up the dry cleaning, then book the flights for the offsite.</div>
+      </div>
+
+      <div class="nav">
+        <div class="item on">
+          <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+          Home
+        </div>
+        <div class="fab">
+          <svg viewBox="0 0 100 100" style="width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;"><path d="M67,29 A25,25 0 1 0 67,71"/><path d="M69,50 C75,44 79,56 86,49"/></svg>
+        </div>
+        <div class="item">
+          <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+          Settings
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+</body>
+</html>

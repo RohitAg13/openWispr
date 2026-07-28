@@ -1,0 +1,51 @@
+name: Play store listing
+
+# Pushes the store listing (title, descriptions, icon, feature graphic, screenshots) from
+# android/fastlane/metadata/ to Google Play. Deliberately manual-only: listing copy and
+# artwork change on their own schedule, and we don't want every tagged release silently
+# overwriting whatever is live.
+#
+# Binaries are NOT touched here — those go out via release.yml on a tag push.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate the listing against Play without publishing it"
+        type: boolean
+        default: true
+
+jobs:
+  metadata:
+    name: Upload listing to Play
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the Play service account is configured
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_JSON" ]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not set. See docs/PLAY_STORE.md, Part A step 4."
+            exit 1
+          fi
+
+      - name: Set up Ruby (fastlane)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Upload store listing (fastlane)
+        working-directory: android
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          printf '%s' "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          export PLAY_JSON_KEY_FILE="$RUNNER_TEMP/play.json"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            bundle exec fastlane metadata validate_only:true
+          else
+            bundle exec fastlane metadata
+          fi
