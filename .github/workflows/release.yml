@@ -103,6 +103,20 @@ jobs:
           export PLAY_JSON_KEY_FILE="$RUNNER_TEMP/play.json"
           bundle exec fastlane internal
 
+      # ---- Production rollout ----
+      # Separate step, not a flag on the one above: if the internal upload fails, this must not
+      # run, and a green tick on the internal step should never be read as "it shipped".
+      # Staged at 20% (see the promote_production lane) — Play has no rollback, so the only
+      # recovery from a bad production release is halting the rollout, which needs there to be
+      # a rollout to halt. Raise it in the Play Console once the crash rate looks sane.
+      - name: Promote to production (staged rollout)
+        if: ${{ startsWith(github.ref, 'refs/tags/') && env.PLAY_JSON != '' }}
+        working-directory: android
+        run: |
+          printf '%s' "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          export PLAY_JSON_KEY_FILE="$RUNNER_TEMP/play.json"
+          bundle exec fastlane promote_production
+
   macos:
     name: macOS DMG
     runs-on: macos-14
