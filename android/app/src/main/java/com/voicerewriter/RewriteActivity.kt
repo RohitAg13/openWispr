@@ -55,6 +55,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
@@ -835,30 +836,38 @@ class RewriteActivity : ComponentActivity() {
                         Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     }
                     // The recording outlived the failure, so offer to re-run it before asking
-                    // the user to say the whole thing again.
+                    // the user to say the whole thing again. Two choices only — re-run the
+                    // audio we still have, or start over. Back dismisses; the recording stays
+                    // on disk either way and is retryable from Home.
                     val saved = pendingId
+                    // Re-running the *same* on-device engine on the *same* samples is
+                    // deterministic — it fails identically. So a retry prefers the other
+                    // downloaded engine, which is the only thing that can actually rescue the
+                    // take. Falls back to the current engine (cloud, or only one model), where
+                    // a retry does mean something because the failure was transient.
+                    val alt = if (saved != null) settings?.let { altOnDeviceEngine(it) } else null
                     if (saved != null) {
                         Text(
-                            "Your recording is saved on this device — nothing was lost.",
+                            if (alt != null)
+                                "Your recording is saved on this device — nothing was lost. " +
+                                    "Retry runs it again on ${alt.second}."
+                            else "Your recording is saved on this device — nothing was lost.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        val alt = settings?.let { altOnDeviceEngine(it) }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            if (alt != null) {
-                                TextButton(onClick = {
-                                    settings?.let { retryTranscription(it.copy(sttModel = alt.first)) }
-                                }) { Text("Retry on ${alt.second}") }
-                            }
-                            TextButton(onClick = { settings?.let { retryTranscription(it) } }) {
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        if (saved != null) {
+                            TextButton(onClick = {
+                                settings?.let { s ->
+                                    retryTranscription(if (alt != null) s.copy(sttModel = alt.first) else s)
+                                }
+                            }) {
                                 Icon(Icons.Default.Refresh, null, Modifier.size(18.dp)); Text("  Retry")
                             }
                         }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { cancelAndFinish() }) { Text("Close") }
                         TextButton(onClick = { onMicTap() }) {
-                            Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
+                            Icon(Icons.Default.Mic, null, Modifier.size(18.dp))
                             Text(if (saved != null) "  Record again" else "  Try again")
                         }
                     }
