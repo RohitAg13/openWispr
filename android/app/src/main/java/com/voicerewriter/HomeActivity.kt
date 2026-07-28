@@ -102,6 +102,8 @@ class HomeActivity : ComponentActivity() {
         val keepHistory: Boolean,
         val groups: List<DayGroup>,
         val stats: DictationStats,
+        /** Recordings whose transcription never landed — offered back to the user to retry. */
+        val unfinished: List<PendingRecording>,
     )
 
     private data class DayGroup(val label: String, val items: List<DictationEntry>)
@@ -154,6 +156,31 @@ class HomeActivity : ComponentActivity() {
 
                         val d = data
                         StatBand(d?.stats)
+
+                        // Unfinished recordings sit above "Recent": they're the only thing on
+                        // this screen that still needs the user, so they lead.
+                        if (d != null && d.unfinished.isNotEmpty()) {
+                            Text(
+                                "Unfinished",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.padding(top = 26.dp, bottom = 12.dp),
+                            )
+                            d.unfinished.forEach { rec ->
+                                UnfinishedCard(
+                                    rec = rec,
+                                    onRetry = { startActivity(RewriteActivity.retryIntent(ctx, rec.id)) },
+                                    onDelete = {
+                                        scope.launch {
+                                            withContext(Dispatchers.IO) { PendingAudio.discard(ctx, rec.id) }
+                                            reload(); showToast("Recording deleted")
+                                        }
+                                    },
+                                )
+                                Spacer(Modifier.height(11.dp))
+                            }
+                            Spacer(Modifier.height(2.dp))
+                        }
 
                         Text(
                             "Recent",
@@ -459,6 +486,53 @@ class HomeActivity : ComponentActivity() {
                             ActionText("Teach", onClick = onTeach)
                             ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * A recording whose transcription never landed. The point of the card is reassurance
+     * first — the audio is still here — and a one-tap way to run it again.
+     */
+    @Composable
+    private fun UnfinishedCard(rec: PendingRecording, onRetry: () -> Unit, onDelete: () -> Unit) {
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(14.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        rec.appLabel.ifBlank { "Dictation" },
+                        fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(clockTime(rec.timestamp), fontFamily = PlexMono, fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    MetaChip(durationLabel(rec.durationSec))
+                    MetaChip("audio saved", dot = true)
+                }
+                Text(
+                    "This one didn't finish transcribing. The recording is still on this device — run it again.",
+                    fontFamily = Mulish, fontSize = 13.sp, lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
+                    Box(
+                        Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primary)
+                            .clickable(onClick = onRetry).padding(18.dp, 9.dp),
+                    ) {
+                        Text("Retry", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -866,7 +940,10 @@ class HomeActivity : ComponentActivity() {
         for (e in entries) {
             groups.getOrPut(dayLabel(e.timestamp)) { mutableListOf() }.add(e)
         }
-        return HomeData(keep, groups.map { DayGroup(it.key, it.value) }, DictationHistory.stats(ctx))
+        // "Unfinished" is derived, never stored: a saved recording with no result that nothing
+        // is currently transcribing. After a crash that set is exactly right with no repair.
+        val unfinished = if (keep) PendingAudio.unfinished(ctx) else emptyList()
+        return HomeData(keep, groups.map { DayGroup(it.key, it.value) }, DictationHistory.stats(ctx), unfinished)
     }
 
     private fun formatWords(n: Long): String = "%,d".format(n)

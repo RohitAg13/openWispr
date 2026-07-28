@@ -55,6 +55,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
@@ -107,6 +108,15 @@ class RewriteActivity : ComponentActivity() {
         const val EXTRA_MODE = "com.voicerewriter.MODE"
         const val EXTRA_AUTO_RECORD = "com.voicerewriter.AUTO_RECORD"
 
+        /** Re-transcribe a saved recording instead of opening the mic (see [PendingAudio]). */
+        const val EXTRA_RETRY_ID = "com.voicerewriter.RETRY_ID"
+
+        /** Launch straight into a retry of the saved recording [id]. */
+        fun retryIntent(context: Context, id: String): Intent =
+            Intent(context, RewriteActivity::class.java)
+                .putExtra(EXTRA_MODE, Defaults.MODE_DICTATE)
+                .putExtra(EXTRA_RETRY_ID, id)
+
         /**
          * How long the corrected text is shown before it auto-inserts — scaled to the
          * text length so there's always time to read it. Min 2s, up to 6s.
@@ -126,6 +136,14 @@ class RewriteActivity : ComponentActivity() {
     private var clipboardResolved: Boolean = false
     private var initialMode: String? = null       // mode requested by the bubble
     private var autoRecord: Boolean = false        // start recording on open (dictation)
+    private var retryId: String? = null            // re-transcribe this saved recording instead
+
+    /**
+     * The durable recording this sheet is working on, if any. Compose state so the error
+     * screen can offer a retry the moment one exists; an activity field (not `remember`) so
+     * [onDestroy] can hand it back for retry rather than stranding it as "in flight".
+     */
+    private var pendingId by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,6 +159,7 @@ class RewriteActivity : ComponentActivity() {
             voiceMode = true
             initialMode = intent.getStringExtra(EXTRA_MODE)
             autoRecord = intent.getBooleanExtra(EXTRA_AUTO_RECORD, false)
+            retryId = intent.getStringExtra(EXTRA_RETRY_ID)
         }
 
         setContent {
@@ -174,6 +193,10 @@ class RewriteActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         audioRecorder.cancel()
+        // Hand any unsettled recording back: with nothing live working on it, it reads as
+        // unfinished and Home offers a retry. Nothing is written — absence of a result is
+        // already the truth on disk.
+        pendingId?.let { PendingAudio.release(it) }
     }
 
     private fun readClipboardText(): String {
@@ -203,6 +226,14 @@ class RewriteActivity : ComponentActivity() {
             Toast.makeText(this, "Copied. Enable accessibility to auto-insert.", Toast.LENGTH_LONG).show()
         }
         LastDictation.set(this, result)
+        // Delivery is confirmed — inserted, or on the clipboard where the user can reach it —
+        // and the transcript is already in history. Only now is the recording settled, which
+        // is what makes it eligible for retention pruning.
+        pendingId?.let { id ->
+            val ctx = applicationContext
+            pendingId = null
+            Thread { runCatching { PendingAudio.settle(ctx, id, result) } }.start()
+        }
         postFixNotification()
         setResult(Activity.RESULT_CANCELED)
         finish()
@@ -372,6 +403,23 @@ class RewriteActivity : ComponentActivity() {
     private fun llmReady(s: Settings): Boolean =
         if (s.provider == "local") LlmModelManager.isReady(this, s.model) else s.isConfigured
 
+    /**
+     * A downloaded on-device engine that *isn't* the one that just failed, as `id to label`.
+     * Parakeet and Whisper fail on different things, so re-running the saved audio on the
+     * other one genuinely rescues transcripts — and on-device it costs nothing but a few
+     * seconds. Null when the user only has one engine, or is on a cloud provider.
+     */
+    private fun altOnDeviceEngine(s: Settings): Pair<String, String>? {
+        if (s.sttProvider != "local") return null
+        val current = OnDeviceStt.resolveModel(s.sttModel)
+        if (!OnDeviceStt.isParakeet(current)) {
+            return if (ParakeetModelManager.isReady(this)) ParakeetModelManager.MODEL_ID to "Parakeet" else null
+        }
+        return WhisperModelManager.MODELS
+            .firstOrNull { WhisperModelManager.isReady(this, it.id) }
+            ?.let { it.id to "Whisper" }
+    }
+
     // ---------------- voice dictation sheet ----------------
 
     private enum class Stage { IDLE, RECORDING, TRANSCRIBING, CORRECTING, REVIEW, ERROR }
@@ -477,20 +525,15 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
-        fun stopRecording(s: Settings) {
-            if (stage != Stage.RECORDING) return
-            durationSec = ((System.currentTimeMillis() - recStartMs) / 1000L).toInt().coerceAtLeast(1)
-            BubbleService.recordingStopper = null
-            ampJob?.cancel()
-            BubbleService.instance?.showIdle()
-            val local = s.sttProvider == "local"
-            val floats = if (local) audioRecorder.stopToFloats() else null
-            val wav = if (local) null else audioRecorder.stopToWav()
-            if ((local && floats == null) || (!local && wav == null)) {
-                error = "Didn't catch any audio. Tap and speak a little longer."
-                stage = Stage.ERROR
-                return
-            }
+        /**
+         * Transcribe a take and run it through the cleanup pipeline. Shared by the first
+         * attempt and every retry — a retry must not be a second, subtly different code path.
+         * [recId] names the durable copy; the cloud backend uploads that exact file.
+         */
+        fun runTranscription(s: Settings, samples: ShortArray, recId: String?) {
+            error = null; notice = null; output = ""; finalText = ""
+            recId?.let { PendingAudio.claim(it) }
+            pendingId = recId
             stage = Stage.TRANSCRIBING
             streamJob = scope.launch {
                 try {
@@ -498,22 +541,78 @@ class RewriteActivity : ComponentActivity() {
                     // Personal vocab biases decoding (B3) on both backends, then snaps
                     // remaining near-misses afterward (B2).
                     val bias = if (vocab.isEmpty()) null else VocabCorrector.biasPrompt(vocab)
-                    val raw = if (local) {
-                        OnDeviceStt.transcribe(this@RewriteActivity, s, floats!!, bias)
+                    val raw = if (s.sttProvider == "local") {
+                        OnDeviceStt.transcribe(this@RewriteActivity, s, WavIo.toFloats(samples), bias)
                     } else {
-                        SttEngine.transcribe(s, wav!!, bias).also { wav.delete() }
+                        SttEngine.transcribe(s, PendingAudio.wavFile(this@RewriteActivity, recId!!), bias)
                     }
                     val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
-                    wav?.delete(); error = friendlyError(e); stage = Stage.ERROR
+                    // Deliberately does not touch the saved recording. This is exactly the
+                    // failure the write-ahead copy exists for; deleting it here is what used
+                    // to turn a transient error into permanently lost words.
+                    error = friendlyError(e); stage = Stage.ERROR
                 }
             }
         }
 
+        /** Re-run the saved audio, optionally on a different engine. */
+        fun retryTranscription(s: Settings) {
+            val id = pendingId ?: return
+            val samples = PendingAudio.samples(this@RewriteActivity, id)
+            if (samples == null) {
+                error = "That recording is no longer on this device."
+                stage = Stage.ERROR
+                return
+            }
+            runTranscription(s, samples, id)
+        }
+
+        fun stopRecording(s: Settings) {
+            if (stage != Stage.RECORDING) return
+            durationSec = ((System.currentTimeMillis() - recStartMs) / 1000L).toInt().coerceAtLeast(1)
+            BubbleService.recordingStopper = null
+            ampJob?.cancel()
+            BubbleService.instance?.showIdle()
+            val samples = audioRecorder.stop()
+            if (samples == null) {
+                error = "Didn't catch any audio. Tap and speak a little longer."
+                stage = Stage.ERROR
+                return
+            }
+            // Write-ahead: the take is on durable storage before the first transcription
+            // attempt, on the on-device path too — that path used to hold the only copy in
+            // RAM, so any failure or process death took the recording with it.
+            val host = (dictationHostPkg ?: OpenWisprAccessibilityService.lastHostPackage).orEmpty()
+            val rec = PendingAudio.begin(
+                this@RewriteActivity, samples, durationSec,
+                appPackage = host, appLabel = appLabel(host),
+                sttProvider = s.sttProvider, sttModel = s.sttModel,
+            )
+            if (rec == null && s.sttProvider != "local") {
+                // The cloud upload needs a file and we just failed to write one — say so
+                // rather than proceeding as if a recoverable copy existed.
+                error = "Couldn't save the recording — free up some storage and try again."
+                stage = Stage.ERROR
+                return
+            }
+            runTranscription(s, samples, rec?.id)
+        }
+
         fun startRecording(s: Settings) {
             error = null; notice = null; transcript = ""; output = ""; finalText = ""; amps.clear()
+            // "Keep history" off promises nothing is saved to disk. Clear anything a previous
+            // session left behind (e.g. a crash mid-dictation) before this one writes its own.
+            if (!DictationHistory.keepHistory(this@RewriteActivity)) {
+                val ctx = applicationContext
+                Thread { runCatching { PendingAudio.purgeAll(ctx) } }.start()
+            }
+            // A previous take in this sheet (they hit "Record again") is no longer live. It
+            // keeps its audio and stays retryable from Home; this take gets its own row.
+            pendingId?.let { PendingAudio.release(it) }
+            pendingId = null
             // Snapshot the target app now, while it still has focus, before our sheet or any
             // system window can steal it (otherwise the entry gets mislabelled, e.g. "System UI").
             dictationHostPkg = OpenWisprAccessibilityService.lastHostPackage
@@ -562,18 +661,41 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
-        fun cancelAndFinish() {
+        /**
+         * [discardAudio] separates the two ways out of this sheet. "Discard" is the user
+         * throwing the dictation away — a terminal outcome, so the recording goes with it.
+         * Backing out of an error is not: that audio stays on disk, retryable from Home.
+         */
+        fun cancelAndFinish(discardAudio: Boolean = false) {
             streamJob?.cancel(); ampJob?.cancel()
             BubbleService.recordingStopper = null
             BubbleService.instance?.showIdle()
             audioRecorder.cancel()
+            pendingId?.let { id ->
+                val ctx = applicationContext
+                pendingId = null
+                if (discardAudio) Thread { runCatching { PendingAudio.discard(ctx, id) } }.start()
+                else PendingAudio.release(id)
+            }
             setResult(Activity.RESULT_CANCELED)
             finish()
         }
 
         LaunchedEffect(Unit) {
             val s = repo.get(); settings = s
-            if (autoRecord) ensurePermissionThenRecord(s)
+            val retry = retryId
+            if (retry != null) {
+                // Opened from Home to re-run a recording an earlier attempt never finished.
+                val rec = withContext(Dispatchers.IO) { PendingAudio.get(this@RewriteActivity, retry) }
+                val saved = withContext(Dispatchers.IO) { PendingAudio.samples(this@RewriteActivity, retry) }
+                if (rec == null || saved == null) {
+                    error = "That recording is no longer on this device."; stage = Stage.ERROR
+                } else {
+                    durationSec = rec.durationSec
+                    dictationHostPkg = rec.appPackage.ifBlank { null }
+                    runTranscription(s, saved, retry)
+                }
+            } else if (autoRecord) ensurePermissionThenRecord(s)
         }
         LaunchedEffect(pendingStart) {
             if (pendingStart) { pendingStart = false; settings?.let { startRecording(it) } }
@@ -654,7 +776,7 @@ class RewriteActivity : ComponentActivity() {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             TextButton(onClick = {
                                 runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
-                                cancelAndFinish()
+                                cancelAndFinish(discardAudio = true)
                             }) {
                                 Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Text("  Discard")
                             }
@@ -693,7 +815,7 @@ class RewriteActivity : ComponentActivity() {
                             Row {
                                 TextButton(onClick = {
                                     runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
-                                    cancelAndFinish()
+                                    cancelAndFinish(discardAudio = true)
                                 }) { Text("Discard") }
                                 TextButton(onClick = {
                                     runCatching { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
@@ -713,10 +835,40 @@ class RewriteActivity : ComponentActivity() {
                     if (error != null) {
                         Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     }
+                    // The recording outlived the failure, so offer to re-run it before asking
+                    // the user to say the whole thing again. Two choices only — re-run the
+                    // audio we still have, or start over. Back dismisses; the recording stays
+                    // on disk either way and is retryable from Home.
+                    val saved = pendingId
+                    // Re-running the *same* on-device engine on the *same* samples is
+                    // deterministic — it fails identically. So a retry prefers the other
+                    // downloaded engine, which is the only thing that can actually rescue the
+                    // take. Falls back to the current engine (cloud, or only one model), where
+                    // a retry does mean something because the failure was transient.
+                    val alt = if (saved != null) settings?.let { altOnDeviceEngine(it) } else null
+                    if (saved != null) {
+                        Text(
+                            if (alt != null)
+                                "Your recording is saved on this device — nothing was lost. " +
+                                    "Retry runs it again on ${alt.second}."
+                            else "Your recording is saved on this device — nothing was lost.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { cancelAndFinish() }) { Text("Close") }
+                        if (saved != null) {
+                            TextButton(onClick = {
+                                settings?.let { s ->
+                                    retryTranscription(if (alt != null) s.copy(sttModel = alt.first) else s)
+                                }
+                            }) {
+                                Icon(Icons.Default.Refresh, null, Modifier.size(18.dp)); Text("  Retry")
+                            }
+                        }
                         TextButton(onClick = { onMicTap() }) {
-                            Icon(Icons.Default.Refresh, null, Modifier.size(18.dp)); Text("  Try again")
+                            Icon(Icons.Default.Mic, null, Modifier.size(18.dp))
+                            Text(if (saved != null) "  Record again" else "  Try again")
                         }
                     }
                 }

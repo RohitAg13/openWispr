@@ -21,6 +21,7 @@
 		3F0C85A66A498253F9D6F133 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8EDD81FB9913BC1BC0CC25 /* SettingsView.swift */; };
 		3FDDC578961C8AA92CD90476 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D58E56F2D386A113D12352B /* AppSettings.swift */; };
 		515AA42779AD16A9261120DD /* ParakeetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */; };
+		5B17B674E4B1C021E692B3D4 /* PendingAudioStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECF7E4D2944DD93EFADAA7D /* PendingAudioStore.swift */; };
 		5FAF1F31DC1DAD60EA84AEDB /* WhisperSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA0CE98BE29CF60211B55D5 /* WhisperSTT.swift */; };
 		610E71F926A1145E62EE0D78 /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 5342A1BFAF9FB8F46CE0A6E1 /* LlamaFramework */; };
 		675526A3DC2A5A26667FCC57 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3369A816EA3D5C7403DE0DA /* OnboardingView.swift */; };
@@ -57,6 +58,7 @@
 		3AD2F169F5B404A53861CE81 /* OpenWispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B19D8A624CAF050B187238A /* WhisperModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperModel.swift; sourceTree = "<group>"; };
 		3D7C8EE5B1CD881D96AF429D /* HotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKey.swift; sourceTree = "<group>"; };
+		3ECF7E4D2944DD93EFADAA7D /* PendingAudioStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingAudioStore.swift; sourceTree = "<group>"; };
 		41289BBCDAB952C0AA44E620 /* SileroVAD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SileroVAD.swift; sourceTree = "<group>"; };
 		443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalDictionaryView.swift; sourceTree = "<group>"; };
 		48667A0CCB7F8C23E3A3B9C6 /* TextInserter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInserter.swift; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 				1D3E1F5F21B99476197A9DD7 /* OpenWisprApp.swift */,
 				9A02DBF7F3F65CF95FAFD9E7 /* ParakeetModel.swift */,
 				E787768CD9DAD25C977CD704 /* ParakeetSTT.swift */,
+				3ECF7E4D2944DD93EFADAA7D /* PendingAudioStore.swift */,
 				443DFC009FD7E7B7BAD2717E /* PersonalDictionaryView.swift */,
 				C6955227F30F04FA604BF89A /* PersonalizationStores.swift */,
 				C2791865DF65073E3B5E7363 /* RecordingHUD.swift */,
@@ -283,6 +286,7 @@
 				79492398B02924E36F4C8FB5 /* OpenWisprApp.swift in Sources */,
 				515AA42779AD16A9261120DD /* ParakeetModel.swift in Sources */,
 				177585A091E711CACA01036E /* ParakeetSTT.swift in Sources */,
+				5B17B674E4B1C021E692B3D4 /* PendingAudioStore.swift in Sources */,
 				EF648D5DF1514550D65165DE /* PersonalDictionaryView.swift in Sources */,
 				AE5F41556A5DA505AF75C91E /* PersonalizationStores.swift in Sources */,
 				D8C0908D061D11C2C108077C /* RecordingHUD.swift in Sources */,
@@ -338,7 +342,7 @@
 				CODE_SIGN_IDENTITY = "OpenWispr Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -358,7 +362,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -444,7 +448,7 @@
 				CODE_SIGN_IDENTITY = "OpenWispr Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -458,7 +462,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

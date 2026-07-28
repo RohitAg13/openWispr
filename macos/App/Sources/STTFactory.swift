@@ -51,6 +51,52 @@ enum STTFactory {
         }
     }
 
+    /// Build a specific provider, bypassing the user's setting. Used only by "retry on a
+    /// different engine": Whisper and Parakeet mis-hear different things, so re-running saved
+    /// audio on the other one genuinely rescues transcripts, and on-device it costs nothing.
+    /// Returns nil when the engine's model isn't downloaded.
+    static func make(_ provider: STTProvider) -> STT? {
+        switch provider {
+        case .appleSpeech:
+            return AppleSpeechSTT()
+        case .whisper:
+            let manager = WhisperModelManager.shared
+            let model = AppSettings.shared.whisperModel
+            guard manager.isDownloaded(model) else { return nil }
+            if let cached = cachedWhisper, cached.model == model { return cached.stt }
+            let stt = WhisperSTT(model: model, modelPath: manager.fileURL(for: model).path)
+            cachedWhisper = (model, stt)
+            return stt
+        case .parakeet:
+            let manager = ParakeetModelManager.shared
+            guard manager.isDownloaded else { return nil }
+            if let cached = cachedParakeet { return cached }
+            let stt = ParakeetSTT(modelDirectory: manager.modelDirectory)
+            cachedParakeet = stt
+            return stt
+        }
+    }
+
+    /// The engine a take will actually run on, accounting for the not-downloaded fallback.
+    /// Recorded alongside a pending recording so a retry knows what already failed.
+    static func resolvedProvider() -> STTProvider {
+        usesAppleSpeech() ? .appleSpeech : AppSettings.shared.sttProvider
+    }
+
+    /// A downloaded on-device engine that *isn't* `provider`, for a second attempt at saved
+    /// audio. Nil when the user has nothing else installed.
+    static func alternative(to provider: STTProvider) -> STTProvider? {
+        let candidates: [STTProvider] = [.parakeet, .whisper]
+        return candidates.first { candidate in
+            guard candidate != provider else { return false }
+            switch candidate {
+            case .parakeet: return ParakeetModelManager.shared.isDownloaded
+            case .whisper:  return WhisperModelManager.shared.isDownloaded(AppSettings.shared.whisperModel)
+            case .appleSpeech: return false
+            }
+        }
+    }
+
     /// Whether the next take will use Apple Speech (so the caller knows to request Speech
     /// recognition permission). True for the Apple provider and for the on-device fallbacks.
     static func usesAppleSpeech() -> Bool {

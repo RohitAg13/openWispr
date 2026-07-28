@@ -125,6 +125,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var vadAutoStop by remember { mutableStateOf(true) }
     var bubbleOnlyOnFields by remember { mutableStateOf(true) }
     var keepHistory by remember { mutableStateOf(DictationHistory.keepHistory(context)) }
+    var audioKeepDays by remember { mutableStateOf(PendingAudio.keepDays(context)) }
 
     var advancedOpen by remember { mutableStateOf(false) }
     var cloudLlmOpen by remember { mutableStateOf(false) }
@@ -397,11 +398,39 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             Section("Privacy") {
                 Card {
                     ToggleRow("Keep history", "Stored on this device · powers personalization", keepHistory) {
-                        keepHistory = it; DictationHistory.setKeepHistory(context, it)
+                        keepHistory = it
+                        DictationHistory.setKeepHistory(context, it)
+                        // "Nothing is saved to disk" has to include the audio, so turning
+                        // history off takes the retained recordings with it.
+                        if (!it) launch { PendingAudio.purgeAll(context) }
+                    }
+                    if (keepHistory) {
+                        Divider()
+                        Padded {
+                            Label("Keep audio")
+                            Text(
+                                "Recordings stay on this device so a dictation that fails can be run " +
+                                    "again. Never uploaded.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(11.dp))
+                            Segment(
+                                options = listOf("7" to "7 days", "30" to "30 days", "90" to "90 days", "0" to "Forever"),
+                                selected = audioKeepDays.toString(),
+                                onSelect = { d ->
+                                    audioKeepDays = d.toInt()
+                                    launch { PendingAudio.setKeepDays(context, audioKeepDays) }
+                                },
+                            )
+                        }
                     }
                     Divider()
                     NavRow("Clear all data", danger = true, icon = Icons.Default.Delete) {
-                        launch { DictationHistory.all(context).forEach { DictationHistory.delete(context, it.id) } }
+                        launch {
+                            DictationHistory.all(context).forEach { DictationHistory.delete(context, it.id) }
+                            PendingAudio.purgeAll(context)
+                        }
                         Toast.makeText(context, "On-device history cleared", Toast.LENGTH_SHORT).show()
                     }
                 }

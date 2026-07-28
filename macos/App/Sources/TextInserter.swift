@@ -13,8 +13,22 @@ import ApplicationServices
 ///
 /// Requires the app to be (a) non-sandboxed and (b) granted Accessibility access by the user in
 /// System Settings ▸ Privacy & Security ▸ Accessibility (needed to post the synthetic keystroke).
-/// Never throws; degrades to `false`.
+/// Never throws; reports what happened via `Outcome` and never leaves the text nowhere.
 enum TextInserter {
+
+    /// What actually happened to the text. Three cases, not two: "we dispatched a ⌘V but
+    /// couldn't see it land" is a real and common outcome (the target exposes no usable AX,
+    /// or is slow, or the grant was revoked mid-flight), and collapsing it into "inserted"
+    /// is what used to silently destroy dictations — we'd restore the previous pasteboard
+    /// 120 ms later over a paste that never happened, leaving the user with nothing at all.
+    enum Outcome {
+        /// Verified: the focused field changed right after our keystroke.
+        case inserted
+        /// Dispatched, but unconfirmable. The transcript is left on the pasteboard.
+        case unverified
+        /// Couldn't even dispatch. The transcript is left on the pasteboard.
+        case failed
+    }
 
     /// Whether this process is currently trusted for Accessibility.
     static var isTrusted: Bool { AXIsProcessTrusted() }
@@ -26,12 +40,14 @@ enum TextInserter {
         _ = AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Insert `text` into the focused field of `app`. Returns `true` if the paste was dispatched,
-    /// `false` if we can't act (e.g. not trusted, or the keystroke couldn't be synthesized).
+    /// Insert `text` into the focused field of `app`.
+    ///
+    /// The caller must handle every `Outcome`: on anything but `.inserted` the text is sitting
+    /// on the pasteboard and the user needs to be told so.
     @discardableResult
-    static func insert(_ text: String, into app: NSRunningApplication?) -> Bool {
-        guard isTrusted else { return false }
-        guard !text.isEmpty else { return false }
+    static func insert(_ text: String, into app: NSRunningApplication?) -> Outcome {
+        guard !text.isEmpty else { return .failed }
+        guard isTrusted else { return .failed }
 
         // Bring the target app forward and let focus settle before we paste into it.
         if let app = app, !app.isActive {
@@ -39,31 +55,72 @@ enum TextInserter {
             spin(milliseconds: 100)
         }
 
-        // Paste at the caret (replacing any selection), preserving the user's pasteboard.
-        return insertViaPaste(text)
+        return insertViaPaste(text, into: app)
     }
 
     // MARK: - Paste
 
-    private static func insertViaPaste(_ text: String) -> Bool {
+    private static func insertViaPaste(_ text: String, into app: NSRunningApplication?) -> Outcome {
         let pasteboard = NSPasteboard.general
-        // Save the current string contents so we can restore them after the paste lands.
+        // Save the current string contents so we can put them back — but *only* if we can see
+        // the paste land. Losing the user's dictation is worse than a one-off clipboard write
+        // they can clear, so an unconfirmed paste keeps the transcript where they can reach it.
         let previous = pasteboard.string(forType: .string)
+        let lengthBefore = focusedTextLength(of: app)
 
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
-        guard postCommandV() else {
-            // Couldn't synthesize the event; restore immediately and report failure.
-            restore(previous, to: pasteboard)
-            return false
-        }
+        guard postCommandV() else { return .failed }
 
-        // Let the paste complete before restoring; the target reads the pasteboard async.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            restore(previous, to: pasteboard)
+        guard didFieldChange(from: lengthBefore, in: app) else { return .unverified }
+
+        restore(previous, to: pasteboard)
+        return .inserted
+    }
+
+    /// Watch the focused field for a beat and report whether it changed after our keystroke.
+    ///
+    /// This is the only evidence available that works across native fields, browsers, terminals
+    /// and Electron alike — `postCommandV` returning true means the *event was constructed*, not
+    /// that anything received it. When the target exposes no readable length (plenty don't) we
+    /// return false, i.e. "couldn't confirm", which is the safe answer.
+    private static func didFieldChange(from before: Int?, in app: NSRunningApplication?) -> Bool {
+        guard let before = before else { return false }
+        // ~360 ms total: long enough for a slow Electron app to consume the paste, short enough
+        // that the user doesn't notice us waiting.
+        for _ in 0..<9 {
+            spin(milliseconds: 40)
+            if let now = focusedTextLength(of: app), now != before { return true }
         }
-        return true
+        return false
+    }
+
+    /// Character count of the target app's focused element, or nil when it doesn't say.
+    /// `kAXNumberOfCharacters` is cheap and widely supported; `kAXValue` is the fallback.
+    private static func focusedTextLength(of app: NSRunningApplication?) -> Int? {
+        guard let pid = app?.processIdentifier else { return nil }
+        let appElement = AXUIElementCreateApplication(pid)
+
+        var focused: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focused) == .success,
+            let element = focused, CFGetTypeID(element) == AXUIElementGetTypeID()
+        else { return nil }
+        // swiftlint:disable:next force_cast
+        let field = element as! AXUIElement
+
+        var count: CFTypeRef?
+        if AXUIElementCopyAttributeValue(field, kAXNumberOfCharactersAttribute as CFString, &count) == .success,
+           let n = count as? Int {
+            return n
+        }
+        var value: CFTypeRef?
+        if AXUIElementCopyAttributeValue(field, kAXValueAttribute as CFString, &value) == .success,
+           let s = value as? String {
+            return s.count
+        }
+        return nil
     }
 
     private static func restore(_ previous: String?, to pasteboard: NSPasteboard) {
