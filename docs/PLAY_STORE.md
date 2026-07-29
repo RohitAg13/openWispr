@@ -148,6 +148,19 @@ Fill the IARC questionnaire as a **Utility / Productivity** app:
 > "Upload AAB to Play internal track" and "Promote to production" steps actually ran. Add the
 > secret via Part A step 4.
 
+> **Play publishing lives in its own `play` job.** It is deliberately *not* a dependency of the
+> GitHub Release job. On v1.1.0 the promote step failed and, because it was then a step inside the
+> `android` job, it failed that whole job — so `release`'s `needs: [android]` was never satisfied
+> and no GitHub Release was published at all. A Play-side hiccup cost the macOS DMG and the APK
+> download too. The two channels now fail independently.
+
+> **Promotion retries.** Play's edit API is read-after-write eventually consistent: an edit opened
+> seconds after the internal commit can report `Track 'internal' doesn't have any releases` when
+> the release is in fact there. The promote step retries with backoff rather than sleeping a fixed
+> guess. If it exhausts its attempts, the internal upload has still succeeded — promote by hand
+> rather than re-running the job, because re-running rebuilds and re-uploads the same
+> `versionCode`, which Play rejects as a duplicate.
+
 After Part A is done, each release is:
 1. Bump `versionCode` (and `versionName`) in `android/app/build.gradle.kts`. Play rejects a
    duplicate `versionCode`, so this bump is mandatory even for a no-op rebuild. Keep
