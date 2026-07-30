@@ -8,6 +8,11 @@
 <meta property="og:title" content="OpenWispr — Your voice never leaves your device">
 <meta property="og:description" content="Open-source, 100% on-device voice dictation for macOS and Android. No cloud, no account, no tracking.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/">
+<!-- www and the Railway subdomain both still serve this page. Without a canonical, search
+     engines see three hosts with identical content and split the ranking between them.
+     Set CANONICAL_HOST on the Railway service to enforce it with a 301 (see website/README.md). -->
+<link rel="canonical" href="https://openwispr.dev/">
 <meta name="theme-color" content="#f5f1e6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,7 +49,7 @@
       h1 { font-size: 33px !important; }
     }
   </style>
-  <script defer data-domain="openwispr.up.railway.app" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+  <script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
 </head>
 <body>
 <div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">

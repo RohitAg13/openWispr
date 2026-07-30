@@ -23,7 +23,25 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
+// Optional host consolidation. Three hosts serve this site — openwispr.dev,
+// www.openwispr.dev, and the *.up.railway.app subdomain Railway never retires — which is a
+// split ranking rather than redundancy. Setting CANONICAL_HOST 301s the other two to it.
+//
+// Deliberately opt-in and unset by default: turning it on before the apex has a DNS record
+// would redirect the working www host to a dead one and take the site down. Set it only once
+// `dig +short openwispr.dev` returns an answer. 301s are cached hard by browsers, so verify
+// the target resolves before enabling.
+const CANONICAL_HOST = process.env.CANONICAL_HOST || '';
+
 const server = http.createServer((req, res) => {
+  if (CANONICAL_HOST) {
+    const host = (req.headers.host || '').split(':')[0];
+    if (host && host !== CANONICAL_HOST) {
+      res.writeHead(301, { Location: `https://${CANONICAL_HOST}${req.url || '/'}` });
+      res.end();
+      return;
+    }
+  }
   // strip query string, decode, normalize, prevent path traversal
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';

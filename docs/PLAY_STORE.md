@@ -8,7 +8,7 @@ fastlane** once the one-time setup below is done.
 - Build: `versionName 1.0.1`, `versionCode 4`, `targetSdk 36`, arm64-v8a only
 - Store listing (copy + graphics) lives in `android/fastlane/metadata/android/en-US/`
 - Graphics are generated from HTML — see `tools/store-assets/`, not a design tool
-- Privacy policy: `website/privacy.html` → hosted at `https://openwispr.up.railway.app/privacy.html`
+- Privacy policy: `website/privacy.html` → hosted at `https://openwispr.dev/privacy.html`
 
 ---
 
@@ -57,7 +57,7 @@ add tester emails → **Save & publish**. (You can also grab the AAB from a tagg
   ```
 
 ### 5. Publish the privacy policy
-Deploy the website (Railway auto-deploys on push). Confirm `https://openwispr.up.railway.app/privacy.html`
+Deploy the website (Railway auto-deploys on push). Confirm `https://openwispr.dev/privacy.html`
 loads, and paste that URL into Play Console → **App content → Privacy policy**.
 
 ---

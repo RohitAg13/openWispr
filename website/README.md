@@ -53,7 +53,36 @@ detect `package.json`. The Root Directory field is under the service
 > Note: Railway's **Nixpacks** builder is legacy; this project targets **Railpack**
 > (Option B) or a plain **Dockerfile** (Option A).
 
-Add a custom domain under **Settings → Networking** when ready.
+## Domain
+
+The canonical host is **`openwispr.dev`**. It is set on the Railway service under
+**Settings → Networking → Custom Domain**, which issues the certificate and prints
+the DNS record to create at the registrar (a `CNAME` for `www`, or Railway's
+ALIAS/ANAME target for the apex — an apex `CNAME` is not valid DNS and registrars
+that appear to accept one are doing something proprietary).
+
+The generated `*.up.railway.app` subdomain keeps working after the custom domain is
+attached; Railway does not retire it. So three hosts can serve identical content —
+apex, `www`, and the Railway subdomain — which is a split ranking, not redundancy.
+Both pages therefore carry a `<link rel="canonical">` pointing at the apex, and
+Plausible's `data-domain` is set to `openwispr.dev`.
+
+To make the consolidation real rather than advisory, set **`CANONICAL_HOST`** on the
+Railway service:
+
+```
+CANONICAL_HOST=openwispr.dev
+```
+
+`server.js` then 301s every other host to it. It is unset by default on purpose —
+enabling it before the apex resolves would redirect the working `www` host to a dead
+one and take the site down. Check first:
+
+```bash
+dig +short openwispr.dev      # must return an answer before enabling
+```
+
+301s are cached aggressively by browsers, so a wrong value here is expensive to undo.
 
 ## Editing
 
