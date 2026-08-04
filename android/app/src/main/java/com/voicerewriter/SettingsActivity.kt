@@ -123,6 +123,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var deterministicCleanup by remember { mutableStateOf(true) }
     var polishLevel by remember { mutableStateOf(PolishLevel.OFF) }
     var vadAutoStop by remember { mutableStateOf(true) }
+    var parakeetHotwordsExperimental by remember { mutableStateOf(false) }
     var bubbleOnlyOnFields by remember { mutableStateOf(true) }
     var keepHistory by remember { mutableStateOf(DictationHistory.keepHistory(context)) }
     var audioKeepDays by remember { mutableStateOf(PendingAudio.keepDays(context)) }
@@ -161,6 +162,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         defaultMode = s.defaultMode
         deterministicCleanup = s.deterministicCleanup; polishLevel = s.polishLevel
         vadAutoStop = s.vadAutoStop; bubbleOnlyOnFields = s.bubbleOnlyOnFields
+        parakeetHotwordsExperimental = s.parakeetHotwordsExperimental
         a11yEnabled = SetupUtils.accessibilityEnabled(context)
         notifOn = SetupUtils.notificationsGranted(context)
         micGranted = SetupUtils.micGranted(context)
@@ -176,6 +178,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         deterministicCleanup = deterministicCleanup, polishLevel = polishLevel,
         vadAutoStop = vadAutoStop, bubbleOnlyOnFields = bubbleOnlyOnFields,
         hasCompletedOnboarding = true,
+        parakeetHotwordsExperimental = parakeetHotwordsExperimental,
     )
 
     // Persist silently on every change (the design saves immediately).
@@ -316,6 +319,16 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                     }
                     Divider()
                     ToggleRow("Auto-stop on pause", "End recording when you stop talking", vadAutoStop) { vadAutoStop = it; persist() }
+                    if (sttProvider == "local" && OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel))) {
+                        Divider()
+                        ToggleRow(
+                            "Vocab-biased decoding (experimental)",
+                            "Tries harder to hit your personal dictionary during transcription, not just after. " +
+                                "Uses a decode mode with a known upstream bug — occasionally returns blank or " +
+                                "wrong text. Leave off unless you're testing it.",
+                            parakeetHotwordsExperimental,
+                        ) { parakeetHotwordsExperimental = it; persist() }
+                    }
                 }
             }
 
