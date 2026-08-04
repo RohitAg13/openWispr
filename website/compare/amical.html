@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr vs Amical — confirmed on-device Android vs an architecture Amical doesn't disclose</title>
+<meta name="description" content="OpenWispr vs Amical on Android: both MIT-licensed, both live on Google Play. Amical's own docs never state whether Android transcription runs on-device or in the cloud — this page doesn't guess, and neither should you.">
+<meta property="og:title" content="OpenWispr vs Amical">
+<meta property="og:description" content="Amical is MIT, on Google Play, with a real context-aware formatting feature. Whether its Android build transcribes on-device is something even its own docs don't say. Here's what's actually confirmed.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/compare/amical.html">
+<link rel="canonical" href="https://openwispr.dev/compare/amical.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does Amical's Android app run on-device or in the cloud?","acceptedAnswer":{"@type":"Answer","text":"This isn't publicly confirmed either way. Amical's site, beta page, and quick-start docs never state it, and their marketing mentions cloud models \"for increased accuracy and speed on mobile\" — which hints at cloud without confirming it. This page doesn't guess, and it doesn't claim OpenWispr is \"the only\" on-device Android option as a result."}},{"@type":"Question","name":"Is Amical open source?","acceptedAnswer":{"@type":"Answer","text":"Yes — MIT-licensed, same as OpenWispr, at 1,468 GitHub stars."}},{"@type":"Question","name":"Does Amical have an iOS app?","acceptedAnswer":{"@type":"Answer","text":"An invite-only TestFlight beta, not a public release. OpenWispr has no iOS build yet at all."}},{"@type":"Question","name":"What is Amical's context-aware formatting?","acceptedAnswer":{"@type":"Answer","text":"It detects the frontmost app you're dictating into and adjusts tone accordingly — more professional in Gmail, casual in Slack, clean in an IDE — across 100+ languages. It's a real, shipped feature OpenWispr doesn't currently match."}},{"@type":"Question","name":"Is OpenWispr confirmed on-device on Android, unlike Amical?","acceptedAnswer":{"@type":"Answer","text":"Yes — OpenWispr's Android transcription is on-device and checkable in its open-source code. The comparison here isn't \"OpenWispr is on-device and Amical isn't\" — it's that OpenWispr's status is confirmable and Amical's currently isn't, which is itself worth knowing."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://openwispr.dev/#compare"},{"@type":"ListItem","position":3,"name":"vs Amical","item":"https://openwispr.dev/compare/amical.html"}]}</script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden;">
+  <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:820px; margin:0 auto; padding:50px 32px 60px; text-align:center;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">OpenWispr vs Amical</span>
+    </div>
+    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">OpenWispr vs Amical</h1>
+    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">Amical is the most direct Android competitor in this research — MIT-licensed, live on Google Play, with a genuinely useful context-aware formatting feature. One thing it doesn't disclose: whether its Android build transcribes on-device or in the cloud.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">Get it on Google Play</a>
+    </div>
+    
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/#compare" style="color:oklch(0.55 0.03 50);">Compare</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">vs Amical</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The short version, and an honesty note up front</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">We don't know how Amical's Android app processes your voice — and neither, publicly, does anyone outside Amical.</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Amical (MIT, TypeScript/Electron, 1,468 ★) is genuinely on-device on macOS and Windows via Ollama, with cloud as an option there. On Android — where it's the most direct competitor to OpenWispr in this research — its architecture is different in one specific, unresolved way: neither amical.ai, its beta page, nor its quick-start docs state whether Android transcription happens on the device or in the cloud. Their marketing mentions cloud models "for increased accuracy and speed on mobile," which hints at cloud, but that's an inference, not a confirmed fact. This page won't guess, and it won't claim OpenWispr is "the only" on-device Android option because of that open question.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">What is confirmed either way: both apps are MIT-licensed, both ship on Google Play, and Amical has a real differentiator — context-aware output formatting that detects the frontmost app and adapts tone (professional in Gmail, casual in Slack, clean in an IDE) across 100+ languages. iOS is invite-only TestFlight, not public.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:1000px; margin:0 auto; padding:60px 32px;">
+    <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr;">
+    <div style="padding:18px 24px; border-bottom:1px solid oklch(0.92 0.012 72);"></div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; background:oklch(0.97 0.018 72);">
+      <svg viewBox="0 0 100 100" style="width:22px; height:22px; display:block; color:oklch(0.66 0.13 40);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:13.5px; font-weight:700; color:oklch(0.3 0.03 45);">OpenWispr</span>
+    </div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">Amical<br><span style="font-size:11px; font-weight:400; color:oklch(0.6 0.02 55);">1,468 ★</span></span>
+    </div>
+  </div>
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Android transcription location</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Confirmed on-device — checkable in open-source code</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Undisclosed by Amical's own docs; marketing hints at cloud &quot;for increased accuracy and speed on mobile&quot; but doesn't confirm it</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">iOS availability</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not shipped</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Invite-only TestFlight beta — no public release</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Context-aware output formatting by app</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not shipped today</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — adapts tone per app (Gmail vs Slack vs IDE) across 100+ languages</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">macOS / Windows on-device</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">macOS: yes, confirmed</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes, via Ollama — confirmed for desktop specifically</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Price</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Free, one tier</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Free</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Open source</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Yes — MIT</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — MIT</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">GitHub stars</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">New project</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">1,468</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Hotkey design</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Single hotkey</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Fn for push-to-talk, Fn+Space for hands-free continuous — a two-tier model</span></div>
+</div>
+</div>
+    <div style="text-align:center; font-size:12.5px; color:oklch(0.58 0.025 52); margin-top:16px;">Sourced from the competitor's own documentation, changelog, and public statements as cited below. Figures can change — see linked sources for the latest.</div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The open question, stated plainly</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Why this page won't call Amical "cloud-based" or "on-device" on Android</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">This is the single most consequential unresolved question in the research behind this comparison. Amical's site, beta page, and quick-start docs never state where Android transcription runs. Their marketing copy about cloud models improving accuracy and speed "on mobile" is suggestive, not conclusive — it's consistent with cloud transcription, but it's also consistent with an optional cloud enhancement layered over a local base. Absent an APK teardown or a direct statement from Amical, calling it either way would be asserting something this research doesn't actually know.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">This matters because it's the same trap this page is trying not to fall into on OpenWispr's behalf: the claim "the only free, MIT-licensed, genuinely on-device dictation app on Android" is a strong claim, and it would be false if said carelessly while Amical's status is unresolved. So it isn't made here.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Where Amical is ahead</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">A real formatting feature, and an iOS beta</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Context-aware formatting — detecting the app you're dictating into and adjusting tone accordingly, across 100+ languages — is a shipped, genuinely useful feature OpenWispr doesn't have an equivalent for today. Amical also has an invite-only iOS TestFlight beta in motion; OpenWispr has no iOS build at all yet, in beta or otherwise.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Its two-tier hotkey pattern — Fn for push-to-talk, Fn+Space for hands-free continuous dictation — is also a well-designed piece of UX worth naming on its own merits, independent of the platform question above.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Amical's Android app run on-device or in the cloud?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">This isn't publicly confirmed either way. Amical's site, beta page, and quick-start docs never state it, and their marketing mentions cloud models "for increased accuracy and speed on mobile" — which hints at cloud without confirming it. This page doesn't guess, and it doesn't claim OpenWispr is "the only" on-device Android option as a result.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Amical open source?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — MIT-licensed, same as OpenWispr, at 1,468 GitHub stars.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Amical have an iOS app?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">An invite-only TestFlight beta, not a public release. OpenWispr has no iOS build yet at all.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What is Amical's context-aware formatting?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">It detects the frontmost app you're dictating into and adjusts tone accordingly — more professional in Gmail, casual in Slack, clean in an IDE — across 100+ languages. It's a real, shipped feature OpenWispr doesn't currently match.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is OpenWispr confirmed on-device on Android, unlike Amical?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — OpenWispr's Android transcription is on-device and checkable in its open-source code. The comparison here isn't "OpenWispr is on-device and Amical isn't" — it's that OpenWispr's status is confirmable and Amical's currently isn't, which is itself worth knowing.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/compare/typeless.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs Typeless (reportedly cloud-only, closed source)</div>
+</a>
+<a href="/android/on-device-whisper-dictation-android.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Long-tail guide</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">On-device Whisper dictation for Android</div>
+</a>
+<a href="/use-cases/mac-and-android-dictation.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Use case</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">One free, open-source app for macOS and Android</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>

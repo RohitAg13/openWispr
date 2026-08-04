@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr vs Muesli — dictation-only + Android vs dictation-plus-meeting-notes, Apple Silicon only</title>
+<meta name="description" content="OpenWispr vs Muesli: Muesli adds Granola-style local meeting transcription with speaker labels to its dictation, publishes a clear model table, and is Apple Silicon Mac only.">
+<meta property="og:title" content="OpenWispr vs Muesli">
+<meta property="og:description" content="Muesli bundles dictation with local meeting transcription and the clearest published model table in this research. It's Apple Silicon Mac only, with no Android app.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/compare/muesli.html">
+<link rel="canonical" href="https://openwispr.dev/compare/muesli.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does Muesli have an Android app?","acceptedAnswer":{"@type":"Answer","text":"No. Muesli is macOS 14.2+, Apple Silicon only, with no build for Windows, Linux, iOS, or Android. OpenWispr's Android app is live on Google Play."}},{"@type":"Question","name":"Does OpenWispr do meeting transcription like Muesli?","acceptedAnswer":{"@type":"Answer","text":"Not today. Muesli's local, Granola-style meeting transcription with speaker labels is a distinct, well-built feature OpenWispr doesn't currently match."}},{"@type":"Question","name":"Does Muesli work on an Intel Mac?","acceptedAnswer":{"@type":"Answer","text":"No — Apple Silicon only. OpenWispr supports both Intel and Apple Silicon Macs."}},{"@type":"Question","name":"What models does Muesli support?","acceptedAnswer":{"@type":"Answer","text":"Per their own published table: Parakeet v3 (25 languages, ~0.13s), Nemotron 3.5 (100+ locales), Cohere 2B (~1s), and Whisper Large Turbo (~2–4s) — the clearest model documentation found in this research. OpenWispr currently ships NVIDIA Parakeet-TDT by default or Whisper via whisper.cpp, selectable, without the same published latency table yet."}},{"@type":"Question","name":"Is Muesli open source?","acceptedAnswer":{"@type":"Answer","text":"Yes — MIT-licensed, same as OpenWispr, with 836 stars on GitHub."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://openwispr.dev/#compare"},{"@type":"ListItem","position":3,"name":"vs Muesli","item":"https://openwispr.dev/compare/muesli.html"}]}</script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden;">
+  <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:820px; margin:0 auto; padding:50px 32px 60px; text-align:center;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">OpenWispr vs Muesli</span>
+    </div>
+    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">OpenWispr vs Muesli</h1>
+    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">Muesli is 100% local dictation plus Granola-style meeting transcription with speaker labels — no bot joining your calls. It's macOS 14.2+, Apple Silicon only, with no Android app.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">Get it on Google Play</a>
+    </div>
+    
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/#compare" style="color:oklch(0.55 0.03 50);">Compare</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">vs Muesli</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The short version</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Muesli does more per session; OpenWispr does it on more devices.</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Muesli (836 ★, MIT) is dictation plus local meeting transcription with speaker labels, entirely on-device, with no bot joining your calls to capture them. It publishes the clearest model table found in this research — Parakeet v3 (25 languages, ~0.13s), Nemotron 3.5 (100+ locales), Cohere 2B (~1s), and Whisper Large Turbo (~2–4s) — which makes the accuracy/speed tradeoff self-explanatory rather than a guess.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">It's macOS 14.2+, Apple Silicon only. There's no Windows, Linux, iOS, or Android build. OpenWispr doesn't currently match its meeting-transcription feature, but it does run on Android and on Intel Macs, neither of which Muesli covers.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:1000px; margin:0 auto; padding:60px 32px;">
+    <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr;">
+    <div style="padding:18px 24px; border-bottom:1px solid oklch(0.92 0.012 72);"></div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; background:oklch(0.97 0.018 72);">
+      <svg viewBox="0 0 100 100" style="width:22px; height:22px; display:block; color:oklch(0.66 0.13 40);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:13.5px; font-weight:700; color:oklch(0.3 0.03 45);">OpenWispr</span>
+    </div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">Muesli<br><span style="font-size:11px; font-weight:400; color:oklch(0.6 0.02 55);">836 ★, Apple Silicon only</span></span>
+    </div>
+  </div>
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Android app</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes — on Google Play</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No — macOS Apple Silicon only</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Meeting transcription with speaker labels</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not a feature today</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — local, Granola-style, no bot joins the call</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Published model table (size/latency/languages)</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not published</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — the clearest found in this research: Parakeet v3, Nemotron 3.5, Cohere 2B, Whisper Large Turbo</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Intel Mac support</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No — Apple Silicon only</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Price</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Free, one tier</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Free</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Open source</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Yes — MIT</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — MIT</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Progressive, feature-scoped permissions</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not documented this way today</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — Accessibility unlocks pasting, Input Monitoring unlocks the hotkey, Screen/Audio unlocks meetings, requested separately as needed</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Distribution</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Direct download, Google Play</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Homebrew cask</span></div>
+</div>
+</div>
+    <div style="text-align:center; font-size:12.5px; color:oklch(0.58 0.025 52); margin-top:16px;">Sourced from the competitor's own documentation, changelog, and public statements as cited below. Figures can change — see linked sources for the latest.</div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Where Muesli is ahead</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">A second product bolted cleanly onto dictation, and real transparency</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Meeting transcription with speaker labels, running entirely on-device with no bot joining the call, is a meaningfully different capability from single-utterance dictation — and Muesli ships it well. Its published model table is also the clearest thing of its kind found across this whole research effort: four models with size, latency, and language-count spelled out, so "why pick one over another" answers itself instead of requiring trial and error.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Its permission model is worth copying directly: request Accessibility only when it unlocks pasting, Input Monitoring only when it unlocks the hotkey, Screen/Audio only when it unlocks meetings — instead of a wall of dialogs at first launch. That's a better first-run experience than most apps in this category, OpenWispr's current flow included.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Where OpenWispr is ahead</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Android, and Intel Macs</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Muesli requires Apple Silicon specifically — no Intel Mac support, and nothing on Windows, Linux, iOS, or Android. OpenWispr runs on Android today and doesn't require an M-series chip on macOS.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If meeting transcription isn't something you need and your device isn't a Silicon Mac, Muesli isn't reachable at all; OpenWispr is.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Muesli have an Android app?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No. Muesli is macOS 14.2+, Apple Silicon only, with no build for Windows, Linux, iOS, or Android. OpenWispr's Android app is live on Google Play.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does OpenWispr do meeting transcription like Muesli?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Not today. Muesli's local, Granola-style meeting transcription with speaker labels is a distinct, well-built feature OpenWispr doesn't currently match.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Muesli work on an Intel Mac?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No — Apple Silicon only. OpenWispr supports both Intel and Apple Silicon Macs.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What models does Muesli support?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Per their own published table: Parakeet v3 (25 languages, ~0.13s), Nemotron 3.5 (100+ locales), Cohere 2B (~1s), and Whisper Large Turbo (~2–4s) — the clearest model documentation found in this research. OpenWispr currently ships NVIDIA Parakeet-TDT by default or Whisper via whisper.cpp, selectable, without the same published latency table yet.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Muesli open source?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — MIT-licensed, same as OpenWispr, with 836 stars on GitHub.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/compare/fluidvoice.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs FluidVoice (custom local model)</div>
+</a>
+<a href="/compare/voiceink.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs VoiceInk (best recovery UX)</div>
+</a>
+<a href="/use-cases/mac-and-android-dictation.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Use case</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">One free, open-source app for macOS and Android</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>

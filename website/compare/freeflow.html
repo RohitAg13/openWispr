@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr vs FreeFlow — on-device by default vs cloud by default, MIT vs MIT</title>
+<meta name="description" content="OpenWispr vs FreeFlow (zachlatta/freeflow): both MIT and both born as Wispr Flow alternatives, but FreeFlow is cloud-by-default (Groq) with local models as an option, not a guarantee. OpenWispr has no cloud path at all.">
+<meta property="og:title" content="OpenWispr vs FreeFlow">
+<meta property="og:description" content="FreeFlow is MIT and free, but cloud by default — you point it at Groq, Ollama, or another endpoint, and you pay the API costs. OpenWispr has no cloud call to configure.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/compare/freeflow.html">
+<link rel="canonical" href="https://openwispr.dev/compare/freeflow.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is FreeFlow actually a local, private dictation app?","acceptedAnswer":{"@type":"Answer","text":"Not by default. FreeFlow's documented default backend is Groq, a cloud API — you can reconfigure it to use Ollama or LM Studio locally, but that's a manual setup step, not the out-of-the-box behavior. OpenWispr has no cloud path to configure at all."}},{"@type":"Question","name":"Does FreeFlow cost money?","acceptedAnswer":{"@type":"Answer","text":"FreeFlow itself is free and MIT-licensed, but using its default cloud backend means paying Groq (or whichever API you point it at) for usage. OpenWispr has no ongoing API cost because there's no cloud call."}},{"@type":"Question","name":"Does FreeFlow have an Android app?","acceptedAnswer":{"@type":"Answer","text":"No — FreeFlow is macOS only. OpenWispr's Android app is live on Google Play."}},{"@type":"Question","name":"Why would FreeFlow default to cloud instead of local, given it's positioned as a Wispr Flow alternative?","acceptedAnswer":{"@type":"Answer","text":"Its author has stated publicly that local pipelines with local LLM post-processing can take 5–10 seconds per transcription versus under a second on a hosted provider, plus battery-life concerns — a real, named engineering tradeoff, not an oversight."}},{"@type":"Question","name":"Is \"freeflow with Cactus as the backend\" a real, supported setup?","acceptedAnswer":{"@type":"Answer","text":"Not as documented. FreeFlow's own README doesn't mention Cactus, Parakeet, or Whisper anywhere, and no changelog, blog post, or issue confirms anyone has shipped that pairing as supported — it's technically possible, not a proven path."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://openwispr.dev/#compare"},{"@type":"ListItem","position":3,"name":"vs FreeFlow","item":"https://openwispr.dev/compare/freeflow.html"}]}</script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden;">
+  <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:820px; margin:0 auto; padding:50px 32px 60px; text-align:center;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">OpenWispr vs FreeFlow</span>
+    </div>
+    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">OpenWispr vs FreeFlow</h1>
+    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">FreeFlow (zachlatta/freeflow) is a macOS-only, MIT-licensed "free & fast alternative to Wispr Flow" — but it's cloud by default, using Groq, with local models as a configurable option rather than the built-in path.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">Get it on Google Play</a>
+    </div>
+    
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/#compare" style="color:oklch(0.55 0.03 50);">Compare</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">vs FreeFlow</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The short version</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Same MIT license, same target — opposite defaults.</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">FreeFlow (<a href="https://github.com/zachlatta/freeflow" style="color:oklch(0.5 0.1 40); text-decoration:underline;">github.com/zachlatta/freeflow</a>, 2,307 ★) bills itself as a "free & fast alternative to Wispr Flow." Its README names Groq as the default transcription/LLM backend, with Ollama, LM Studio, or another OpenAI-compatible server as configurable alternatives. That means the out-of-the-box experience sends audio to a cloud API — you pay Groq's usage costs, not a FreeFlow subscription, but it's cloud by default, not local by default.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">FreeFlow's own author is candid about why: "Local models are often slower than hosted providers, especially on cold start, long recordings, or busy hardware" — a real, named tradeoff, with a configurable timeout to manage it. That's an honest engineering call, and a useful contrast: OpenWispr made the opposite bet, accepting the cold-start cost to guarantee there's no cloud call to configure in the first place.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:1000px; margin:0 auto; padding:60px 32px;">
+    <div style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:18px; overflow:hidden;">
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr;">
+    <div style="padding:18px 24px; border-bottom:1px solid oklch(0.92 0.012 72);"></div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; background:oklch(0.97 0.018 72);">
+      <svg viewBox="0 0 100 100" style="width:22px; height:22px; display:block; color:oklch(0.66 0.13 40);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:13.5px; font-weight:700; color:oklch(0.3 0.03 45);">OpenWispr</span>
+    </div>
+    <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">FreeFlow<br><span style="font-size:11px; font-weight:400; color:oklch(0.6 0.02 55);">zachlatta/freeflow</span></span>
+    </div>
+  </div>
+  <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Android app</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes — on Google Play</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No — macOS only</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Default transcription path</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">On-device, always — no cloud path exists</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Cloud by default (Groq); local via Ollama/LM Studio is a manual reconfiguration</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Ongoing cost</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">None — free, no API costs, no subscription</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">You pay your own Groq/OpenAI-compatible API usage costs</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Works with no internet connection out of the box</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No, on the default configuration — requires manual local-endpoint setup first</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Open source</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Yes — MIT</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — MIT</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Platform coverage</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">macOS + Android</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">macOS only</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Named cold-start tradeoff disclosure</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Not published</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes — explicit note that local models can take 5–10s vs &lt;1s cloud, with a configurable timeout</span></div>
+</div>
+<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Hotkey pattern</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Single hotkey, standard toggle</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Hold Fn to record, or tap Cmd-Fn to toggle — same key, two behaviors</span></div>
+</div>
+</div>
+    <div style="text-align:center; font-size:12.5px; color:oklch(0.58 0.025 52); margin-top:16px;">Sourced from the competitor's own documentation, changelog, and public statements as cited below. Figures can change — see linked sources for the latest.</div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Read this carefully before choosing FreeFlow for privacy</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">"Free" and "local" aren't the same claim here</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">FreeFlow's README does not mention Cactus, Parakeet, Whisper, or Apple's on-device SpeechAnalyzer anywhere — its documented default path is Groq, a cloud API. That's a technically coherent, MIT-licensed, genuinely useful tool, but it isn't a local-first architecture out of the box the way OpenWispr or the desktop-cluster apps in this research are. Switching FreeFlow to Ollama or LM Studio is possible and documented, but it's a manual setup step, not the default.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The FreeFlow author's own stated reasoning for defaulting to cloud is worth taking at face value, not dismissing: local pipelines with a local LLM for post-processing can run 5–10 seconds versus under a second on a hosted provider, plus battery-life concerns. That's a real cost of the on-device choice OpenWispr made — named here rather than hidden.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Where OpenWispr is ahead</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">No API key to manage, and it works on a phone</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">OpenWispr has no cloud path to configure and no third-party API costs to accrue — Groq, or any other provider, isn't in the loop by default or by option. And FreeFlow has no Android app, which OpenWispr ships today.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The two hotkey ideas FreeFlow ships are genuinely good and worth naming: holding Fn to record or tapping Cmd-Fn to toggle, the same key doing two different things depending on how you press it — plus an honest, published disclosure of the cold-start tradeoff its cloud-default users mostly avoid. Neither is currently something OpenWispr documents as clearly.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is FreeFlow actually a local, private dictation app?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Not by default. FreeFlow's documented default backend is Groq, a cloud API — you can reconfigure it to use Ollama or LM Studio locally, but that's a manual setup step, not the out-of-the-box behavior. OpenWispr has no cloud path to configure at all.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does FreeFlow cost money?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">FreeFlow itself is free and MIT-licensed, but using its default cloud backend means paying Groq (or whichever API you point it at) for usage. OpenWispr has no ongoing API cost because there's no cloud call.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does FreeFlow have an Android app?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No — FreeFlow is macOS only. OpenWispr's Android app is live on Google Play.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why would FreeFlow default to cloud instead of local, given it's positioned as a Wispr Flow alternative?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Its author has stated publicly that local pipelines with local LLM post-processing can take 5–10 seconds per transcription versus under a second on a hosted provider, plus battery-life concerns — a real, named engineering tradeoff, not an oversight.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is &quot;freeflow with Cactus as the backend&quot; a real, supported setup?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Not as documented. FreeFlow's own README doesn't mention Cactus, Parakeet, or Whisper anywhere, and no changelog, blog post, or issue confirms anyone has shipped that pairing as supported — it's technically possible, not a proven path.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/compare/wispr-flow.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs Wispr Flow (cloud-only)</div>
+</a>
+<a href="/compare/raycast.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs Raycast Dictation (cloud-only, unnamed model)</div>
+</a>
+<a href="/android/free-open-source-voice-dictation.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Long-tail guide</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Free, open-source voice dictation, no subscription</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "muesli",
+  "outputPath": "compare/muesli.html",
+  "canonicalPath": "/compare/muesli.html",
+  "title": "OpenWispr vs Muesli — dictation-only + Android vs dictation-plus-meeting-notes, Apple Silicon only",
+  "description": "OpenWispr vs Muesli: Muesli adds Granola-style local meeting transcription with speaker labels to its dictation, publishes a clear model table, and is Apple Silicon Mac only.",
+  "ogTitle": "OpenWispr vs Muesli",
+  "ogDescription": "Muesli bundles dictation with local meeting transcription and the clearest published model table in this research. It's Apple Silicon Mac only, with no Android app.",
+  "eyebrow": "OpenWispr vs Muesli",
+  "h1": "OpenWispr vs Muesli",
+  "subhead": "Muesli is 100% local dictation plus Granola-style meeting transcription with speaker labels — no bot joining your calls. It's macOS 14.2+, Apple Silicon only, with no Android app.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs Muesli", "href": "/compare/muesli.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "Muesli does more per session; OpenWispr does it on more devices.",
+    "paragraphs": [
+      "Muesli (836 ★, MIT) is dictation plus local meeting transcription with speaker labels, entirely on-device, with no bot joining your calls to capture them. It publishes the clearest model table found in this research — Parakeet v3 (25 languages, ~0.13s), Nemotron 3.5 (100+ locales), Cohere 2B (~1s), and Whisper Large Turbo (~2–4s) — which makes the accuracy/speed tradeoff self-explanatory rather than a guess.",
+      "It's macOS 14.2+, Apple Silicon only. There's no Windows, Linux, iOS, or Android build. OpenWispr doesn't currently match its meeting-transcription feature, but it does run on Android and on Intel Macs, neither of which Muesli covers."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "Muesli",
+    "competitorNote": "836 ★, Apple Silicon only",
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No — macOS Apple Silicon only", "usGood": true },
+      { "feature": "Meeting transcription with speaker labels", "us": "Not a feature today", "them": "Yes — local, Granola-style, no bot joins the call", "usGood": false },
+      { "feature": "Published model table (size/latency/languages)", "us": "Not published", "them": "Yes — the clearest found in this research: Parakeet v3, Nemotron 3.5, Cohere 2B, Whisper Large Turbo", "usGood": false },
+      { "feature": "Intel Mac support", "us": "Yes", "them": "No — Apple Silicon only", "usGood": true },
+      { "feature": "Price", "us": "Free, one tier", "them": "Free", "usGood": false },
+      { "feature": "Open source", "us": "Yes — MIT", "them": "Yes — MIT", "usGood": false },
+      { "feature": "Progressive, feature-scoped permissions", "us": "Not documented this way today", "them": "Yes — Accessibility unlocks pasting, Input Monitoring unlocks the hotkey, Screen/Audio unlocks meetings, requested separately as needed", "usGood": false },
+      { "feature": "Distribution", "us": "Direct download, Google Play", "them": "Homebrew cask", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Where Muesli is ahead",
+      "heading": "A second product bolted cleanly onto dictation, and real transparency",
+      "paragraphs": [
+        "Meeting transcription with speaker labels, running entirely on-device with no bot joining the call, is a meaningfully different capability from single-utterance dictation — and Muesli ships it well. Its published model table is also the clearest thing of its kind found across this whole research effort: four models with size, latency, and language-count spelled out, so \"why pick one over another\" answers itself instead of requiring trial and error.",
+        "Its permission model is worth copying directly: request Accessibility only when it unlocks pasting, Input Monitoring only when it unlocks the hotkey, Screen/Audio only when it unlocks meetings — instead of a wall of dialogs at first launch. That's a better first-run experience than most apps in this category, OpenWispr's current flow included."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "Android, and Intel Macs",
+      "paragraphs": [
+        "Muesli requires Apple Silicon specifically — no Intel Mac support, and nothing on Windows, Linux, iOS, or Android. OpenWispr runs on Android today and doesn't require an M-series chip on macOS.",
+        "If meeting transcription isn't something you need and your device isn't a Silicon Mac, Muesli isn't reachable at all; OpenWispr is."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does Muesli have an Android app?", "a": "No. Muesli is macOS 14.2+, Apple Silicon only, with no build for Windows, Linux, iOS, or Android. OpenWispr's Android app is live on Google Play." },
+    { "q": "Does OpenWispr do meeting transcription like Muesli?", "a": "Not today. Muesli's local, Granola-style meeting transcription with speaker labels is a distinct, well-built feature OpenWispr doesn't currently match." },
+    { "q": "Does Muesli work on an Intel Mac?", "a": "No — Apple Silicon only. OpenWispr supports both Intel and Apple Silicon Macs." },
+    { "q": "What models does Muesli support?", "a": "Per their own published table: Parakeet v3 (25 languages, ~0.13s), Nemotron 3.5 (100+ locales), Cohere 2B (~1s), and Whisper Large Turbo (~2–4s) — the clearest model documentation found in this research. OpenWispr currently ships NVIDIA Parakeet-TDT by default or Whisper via whisper.cpp, selectable, without the same published latency table yet." },
+    { "q": "Is Muesli open source?", "a": "Yes — MIT-licensed, same as OpenWispr, with 836 stars on GitHub." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs FluidVoice (custom local model)", "href": "/compare/fluidvoice.html" },
+    { "kicker": "Also compare", "title": "OpenWispr vs VoiceInk (best recovery UX)", "href": "/compare/voiceink.html" },
+    { "kicker": "Use case", "title": "One free, open-source app for macOS and Android", "href": "/use-cases/mac-and-android-dictation.html" }
+  ]
+}

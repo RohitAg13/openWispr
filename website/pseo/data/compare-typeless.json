@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "typeless",
+  "outputPath": "compare/typeless.html",
+  "canonicalPath": "/compare/typeless.html",
+  "title": "OpenWispr vs Typeless — free MIT + on-device vs $12-30/mo, closed source",
+  "description": "OpenWispr vs Typeless on Android: Typeless ships a real Android IME keyboard across four platforms, but is closed source, $12-30/mo past a free cap, and multiple reviewers report it's cloud-only despite marketing that reads as local.",
+  "ogTitle": "OpenWispr vs Typeless",
+  "ogDescription": "Typeless reaches mac, Windows, iOS and Android with a real keyboard integration. It's closed source and paid, and its on-device claims don't hold up under review. Here's the sourced comparison.",
+  "eyebrow": "OpenWispr vs Typeless",
+  "h1": "OpenWispr vs Typeless",
+  "subhead": "Typeless is the widest-reach dictation app in this research — macOS, Windows, iOS, and Android, with a real IME keyboard. It's closed source, $12–30/mo past a free cap, and its \"on-device\" marketing doesn't match what independent reviewers found.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs Typeless", "href": "/compare/typeless.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "Typeless reaches more platforms. The transcription location claim doesn't check out.",
+    "paragraphs": [
+      "Typeless ships on macOS, Windows, iOS, and Android — including a real Android IME keyboard (<code>com.typeless.mobile</code>), which is more platform reach than any single competitor covered in this research. Its free tier caps at 8,000 words/week; Pro is $12/mo billed annually or $30/mo monthly. It's closed source.",
+      "The specific claim worth scrutinizing: Typeless's marketing (\"Zero cloud data retention,\" \"On-device history storage\") reads as local processing, but multiple independent reviewers report it's cloud-only with no on-device mode. Those reviews come from competitor-adjacent blogs, so treat the specific permission-audit claims in them as plausible, not verified — but Typeless's own pricing page and homepage genuinely never state where transcription actually runs, which is itself the finding. On a dropped connection, cloud-only means dictation stops."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "Typeless",
+    "competitorNote": null,
+    "rows": [
+      { "feature": "Where transcription runs", "us": "Your device, always, verifiably (open source)", "them": "Never stated by Typeless themselves; multiple independent (competitor-adjacent) reviews report cloud-only despite marketing that reads as local", "usGood": true },
+      { "feature": "Works with no internet connection", "us": "Yes, fully", "them": "Unclear — if the reviews are right, dictation stops on a dropped connection", "usGood": true },
+      { "feature": "Price", "us": "Free, no cap, ever", "them": "Free up to 8,000 words/week; Pro $12/mo annual or $30/mo monthly", "usGood": true },
+      { "feature": "Open source", "us": "Yes — MIT, every line on GitHub", "them": "No — closed source", "usGood": true },
+      { "feature": "Android integration", "us": "Standard app + accessibility-based insert", "them": "A real IME keyboard (com.typeless.mobile) — a deeper OS-level integration", "usGood": false },
+      { "feature": "Platform coverage", "us": "macOS + Android", "them": "macOS, Windows, iOS, Android — the widest reach in this research", "usGood": false },
+      { "feature": "Account required", "us": "Never", "them": "Yes", "usGood": true },
+      { "feature": "Where the transcription location claim is disclosed", "us": "In the open-source code itself", "them": "Not disclosed by Typeless's own site — the absence is the finding, per this research", "usGood": true }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Read this before choosing Typeless for privacy",
+      "heading": "\"Zero cloud data retention\" is not the same claim as \"on-device\"",
+      "paragraphs": [
+        "Typeless's marketing copy — \"Zero cloud data retention,\" \"On-device history storage\" — is the kind of language that reads as local processing without actually stating it. This research found multiple independent reviews (competitor-adjacent blogs, so weight accordingly) reporting Typeless is cloud-only with no on-device transcription mode at all. What's independently verifiable without trusting those reviews: Typeless's own pricing page and homepage never state where transcription runs, for a product actively marketed on privacy language. That absence, on its own, is worth knowing before you rely on it for anything sensitive.",
+        "\"Works on a plane\" is a real, demonstrable, screenshottable claim Typeless cannot make if the cloud-only reports are accurate — dictation would simply stop with no connection. OpenWispr can make that claim because there's no cloud path to lose."
+      ]
+    },
+    {
+      "eyebrow": "Where Typeless is ahead",
+      "heading": "Platform reach and a real keyboard integration",
+      "paragraphs": [
+        "Typeless covers macOS, Windows, iOS, and Android — more platforms than OpenWispr today — and its Android IME keyboard is a deeper integration than an accessibility-based insert, working inside any text field the same way a normal keyboard app does.",
+        "If you specifically need iOS or Windows dictation right now, or want a keyboard-level Android integration rather than an overlay, Typeless covers both and OpenWispr doesn't yet."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Is Typeless actually private and on-device, like its marketing suggests?", "a": "Its marketing (\"Zero cloud data retention,\" \"On-device history storage\") reads that way, but multiple independent reviews report it's cloud-only with no local mode. Those reviews are competitor-adjacent, so treat specifics cautiously — but Typeless's own site never states where transcription runs, which is itself notable. OpenWispr's on-device processing is checkable in its open-source code." },
+    { "q": "How much does Typeless cost?", "a": "Free up to 8,000 words/week; Pro is $12/mo billed annually or $30/mo billed monthly. OpenWispr is free with no word cap and no paid tier." },
+    { "q": "Is Typeless open source?", "a": "No — closed source. OpenWispr is MIT-licensed, with the full source on GitHub." },
+    { "q": "Does Typeless work without an internet connection?", "a": "Unclear from their own materials. If the independent reports of cloud-only processing are accurate, dictation would stop on a dropped connection. OpenWispr works fully offline after the initial model download, which is verifiable rather than a marketing claim." },
+    { "q": "Does Typeless have a real Android keyboard, not just an app?", "a": "Yes — a dedicated IME keyboard (com.typeless.mobile), which is a deeper OS-level integration than OpenWispr's current accessibility-based approach." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs Amical (Android on-device status undisclosed)", "href": "/compare/amical.html" },
+    { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
+    { "kicker": "Long-tail guide", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" }
+  ]
+}

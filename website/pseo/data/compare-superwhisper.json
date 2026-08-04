@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "superwhisper",
+  "outputPath": "compare/superwhisper.html",
+  "canonicalPath": "/compare/superwhisper.html",
+  "title": "OpenWispr vs superwhisper — open-source and Android vs closed-source, Mac/Windows only",
+  "description": "How OpenWispr compares to superwhisper: model choice, pricing, open source status, and Android availability — including where superwhisper is genuinely ahead.",
+  "ogTitle": "OpenWispr vs superwhisper",
+  "ogDescription": "superwhisper has the more granular model picker. OpenWispr has an Android app and a public MIT license. Here's the honest comparison.",
+  "eyebrow": "OpenWispr vs superwhisper",
+  "h1": "OpenWispr vs superwhisper",
+  "subhead": "superwhisper is a genuinely strong on-device dictation app for macOS and Windows, with the deepest model picker in its class. It has no Android app. OpenWispr does — and is open source.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs superwhisper", "href": "/compare/superwhisper.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "Both run on-device. They differ on platform, license, and model depth.",
+    "paragraphs": [
+      "Unlike the cloud-only comparison against Wispr Flow, superwhisper is a real on-device peer — its free tier already runs local Whisper models, and its paid tier adds on-device Parakeet and Whisper Large alongside optional bring-your-own-key cloud models (Deepgram, ElevenLabs). This comparison is narrower and more honest as a result: it's mostly about platform coverage, license, and how deep the model picker goes, not \"local vs cloud.\"",
+      "The clearest gap in superwhisper's favor is model choice — it offers the most granular picker of any app in this category. The clearest gap in OpenWispr's favor is Android: superwhisper has none, and Android support is an <a href=\"https://feedback.superwhisper.com/board/p/android-app\" style=\"color:oklch(0.5 0.1 40); text-decoration:underline;\">open feature request</a> on their own public feedback board, not a shipped feature."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "superwhisper",
+    "competitorNote": null,
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No — open feature request on their own feedback board", "usGood": true },
+      { "feature": "On-device transcription", "us": "Always, on every tier (there's only one)", "them": "Free tier: smaller Whisper models on-device. Paid tier adds larger on-device models, plus optional BYOK cloud (Deepgram, ElevenLabs)", "usGood": true },
+      { "feature": "Price", "us": "Free, one tier, no cap", "them": "Free tier limited to smaller models; paid tier starts around $8.49/mo for larger local models", "usGood": true },
+      { "feature": "Open source", "us": "Yes — MIT, every line on GitHub", "them": "No — closed source", "usGood": true },
+      { "feature": "Model picker depth", "us": "One right-sized Whisper-class model", "them": "The most granular picker in its class — multiple Whisper and Parakeet variants, plus cloud options", "usGood": false },
+      { "feature": "Platform coverage", "us": "macOS + Android", "them": "macOS (Intel + Apple Silicon), Windows — no Android", "usGood": true },
+      { "feature": "Retry a failed transcription", "us": "Actively in development", "them": "Yes — \"Process Again\" from history, using current settings", "usGood": false },
+      { "feature": "Account required", "us": "Never", "them": "Not required for local models", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Where superwhisper is ahead",
+      "heading": "Model choice and recovery UX are genuinely better today",
+      "paragraphs": [
+        "superwhisper's model picker is the deepest in this category — several Whisper variants plus Parakeet, selectable per your accuracy/speed tradeoff, all documented. It also has a clean recovery pattern: right-click any history entry and \"Process Again\" re-runs transcription with your current settings, without needing to re-record.",
+        "OpenWispr currently ships one right-sized on-device model rather than a picker, and its own retry-on-failure flow is still in active development, not shipped. If per-recording model switching or mature failure recovery matters most to you today, superwhisper covers both better right now."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "Android, and a license you can actually read",
+      "paragraphs": [
+        "The gap that doesn't close with a feature update: superwhisper has no Android app, and Android support sits as an open, unshipped request on their own feedback board. OpenWispr's Android app is live on Google Play today, running the same on-device model as the desktop build.",
+        "superwhisper is closed source — you can observe its behavior but not read the code that produces it. OpenWispr is MIT-licensed; every claim about what the app does or doesn't send over the network is checkable in the public repository, not just stated in a privacy policy."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does superwhisper have an Android app?", "a": "No. As of this writing, Android support for superwhisper is an open feature request on their own public feedback board, not a shipped product. OpenWispr ships on Google Play today." },
+    { "q": "Is superwhisper open source?", "a": "No — superwhisper is closed source. OpenWispr is MIT-licensed, with the full source on GitHub." },
+    { "q": "Does superwhisper actually run on-device, or is it cloud-based?", "a": "Its free tier runs smaller Whisper models on-device; its paid tier adds larger on-device models (including Parakeet) and offers optional bring-your-own-key cloud transcription via Deepgram or ElevenLabs if you choose to enable it. OpenWispr has no cloud path at all — there's only one tier, and it's always local." },
+    { "q": "Which app has better model choice right now?", "a": "Honestly, superwhisper does. It offers the most granular model picker of any app in this category — several Whisper and Parakeet variants, selectable per recording. OpenWispr currently ships one right-sized model, prioritizing getting on-device speed and reliability right first." },
+    { "q": "Is OpenWispr's failure recovery as good as superwhisper's \"Process Again\"?", "a": "Not yet. superwhisper's history-based \"Process Again\" is a solid, shipped recovery pattern. OpenWispr's equivalent — durable audio retention and a retry flow — is in active development; track progress on GitHub before assuming parity." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs Wispr Flow", "href": "/compare/wispr-flow.html" },
+    { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
+    { "kicker": "Long-tail guide", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" }
+  ]
+}

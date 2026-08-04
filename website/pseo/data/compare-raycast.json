@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "raycast",
+  "outputPath": "compare/raycast.html",
+  "canonicalPath": "/compare/raycast.html",
+  "title": "OpenWispr vs Raycast Dictation — on-device + Android vs cloud-only, unnamed model",
+  "description": "OpenWispr vs Raycast Dictation: a launcher feature, cloud-only, with no named speech model and no Android. Free during beta, with post-beta pricing unannounced.",
+  "ogTitle": "OpenWispr vs Raycast Dictation",
+  "ogDescription": "Raycast Dictation is cloud-only and doesn't name its speech model or subprocessor. It has no Android app and its beta pricing is unannounced. Here's the sourced comparison.",
+  "eyebrow": "OpenWispr vs Raycast Dictation",
+  "h1": "OpenWispr vs Raycast Dictation",
+  "subhead": "Raycast Dictation is a feature of the Raycast launcher, not a standalone app — cloud-only, with no disclosed speech model, currently free during a beta with unannounced pricing after.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs Raycast Dictation", "href": "/compare/raycast.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "A launcher add-on, not a dedicated dictation product.",
+    "paragraphs": [
+      "Raycast Dictation ships inside the Raycast launcher on macOS and Windows (since June 2026), plus iOS through the Raycast Keyboard. It's cloud-only — Raycast does not publicly name its speech-to-text partner or model, and there's no user model choice. It's free during the current beta, with pricing after the beta unannounced. It has a 20-minute session cap and no Android build.",
+      "It does ship genuinely good ideas worth naming on their own merits: Auto Styling that picks a tone based on the app or website you're dictating into, Custom Vocabulary, Custom Instructions, single-tap modifier hotkeys, and team-shared Dictation Styles. Transcriptions and usage statistics are stored locally and never sent as telemetry — a real, specific claim, distinct from where the audio itself is processed."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "Raycast Dictation",
+    "competitorNote": null,
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No — macOS, Windows, and iOS (via Raycast Keyboard) only", "usGood": true },
+      { "feature": "On-device transcription", "us": "Always", "them": "No — cloud only, with no user model choice", "usGood": true },
+      { "feature": "Speech model / subprocessor disclosed", "us": "Yes — NVIDIA Parakeet-TDT (default) or Whisper, named and selectable", "them": "No — Raycast does not publicly name its STT partner or model", "usGood": true },
+      { "feature": "Works with no internet connection", "us": "Yes, fully", "them": "No — cloud dependency, connection lost means dictation stops", "usGood": true },
+      { "feature": "Price", "us": "Free, no tier, ever", "them": "Free during beta; post-beta pricing unannounced", "usGood": true },
+      { "feature": "Open source", "us": "Yes — MIT", "them": "No", "usGood": true },
+      { "feature": "Session length cap", "us": "None documented", "them": "20-minute cap per session", "usGood": true },
+      { "feature": "Custom vocabulary / auto-styling / team-shared styles", "us": "Personal dictionary planned, not shipped today", "them": "Yes — Custom Vocabulary, Auto Styling, Custom Instructions, team-shared Dictation Styles", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Where Raycast Dictation is ahead",
+      "heading": "Polish around the edges of the actual transcription",
+      "paragraphs": [
+        "Auto Styling — automatically adapting tone based on the app or website you're dictating into — is a genuinely useful idea, as are Custom Vocabulary and Custom Instructions for steering output without a settings menu. Team-shared Dictation Styles is a distinctly B2B feature nothing else in this research offers. None of that requires knowing what model does the actual transcription, which is precisely the part Raycast doesn't disclose.",
+        "It's also worth crediting explicitly and separately: Raycast states transcriptions and usage statistics are stored locally and never sent as telemetry. That's a real, narrower privacy claim, distinct from — and not a substitute for — where the audio itself is processed, which is their cloud."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "It's Android, works offline, and tells you what model is running",
+      "paragraphs": [
+        "Raycast Dictation has no Android build, no offline mode, and doesn't name its transcription model or subprocessor publicly — you're trusting a launcher plugin with your voice without knowing what processes it. OpenWispr runs on Android, works with no internet connection at all, and its model (Parakeet-TDT by default, or Whisper) is named, selectable, and checkable in open-source code.",
+        "Raycast's pricing is also an open question: free during the current beta, with no stated plan for after. OpenWispr's pricing has one state: free, permanently, because there's no cloud infrastructure cost driving a future price."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Is Raycast Dictation free?", "a": "Currently, during its beta. Pricing after the beta ends is unannounced. OpenWispr is free with no tier and no cloud infrastructure cost that would require a future price." },
+    { "q": "Does Raycast Dictation work offline?", "a": "No — it's cloud-only, so a lost connection stops dictation. OpenWispr works fully offline after the initial model download." },
+    { "q": "What speech model does Raycast Dictation use?", "a": "Not publicly disclosed. A widely repeated claim that it's \"OpenAI GPT-5.4 mini\" traces back to a competitor's marketing page (superwhisper's), not to Raycast — treat it as unverified. OpenWispr names its model: NVIDIA Parakeet-TDT by default, or Whisper via whisper.cpp, selectable." },
+    { "q": "Does Raycast Dictation have an Android app?", "a": "No — it's a feature of the Raycast launcher on macOS and Windows, plus iOS via the Raycast Keyboard. There's no Android build. OpenWispr's Android app is live on Google Play." },
+    { "q": "Is Raycast Dictation open source?", "a": "No. OpenWispr is MIT-licensed, with the full source on GitHub." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs FreeFlow (cloud by default)", "href": "/compare/freeflow.html" },
+    { "kicker": "Also compare", "title": "OpenWispr vs Wispr Flow (cloud-only)", "href": "/compare/wispr-flow.html" },
+    { "kicker": "Use case", "title": "Dictation software your IT team won't need to block", "href": "/use-cases/dictation-it-wont-block.html" }
+  ]
+}

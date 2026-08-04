@@ -1,0 +1,49 @@
+{
+  "type": "longtail",
+  "slug": "multilingual-dictation",
+  "outputPath": "use-cases/multilingual-dictation.html",
+  "canonicalPath": "/use-cases/multilingual-dictation.html",
+  "title": "Multilingual Dictation Without Unwanted Translation | OpenWispr",
+  "description": "Wispr Flow users report the app spontaneously translating speech instead of transcribing it, and its auto-detect feature was removed. On-device transcription has a structurally different failure surface for this specific bug.",
+  "ogTitle": "Multilingual dictation, without the surprise translation",
+  "ogDescription": "A documented Wispr Flow bug: speaking Portuguese or Swedish and getting English text back, unrequested. Here's the structural reason on-device transcription doesn't share that specific failure path.",
+  "eyebrow": "Multilingual",
+  "h1": "Multilingual dictation, without the surprise translation",
+  "subhead": "A specific, documented complaint about the category leader: speak in one language, and the app spontaneously translates to another without being asked. It's a real bug, named by real users, and worth understanding structurally before picking a dictation app for a multilingual workflow.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Use cases", "href": "/use-cases/multilingual-dictation.html" },
+    { "label": "Multilingual", "href": "/use-cases/multilingual-dictation.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "The documented bug",
+      "heading": "\"As far as I know, live translation is not even a feature\"",
+      "paragraphs": [
+        "Two separate, dated organic complaints describe the same failure mode in Wispr Flow: \"I speak English (mostly) and Portuguese… Wispr started to translate from one language to the other… After the ~20th time, I gave up and disabled Portuguese\" (2026-06-15), and \"Wispr Flow live translates when I speak Swedish into English. As far as I know, live translation is not even a feature\" (2026-06-30). Wispr Flow's auto-detect was also removed at some point, which reportedly angered European users who relied on it to switch languages mid-session without manual configuration.",
+        "This isn't a claim that every cloud dictation product has this exact bug — it's a specific, sourced complaint about one product. It's included here because it points at a structural question worth asking about any dictation app you're evaluating for multilingual use: what happens between what you said and what lands on the page, and how many opportunities are there for that pipeline to do something you didn't ask for?"
+      ]
+    },
+    {
+      "eyebrow": "The structural difference",
+      "heading": "Fewer moving parts between your voice and the transcript",
+      "paragraphs": [
+        "OpenWispr's on-device pipeline runs a speech model — NVIDIA Parakeet-TDT by default, or Whisper via whisper.cpp — directly on your device, with no network round-trip that could route audio through a different model, service version, or configuration than the one you started with. That's a structural property of the architecture, not a benchmarked claim about translation accuracy specifically — this page isn't asserting OpenWispr has been tested head-to-head against the exact failure mode described above, only that there's no cloud-side model swap or hidden mode change in the pipeline to produce it.",
+        "For context on language breadth elsewhere in this category: Muesli publishes a model table showing Parakeet v3 covering 25 languages and Nemotron 3.5 covering 100+ locales, on-device — a useful reference point for how far local models have come on multilingual coverage generally, separate from the specific translation bug discussed above."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does Wispr Flow really mistranslate instead of transcribing?", "a": "Two separate, dated organic user reports describe exactly that — speaking Portuguese or Swedish and getting unrequested English translation back. Their auto-detect feature was also reportedly removed. This is a sourced complaint about that specific product, not a claim about the category as a whole." },
+    { "q": "Has OpenWispr been tested against this specific translation bug?", "a": "Not benchmarked head-to-head — this page makes a structural argument, not a tested-and-confirmed one. OpenWispr's on-device pipeline has no network round-trip that could swap models or modes mid-session, which is the mechanism most likely to produce that kind of surprise behavior, but that's an architectural observation, not a claim of measured multilingual accuracy." },
+    { "q": "How many languages does OpenWispr support?", "a": "It uses NVIDIA Parakeet-TDT by default or Whisper via whisper.cpp, both of which are multilingual models — but this page isn't citing a specific tested language count for OpenWispr itself. If exact language coverage matters for your use case, verify directly against the current model documentation on GitHub." },
+    { "q": "Which competitor publishes the clearest multilingual model information?", "a": "Muesli, among the apps covered in this research — a published table showing Parakeet v3 at 25 languages and Nemotron 3.5 at 100+ locales, on-device. See the OpenWispr vs Muesli comparison for the full picture, including where Muesli is ahead." },
+    { "q": "Is auto-detecting between multiple spoken languages mid-session supported?", "a": "This is a real, named gap for Wispr Flow specifically (auto-detect was removed). This page doesn't make a specific claim about OpenWispr's current auto-detect behavior — check current documentation on GitHub for the latest state." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Compare", "title": "OpenWispr vs Wispr Flow (cloud-only)", "href": "/compare/wispr-flow.html" },
+    { "kicker": "Compare", "title": "OpenWispr vs Muesli (published multilingual model table)", "href": "/compare/muesli.html" },
+    { "kicker": "Use case", "title": "One free, open-source app for macOS and Android", "href": "/use-cases/mac-and-android-dictation.html" }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "amical",
+  "outputPath": "compare/amical.html",
+  "canonicalPath": "/compare/amical.html",
+  "title": "OpenWispr vs Amical — confirmed on-device Android vs an architecture Amical doesn't disclose",
+  "description": "OpenWispr vs Amical on Android: both MIT-licensed, both live on Google Play. Amical's own docs never state whether Android transcription runs on-device or in the cloud — this page doesn't guess, and neither should you.",
+  "ogTitle": "OpenWispr vs Amical",
+  "ogDescription": "Amical is MIT, on Google Play, with a real context-aware formatting feature. Whether its Android build transcribes on-device is something even its own docs don't say. Here's what's actually confirmed.",
+  "eyebrow": "OpenWispr vs Amical",
+  "h1": "OpenWispr vs Amical",
+  "subhead": "Amical is the most direct Android competitor in this research — MIT-licensed, live on Google Play, with a genuinely useful context-aware formatting feature. One thing it doesn't disclose: whether its Android build transcribes on-device or in the cloud.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs Amical", "href": "/compare/amical.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version, and an honesty note up front",
+    "heading": "We don't know how Amical's Android app processes your voice — and neither, publicly, does anyone outside Amical.",
+    "paragraphs": [
+      "Amical (MIT, TypeScript/Electron, 1,468 ★) is genuinely on-device on macOS and Windows via Ollama, with cloud as an option there. On Android — where it's the most direct competitor to OpenWispr in this research — its architecture is different in one specific, unresolved way: neither amical.ai, its beta page, nor its quick-start docs state whether Android transcription happens on the device or in the cloud. Their marketing mentions cloud models \"for increased accuracy and speed on mobile,\" which hints at cloud, but that's an inference, not a confirmed fact. This page won't guess, and it won't claim OpenWispr is \"the only\" on-device Android option because of that open question.",
+      "What is confirmed either way: both apps are MIT-licensed, both ship on Google Play, and Amical has a real differentiator — context-aware output formatting that detects the frontmost app and adapts tone (professional in Gmail, casual in Slack, clean in an IDE) across 100+ languages. iOS is invite-only TestFlight, not public."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "Amical",
+    "competitorNote": "1,468 ★",
+    "rows": [
+      { "feature": "Android transcription location", "us": "Confirmed on-device — checkable in open-source code", "them": "Undisclosed by Amical's own docs; marketing hints at cloud \"for increased accuracy and speed on mobile\" but doesn't confirm it", "usGood": true },
+      { "feature": "iOS availability", "us": "Not shipped", "them": "Invite-only TestFlight beta — no public release", "usGood": false },
+      { "feature": "Context-aware output formatting by app", "us": "Not shipped today", "them": "Yes — adapts tone per app (Gmail vs Slack vs IDE) across 100+ languages", "usGood": false },
+      { "feature": "macOS / Windows on-device", "us": "macOS: yes, confirmed", "them": "Yes, via Ollama — confirmed for desktop specifically", "usGood": false },
+      { "feature": "Price", "us": "Free, one tier", "them": "Free", "usGood": false },
+      { "feature": "Open source", "us": "Yes — MIT", "them": "Yes — MIT", "usGood": false },
+      { "feature": "GitHub stars", "us": "New project", "them": "1,468", "usGood": false },
+      { "feature": "Hotkey design", "us": "Single hotkey", "them": "Fn for push-to-talk, Fn+Space for hands-free continuous — a two-tier model", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "The open question, stated plainly",
+      "heading": "Why this page won't call Amical \"cloud-based\" or \"on-device\" on Android",
+      "paragraphs": [
+        "This is the single most consequential unresolved question in the research behind this comparison. Amical's site, beta page, and quick-start docs never state where Android transcription runs. Their marketing copy about cloud models improving accuracy and speed \"on mobile\" is suggestive, not conclusive — it's consistent with cloud transcription, but it's also consistent with an optional cloud enhancement layered over a local base. Absent an APK teardown or a direct statement from Amical, calling it either way would be asserting something this research doesn't actually know.",
+        "This matters because it's the same trap this page is trying not to fall into on OpenWispr's behalf: the claim \"the only free, MIT-licensed, genuinely on-device dictation app on Android\" is a strong claim, and it would be false if said carelessly while Amical's status is unresolved. So it isn't made here."
+      ]
+    },
+    {
+      "eyebrow": "Where Amical is ahead",
+      "heading": "A real formatting feature, and an iOS beta",
+      "paragraphs": [
+        "Context-aware formatting — detecting the app you're dictating into and adjusting tone accordingly, across 100+ languages — is a shipped, genuinely useful feature OpenWispr doesn't have an equivalent for today. Amical also has an invite-only iOS TestFlight beta in motion; OpenWispr has no iOS build at all yet, in beta or otherwise.",
+        "Its two-tier hotkey pattern — Fn for push-to-talk, Fn+Space for hands-free continuous dictation — is also a well-designed piece of UX worth naming on its own merits, independent of the platform question above."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does Amical's Android app run on-device or in the cloud?", "a": "This isn't publicly confirmed either way. Amical's site, beta page, and quick-start docs never state it, and their marketing mentions cloud models \"for increased accuracy and speed on mobile\" — which hints at cloud without confirming it. This page doesn't guess, and it doesn't claim OpenWispr is \"the only\" on-device Android option as a result." },
+    { "q": "Is Amical open source?", "a": "Yes — MIT-licensed, same as OpenWispr, at 1,468 GitHub stars." },
+    { "q": "Does Amical have an iOS app?", "a": "An invite-only TestFlight beta, not a public release. OpenWispr has no iOS build yet at all." },
+    { "q": "What is Amical's context-aware formatting?", "a": "It detects the frontmost app you're dictating into and adjusts tone accordingly — more professional in Gmail, casual in Slack, clean in an IDE — across 100+ languages. It's a real, shipped feature OpenWispr doesn't currently match." },
+    { "q": "Is OpenWispr confirmed on-device on Android, unlike Amical?", "a": "Yes — OpenWispr's Android transcription is on-device and checkable in its open-source code. The comparison here isn't \"OpenWispr is on-device and Amical isn't\" — it's that OpenWispr's status is confirmable and Amical's currently isn't, which is itself worth knowing." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs Typeless (reportedly cloud-only, closed source)", "href": "/compare/typeless.html" },
+    { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
+    { "kicker": "Use case", "title": "One free, open-source app for macOS and Android", "href": "/use-cases/mac-and-android-dictation.html" }
+  ]
+}
