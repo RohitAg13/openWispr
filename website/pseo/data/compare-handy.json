@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "handy",
+  "outputPath": "compare/handy.html",
+  "canonicalPath": "/compare/handy.html",
+  "title": "OpenWispr vs Handy — the 27.7k-star volume leader, and its one gap: mobile",
+  "description": "OpenWispr vs Handy: Handy is the most-starred open-source dictation app in this research (27.7k), 100% local with no cloud path at all, and positioned on accessibility. It has no mobile app of any kind.",
+  "ogTitle": "OpenWispr vs Handy",
+  "ogDescription": "Handy is the category's volume leader on GitHub and fully local by design. It doesn't ship on any phone. Here's the sourced comparison.",
+  "eyebrow": "OpenWispr vs Handy",
+  "h1": "OpenWispr vs Handy",
+  "subhead": "Handy is the most-starred open-source dictation app covered in this research — 27,709 stars, MIT-licensed, 100% local with no cloud path at any tier. It's mac/Windows/Linux desktop only, with no mobile app.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs Handy", "href": "/compare/handy.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "OpenWispr's closest philosophical twin — everywhere except mobile.",
+    "paragraphs": [
+      "Handy is honest, uncomplicated, and the volume leader by a wide margin: 27,709 GitHub stars, MIT license, no paid tier, no cloud path at all, on any of its three desktop platforms (macOS, Windows, Linux). Its own positioning is explicit: \"Accessibility tooling belongs in everyone's hands, not behind a paywall.\" It's the only genuinely tri-platform desktop dictation app in this research that's 100% offline.",
+      "There's exactly one structural gap, and it's the whole reason this page exists: Handy has no mobile app of any kind — no Android, no iOS. If you need dictation on your phone, Handy isn't an option regardless of how good the desktop experience is."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "Handy",
+    "competitorNote": "27.7k ★",
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No mobile app at all", "usGood": true },
+      { "feature": "Desktop platform coverage", "us": "macOS (Windows, Linux in progress)", "them": "macOS, Windows, and Linux — the only fully tri-platform, 100% offline desktop app in this research", "usGood": false },
+      { "feature": "Cloud path", "us": "None, architecturally", "them": "None at any tier — matches OpenWispr's stance exactly", "usGood": false },
+      { "feature": "Price", "us": "Free, one tier", "them": "Free, no paid tier at all", "usGood": false },
+      { "feature": "Open source", "us": "Yes — MIT", "them": "Yes — MIT", "usGood": false },
+      { "feature": "GitHub stars", "us": "New project", "them": "27,709 — the volume leader in this research", "usGood": false },
+      { "feature": "Model-download fallback for restricted networks", "us": "Not documented", "them": "Documented manual model-drop path — put model files directly in the app-support folder if the in-app downloader is blocked", "usGood": false },
+      { "feature": "Positioning", "us": "Free + offline first, privacy as the closer", "them": "Accessibility-first — \"Accessibility tooling belongs in everyone's hands, not behind a paywall\"", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Where Handy is ahead",
+      "heading": "Desktop maturity, a proven accessibility frame, and real scale",
+      "paragraphs": [
+        "27,709 stars is not a vanity number in this category — it means Handy has been battle-tested by far more users than any other app in this research, OpenWispr included. It also ships a genuinely useful detail: a documented manual model-drop path, so a user behind a restrictive proxy or on a flaky network can place model files directly in the app's support folder instead of depending on the in-app downloader.",
+        "Handy's accessibility-first positioning is also a proven frame, not a guess — its scale is partial evidence it resonates. Nobody else in this research competes seriously on that angle, and it's a legitimate audience OpenWispr hasn't built dedicated support for yet."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "The one platform Handy doesn't touch",
+      "paragraphs": [
+        "Handy has zero mobile presence — no Android build, no iOS build, nothing in progress that's publicly documented. If dictation needs to work on your phone at all, the comparison stops there regardless of how strong Handy's desktop app is.",
+        "This isn't a knock on Handy's engineering — it's a scope decision they've made, same as OpenWispr choosing Android over Windows/Linux first. But for anyone whose primary device is a phone, or who wants one dictation habit that follows them from laptop to pocket, Handy currently can't be that app."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does Handy have an Android or iOS app?", "a": "No. Handy is macOS, Windows, and Linux desktop only, with no mobile app of any kind. OpenWispr's Android app is live on Google Play." },
+    { "q": "Is Handy free, like OpenWispr?", "a": "Yes — Handy has no paid tier and no cloud path at any tier, matching OpenWispr's stance. Both are MIT-licensed and 100% local by architecture." },
+    { "q": "Why does Handy have so many more GitHub stars than OpenWispr?", "a": "Handy has been public and iterating far longer — 27,709 stars reflects real accumulated usage and word of mouth, not a claim OpenWispr disputes. It's a legitimate signal of desktop maturity that OpenWispr, as a newer project, hasn't had time to accumulate yet." },
+    { "q": "What is Handy's manual model-drop path?", "a": "A documented way to place speech-model files directly into the app's support folder, bypassing the in-app downloader — useful behind a restrictive proxy or on unreliable networks. OpenWispr doesn't have an equivalent documented path today." },
+    { "q": "If Handy is this good on desktop, why would I use OpenWispr instead?", "a": "The honest answer: if you're only ever on a desktop and don't need mobile, Handy is a strong, more mature option. OpenWispr's clearest reason to choose it over Handy is Android — Handy has no mobile app at all." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs VoiceInk (GPL, Apple Silicon only)", "href": "/compare/voiceink.html" },
+    { "kicker": "Also compare", "title": "OpenWispr vs FluidVoice", "href": "/compare/fluidvoice.html" },
+    { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" }
+  ]
+}

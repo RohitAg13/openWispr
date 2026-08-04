@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "fluidvoice",
+  "outputPath": "compare/fluidvoice.html",
+  "canonicalPath": "/compare/fluidvoice.html",
+  "title": "OpenWispr vs FluidVoice — free MIT + Android vs GPL, macOS 15+ only",
+  "description": "OpenWispr vs FluidVoice: FluidVoice trained its own local enhancement model (Fluid-1) and relicensed to GPL-3.0 in 2026. It's macOS 15+ only with iOS and Windows still on a waitlist. OpenWispr ships Android today.",
+  "ogTitle": "OpenWispr vs FluidVoice",
+  "ogDescription": "FluidVoice is the most-mentioned alternative in the research behind this site, with a custom local model nobody else trained. It has no shipped Android app. Here's the sourced comparison.",
+  "eyebrow": "OpenWispr vs FluidVoice",
+  "h1": "OpenWispr vs FluidVoice",
+  "subhead": "FluidVoice is the most-mentioned dictation alternative in the research behind this comparison — a genuinely on-device app with a custom-trained local cleanup model. It's macOS 15+ only; iOS and Windows are still waitlisted.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs FluidVoice", "href": "/compare/fluidvoice.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "FluidVoice trained its own model. That's the real differentiator.",
+    "paragraphs": [
+      "FluidVoice (8,997 ★) is local-first with cloud strictly opt-in, and it's the app most named by professionals in the source thread this research is built on. Its standout feature is Fluid-1, a custom-trained ~3.5 GB on-device model that handles formatting, capitalization, and per-app tone — no cloud, no API key. Nobody else in this research trained their own local cleanup model; everyone else wires up an existing LLM.",
+      "It relicensed from Apache-2.0 to GPL-3.0 in February 2026, described in the research as a commercially-defensive move. It currently ships macOS 15+ only — iOS and Windows support are on a waitlist, not shipped. OpenWispr already ships on Android, which FluidVoice doesn't have at all."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "FluidVoice",
+    "competitorNote": "8,997 ★",
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No — not shipped, not waitlisted", "usGood": true },
+      { "feature": "macOS support", "us": "Yes — Intel and Apple Silicon", "them": "macOS 15+ required", "usGood": false },
+      { "feature": "iOS / Windows", "us": "Not on the roadmap yet", "them": "Both on a waitlist — not shipped", "usGood": false },
+      { "feature": "Local cleanup model", "us": "Fine-tuned local model, or an optional cloud LLM", "them": "Fluid-1 — a custom-trained ~3.5 GB local model for formatting, capitalization, per-app tone", "usGood": false },
+      { "feature": "Price", "us": "Free, one tier", "them": "Free", "usGood": false },
+      { "feature": "Open source license", "us": "MIT — permissive", "them": "GPL-3.0 since Feb 2026 (was Apache-2.0)", "usGood": false },
+      { "feature": "Model choice at onboarding with published sizes", "us": "Not shown at onboarding today", "them": "Yes — Apple Speech (0 MB) to Nemotron (~670 MB) to Whisper Large (2.9 GB), sizes published upfront", "usGood": false },
+      { "feature": "GitHub stars", "us": "New project", "them": "8,997", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Where FluidVoice is ahead",
+      "heading": "A genuinely novel local model, and clear onboarding",
+      "paragraphs": [
+        "Fluid-1 is a real differentiator: a purpose-trained local model for cleanup, formatting, and per-app tone, running with no cloud call and no API key. Most competitors, OpenWispr included, use an existing model rather than training their own. FluidVoice's onboarding is also a pattern worth naming on its own merits — model choice is presented up front with published download sizes (Apple Speech at 0 MB up to Whisper Large at 2.9 GB), so a user picks a tradeoff deliberately instead of discovering it after the fact.",
+        "It's also the single most-mentioned alternative in the primary research thread behind this comparison — three separate mentions, more than any other product — which is a real signal of mindshare among the exact audience this research targeted."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "Android, and a lower macOS floor",
+      "paragraphs": [
+        "FluidVoice has no Android app, shipped or waitlisted. If you need dictation on a phone, it isn't an option today. OpenWispr's Android app is live on Google Play.",
+        "FluidVoice also requires macOS 15+; OpenWispr supports both Intel and Apple Silicon Macs without that floor. And FluidVoice's GPL-3.0 license carries a copyleft obligation for distributed derivative works that OpenWispr's MIT license doesn't."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Does FluidVoice have an Android app?", "a": "No — not shipped, and not on a public waitlist either, unlike their iOS and Windows plans. OpenWispr's Android app is live on Google Play today." },
+    { "q": "What is Fluid-1?", "a": "FluidVoice's own custom-trained, ~3.5 GB on-device model for text cleanup — formatting, capitalization, and per-app tone — with no cloud call. It's a genuinely novel piece of engineering; OpenWispr's cleanup uses a fine-tuned local model or an optional cloud LLM, not a custom-trained model of that scale." },
+    { "q": "What macOS version does FluidVoice need?", "a": "macOS 15 or later. OpenWispr supports both Intel and Apple Silicon Macs without that specific version floor." },
+    { "q": "Is FluidVoice open source?", "a": "Yes — GPL-3.0 as of February 2026 (previously Apache-2.0). OpenWispr is MIT-licensed, which is more permissive and carries no copyleft obligation." },
+    { "q": "Why was FluidVoice mentioned more than other alternatives in the research behind this page?", "a": "It was named three separate times in the LinkedIn thread this research started from — more than any other single product — suggesting real mindshare among professionals actively looking for a Wispr Flow alternative." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs Handy (27.7k★, no mobile)", "href": "/compare/handy.html" },
+    { "kicker": "Also compare", "title": "OpenWispr vs Muesli (model table, meeting notes)", "href": "/compare/muesli.html" },
+    { "kicker": "Use case", "title": "One free, open-source app for macOS and Android", "href": "/use-cases/mac-and-android-dictation.html" }
+  ]
+}

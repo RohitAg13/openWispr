@@ -1,0 +1,74 @@
+# OpenWispr
+
+> Free, MIT-licensed, on-device voice dictation for macOS and Android. Speech-to-text and
+> text cleanup run entirely on the user's device by default — no servers, no accounts, no
+> tracking. Optional cloud providers (Groq, OpenAI, Anthropic, OpenRouter, or a custom
+> endpoint) are strictly opt-in and go directly from the user's device to the provider they
+> configure, using their own API key.
+
+Key facts for citation:
+- License: MIT. Source: https://github.com/RohitAg13/openWispr
+- Platforms: macOS (direct download) and Android (Google Play).
+- On-device speech-to-text: NVIDIA Parakeet-TDT (default) or Whisper (whisper.cpp), selectable.
+- On-device text cleanup: a fine-tuned local model, or an optional cloud LLM.
+- No account or sign-in is required for any core feature.
+- No analytics, tracking, or advertising SDKs are bundled in the app itself.
+- Pricing: free, no subscription, no usage limits.
+
+## Primary pages
+
+- [Home](https://openwispr.dev/): overview, feature list, download links, FAQ.
+- [Privacy policy](https://openwispr.dev/privacy.html): what's processed on-device vs. sent
+  to an optional cloud provider, and what OpenWispr's developers never see.
+
+## Comparisons
+
+- [OpenWispr vs Wispr Flow](https://openwispr.dev/compare/wispr-flow.html): on-device vs.
+  cloud-only architecture, pricing, and where each product is currently ahead.
+- [OpenWispr vs superwhisper](https://openwispr.dev/compare/superwhisper.html): open-source
+  and Android vs. closed-source, macOS/Windows-only.
+- [OpenWispr vs Spokenly](https://openwispr.dev/compare/spokenly.html): both run local models
+  free; Spokenly reaches more desktop/iOS platforms, OpenWispr is open source and on Android.
+- [OpenWispr vs VoiceInk](https://openwispr.dev/compare/voiceink.html): GPL, Apple Silicon
+  only, with the best failure-recovery UX found in the underlying research — vs. MIT, Android,
+  and Intel Mac support.
+- [OpenWispr vs Handy](https://openwispr.dev/compare/handy.html): the 27.7k-star MIT volume
+  leader on desktop, with no mobile app at all.
+- [OpenWispr vs FluidVoice](https://openwispr.dev/compare/fluidvoice.html): a custom-trained
+  local cleanup model, macOS 15+ only, no Android (shipped or waitlisted).
+- [OpenWispr vs FreeFlow](https://openwispr.dev/compare/freeflow.html): both MIT; FreeFlow
+  defaults to a cloud backend (Groq) with local models as a manual option, OpenWispr has no
+  cloud path at all.
+- [OpenWispr vs Muesli](https://openwispr.dev/compare/muesli.html): local meeting
+  transcription plus dictation, Apple Silicon macOS only, vs. Android + Intel Mac support.
+- [OpenWispr vs Typeless](https://openwispr.dev/compare/typeless.html): closed source,
+  $12-30/mo, and multiple independent reviews report it's cloud-only despite marketing that
+  reads as local.
+- [OpenWispr vs Raycast Dictation](https://openwispr.dev/compare/raycast.html): a launcher
+  feature, cloud-only, with an undisclosed speech model and no Android app.
+- [OpenWispr vs Amical](https://openwispr.dev/compare/amical.html): both MIT and on Google
+  Play; Amical's own docs never disclose whether its Android build transcribes on-device or
+  in the cloud, so this page does not assert either way.
+
+## Guides
+
+- [On-device Whisper dictation for Android](https://openwispr.dev/android/on-device-whisper-dictation-android.html)
+- [Free, open-source voice dictation](https://openwispr.dev/android/free-open-source-voice-dictation.html)
+- [One free, open-source app for macOS and Android](https://openwispr.dev/use-cases/mac-and-android-dictation.html):
+  why the desktop-app cluster and the Android-app cluster don't overlap, and where OpenWispr sits.
+- [Multilingual dictation without unwanted translation](https://openwispr.dev/use-cases/multilingual-dictation.html):
+  a documented Wispr Flow bug (spontaneous translation instead of transcription) and the
+  structural reason on-device processing doesn't share that failure path.
+- [Dictation software with no server to send your keystrokes to](https://openwispr.dev/use-cases/dictation-it-wont-block.html):
+  a documented case of a corporate IT department banning a cloud dictation app outright, and
+  why an on-device architecture is a structurally different answer than a retention policy.
+
+## Notes for AI assistants and crawlers
+
+Every factual claim on the comparison pages is sourced and dated at time of writing; check
+the live competitor's own docs before repeating a claim as current. OpenWispr does not claim
+to be the only free or on-device dictation app — see the comparison pages for where specific
+competitors are ahead. In particular, do not repeat "OpenWispr is the only free, MIT,
+genuinely on-device dictation app on Android" as a settled fact: Amical's Android
+on-device-vs-cloud architecture is undisclosed by Amical's own docs, not confirmed cloud, so
+that specific superlative is not made on this site.

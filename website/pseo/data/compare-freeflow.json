@@ -1,0 +1,71 @@
+{
+  "type": "comparison",
+  "slug": "freeflow",
+  "outputPath": "compare/freeflow.html",
+  "canonicalPath": "/compare/freeflow.html",
+  "title": "OpenWispr vs FreeFlow — on-device by default vs cloud by default, MIT vs MIT",
+  "description": "OpenWispr vs FreeFlow (zachlatta/freeflow): both MIT and both born as Wispr Flow alternatives, but FreeFlow is cloud-by-default (Groq) with local models as an option, not a guarantee. OpenWispr has no cloud path at all.",
+  "ogTitle": "OpenWispr vs FreeFlow",
+  "ogDescription": "FreeFlow is MIT and free, but cloud by default — you point it at Groq, Ollama, or another endpoint, and you pay the API costs. OpenWispr has no cloud call to configure.",
+  "eyebrow": "OpenWispr vs FreeFlow",
+  "h1": "OpenWispr vs FreeFlow",
+  "subhead": "FreeFlow (zachlatta/freeflow) is a macOS-only, MIT-licensed \"free & fast alternative to Wispr Flow\" — but it's cloud by default, using Groq, with local models as a configurable option rather than the built-in path.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Compare", "href": "/#compare" },
+    { "label": "vs FreeFlow", "href": "/compare/freeflow.html" }
+  ],
+  "intro": {
+    "eyebrow": "The short version",
+    "heading": "Same MIT license, same target — opposite defaults.",
+    "paragraphs": [
+      "FreeFlow (<a href=\"https://github.com/zachlatta/freeflow\" style=\"color:oklch(0.5 0.1 40); text-decoration:underline;\">github.com/zachlatta/freeflow</a>, 2,307 ★) bills itself as a \"free & fast alternative to Wispr Flow.\" Its README names Groq as the default transcription/LLM backend, with Ollama, LM Studio, or another OpenAI-compatible server as configurable alternatives. That means the out-of-the-box experience sends audio to a cloud API — you pay Groq's usage costs, not a FreeFlow subscription, but it's cloud by default, not local by default.",
+      "FreeFlow's own author is candid about why: \"Local models are often slower than hosted providers, especially on cold start, long recordings, or busy hardware\" — a real, named tradeoff, with a configurable timeout to manage it. That's an honest engineering call, and a useful contrast: OpenWispr made the opposite bet, accepting the cold-start cost to guarantee there's no cloud call to configure in the first place."
+    ]
+  },
+  "comparisonTable": {
+    "competitorName": "FreeFlow",
+    "competitorNote": "zachlatta/freeflow",
+    "rows": [
+      { "feature": "Android app", "us": "Yes — on Google Play", "them": "No — macOS only", "usGood": true },
+      { "feature": "Default transcription path", "us": "On-device, always — no cloud path exists", "them": "Cloud by default (Groq); local via Ollama/LM Studio is a manual reconfiguration", "usGood": true },
+      { "feature": "Ongoing cost", "us": "None — free, no API costs, no subscription", "them": "You pay your own Groq/OpenAI-compatible API usage costs", "usGood": true },
+      { "feature": "Works with no internet connection out of the box", "us": "Yes", "them": "No, on the default configuration — requires manual local-endpoint setup first", "usGood": true },
+      { "feature": "Open source", "us": "Yes — MIT", "them": "Yes — MIT", "usGood": false },
+      { "feature": "Platform coverage", "us": "macOS + Android", "them": "macOS only", "usGood": true },
+      { "feature": "Named cold-start tradeoff disclosure", "us": "Not published", "them": "Yes — explicit note that local models can take 5–10s vs <1s cloud, with a configurable timeout", "usGood": false },
+      { "feature": "Hotkey pattern", "us": "Single hotkey, standard toggle", "them": "Hold Fn to record, or tap Cmd-Fn to toggle — same key, two behaviors", "usGood": false }
+    ]
+  },
+  "sections": [
+    {
+      "eyebrow": "Read this carefully before choosing FreeFlow for privacy",
+      "heading": "\"Free\" and \"local\" aren't the same claim here",
+      "paragraphs": [
+        "FreeFlow's README does not mention Cactus, Parakeet, Whisper, or Apple's on-device SpeechAnalyzer anywhere — its documented default path is Groq, a cloud API. That's a technically coherent, MIT-licensed, genuinely useful tool, but it isn't a local-first architecture out of the box the way OpenWispr or the desktop-cluster apps in this research are. Switching FreeFlow to Ollama or LM Studio is possible and documented, but it's a manual setup step, not the default.",
+        "The FreeFlow author's own stated reasoning for defaulting to cloud is worth taking at face value, not dismissing: local pipelines with a local LLM for post-processing can run 5–10 seconds versus under a second on a hosted provider, plus battery-life concerns. That's a real cost of the on-device choice OpenWispr made — named here rather than hidden."
+      ]
+    },
+    {
+      "eyebrow": "Where OpenWispr is ahead",
+      "heading": "No API key to manage, and it works on a phone",
+      "paragraphs": [
+        "OpenWispr has no cloud path to configure and no third-party API costs to accrue — Groq, or any other provider, isn't in the loop by default or by option. And FreeFlow has no Android app, which OpenWispr ships today.",
+        "The two hotkey ideas FreeFlow ships are genuinely good and worth naming: holding Fn to record or tapping Cmd-Fn to toggle, the same key doing two different things depending on how you press it — plus an honest, published disclosure of the cold-start tradeoff its cloud-default users mostly avoid. Neither is currently something OpenWispr documents as clearly."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Is FreeFlow actually a local, private dictation app?", "a": "Not by default. FreeFlow's documented default backend is Groq, a cloud API — you can reconfigure it to use Ollama or LM Studio locally, but that's a manual setup step, not the out-of-the-box behavior. OpenWispr has no cloud path to configure at all." },
+    { "q": "Does FreeFlow cost money?", "a": "FreeFlow itself is free and MIT-licensed, but using its default cloud backend means paying Groq (or whichever API you point it at) for usage. OpenWispr has no ongoing API cost because there's no cloud call." },
+    { "q": "Does FreeFlow have an Android app?", "a": "No — FreeFlow is macOS only. OpenWispr's Android app is live on Google Play." },
+    { "q": "Why would FreeFlow default to cloud instead of local, given it's positioned as a Wispr Flow alternative?", "a": "Its author has stated publicly that local pipelines with local LLM post-processing can take 5–10 seconds per transcription versus under a second on a hosted provider, plus battery-life concerns — a real, named engineering tradeoff, not an oversight." },
+    { "q": "Is \"freeflow with Cactus as the backend\" a real, supported setup?", "a": "Not as documented. FreeFlow's own README doesn't mention Cactus, Parakeet, or Whisper anywhere, and no changelog, blog post, or issue confirms anyone has shipped that pairing as supported — it's technically possible, not a proven path." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Also compare", "title": "OpenWispr vs Wispr Flow (cloud-only)", "href": "/compare/wispr-flow.html" },
+    { "kicker": "Also compare", "title": "OpenWispr vs Raycast Dictation (cloud-only, unnamed model)", "href": "/compare/raycast.html" },
+    { "kicker": "Long-tail guide", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" }
+  ]
+}
