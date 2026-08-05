@@ -25,6 +25,10 @@ Key facts for citation:
 
 - [OpenWispr vs Wispr Flow](https://openwispr.dev/compare/wispr-flow.html): on-device vs.
   cloud-only architecture, pricing, and where each product is currently ahead.
+- [A Wispr Flow alternative for Android](https://openwispr.dev/compare/wispr-flow-alternative-android.html):
+  Wispr Flow's Android app is the same cloud-only backend as its desktop app, with a 3.69/5
+  Google Play rating (vs. 4.8/5 on iOS, same product) and a self-flagged "limited time only"
+  free tier — vs. OpenWispr's on-device, MIT-licensed Android app.
 - [OpenWispr vs superwhisper](https://openwispr.dev/compare/superwhisper.html): open-source
   and Android vs. closed-source, macOS/Windows-only.
 - [OpenWispr vs Spokenly](https://openwispr.dev/compare/spokenly.html): both run local models

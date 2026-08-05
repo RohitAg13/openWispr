@@ -51,6 +51,7 @@
   ],
   "relatedLinks": [
     { "kicker": "Also read", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" },
+    { "kicker": "Compare", "title": "A Wispr Flow alternative for Android", "href": "/compare/wispr-flow-alternative-android.html" },
     { "kicker": "Compare", "title": "OpenWispr vs Wispr Flow (cloud-only)", "href": "/compare/wispr-flow.html" },
     { "kicker": "Compare", "title": "OpenWispr vs superwhisper (no Android app)", "href": "/compare/superwhisper.html" }
   ]

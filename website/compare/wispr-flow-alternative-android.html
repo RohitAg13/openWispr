@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenWispr vs Wispr Flow — A Free, On-Device Wispr Flow Alternative</title>
-<meta name="description" content="Looking for a Wispr Flow alternative? OpenWispr is a free, MIT-licensed, on-device dictation app for macOS and Android. A fact-checked comparison: pricing, on-device vs cloud processing, offline reliability, and what Wispr Flow's own docs say about audio retention and Context Awareness — including where OpenWispr is still behind.">
-<meta property="og:title" content="OpenWispr vs Wispr Flow — a free, on-device alternative">
-<meta property="og:description" content="Free and MIT-licensed vs $15/mo and cloud-only. Sourced from Wispr Flow's own documentation, changelog, and status page.">
+<title>Wispr Flow Alternative for Android — Free, On-Device Dictation | OpenWispr</title>
+<meta name="description" content="Looking for a Wispr Flow alternative for Android? OpenWispr is an independent, free, MIT-licensed dictation app built for Android from day one — on-device transcription, no account, and a fact-checked look at how Wispr Flow's own Android app compares, including its Play Store ratings.">
+<meta property="og:title" content="A Wispr Flow alternative for Android">
+<meta property="og:description" content="Wispr Flow's Android app is cloud-only and was rated 3.69/5 on Google Play as of July 2026 (vs 4.8/5 on iOS, same product). OpenWispr is free, on-device, and MIT-licensed.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://openwispr.dev/compare/wispr-flow.html">
-<link rel="canonical" href="https://openwispr.dev/compare/wispr-flow.html">
+<meta property="og:url" content="https://openwispr.dev/compare/wispr-flow-alternative-android.html">
+<link rel="canonical" href="https://openwispr.dev/compare/wispr-flow-alternative-android.html">
 <meta name="theme-color" content="#f5f1e6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,8 +35,8 @@
   }
 </style>
 <script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What's a good free, open-source alternative to Wispr Flow?","acceptedAnswer":{"@type":"Answer","text":"OpenWispr is a free, MIT-licensed alternative to Wispr Flow for macOS and Android. It's an independent project, not affiliated with Wispr Flow — the appeal is architectural: transcription and cleanup run entirely on your device, with no account, no subscription, and no word cap, and the source is public so the claim is checkable rather than a promise."}},{"@type":"Question","name":"Is Wispr Flow really cloud-only, with no local option?","acceptedAnswer":{"@type":"Answer","text":"Yes — per Wispr Flow's own security FAQ, \"Wispr's backend must decrypt audio to perform transcription,\" and there is no on-device mode at any pricing tier, including Enterprise."}},{"@type":"Question","name":"Does OpenWispr have full feature parity with Wispr Flow yet?","acceptedAnswer":{"@type":"Answer","text":"No, not yet. Wispr Flow supports iOS and Windows, which OpenWispr doesn't ship today (Windows is in progress). OpenWispr's audio-retention and retry-on-failure handling is also actively being built rather than shipped. Track both on GitHub."}},{"@type":"Question","name":"What happens to my audio if I enable Wispr Flow's zero-retention mode?","acceptedAnswer":{"@type":"Answer","text":"Per their own documentation, enabling zero data retention means \"audio is never saved to History and retry from saved audio is unavailable\" — so their most private setting is also their least recoverable one. OpenWispr has no retention policy to trade off, because audio never leaves your device to begin with."}},{"@type":"Question","name":"Is OpenWispr actually free, or is there a paid tier I'll hit eventually?","acceptedAnswer":{"@type":"Answer","text":"OpenWispr is free and MIT-licensed with a single tier: no word cap, no subscription, no account. Wispr Flow's Pro tier is $15/mo, or $12/mo billed annually ($144/yr), after its free-tier word limits are used up."}},{"@type":"Question","name":"Does Wispr Flow send anything besides my voice to its servers?","acceptedAnswer":{"@type":"Answer","text":"According to their own Context Awareness documentation, when enabled — on by default on Mac and Windows — it can send app info, on-screen text, variable and file names in coding apps, and a screenshot to their cloud. OpenWispr's published source makes no network calls for transcription at all."}}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://openwispr.dev/#compare"},{"@type":"ListItem","position":3,"name":"vs Wispr Flow","item":"https://openwispr.dev/compare/wispr-flow.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does Wispr Flow even have an Android app?","acceptedAnswer":{"@type":"Answer","text":"Yes. Wispr Flow ships on Android, running the same cloud-only backend as its desktop and iOS apps — there is no on-device mode on Android or any other platform, per their own security FAQ."}},{"@type":"Question","name":"Is there a good Wispr Flow alternative for Android that works offline?","acceptedAnswer":{"@type":"Answer","text":"OpenWispr is a free, MIT-licensed, independent alternative built with Android as a first-class platform. Its transcription and text cleanup run entirely on-device — put your phone in airplane mode and it keeps working, because there is no cloud step to fail over from."}},{"@type":"Question","name":"Is Wispr Flow's Android app as good as its iOS app?","acceptedAnswer":{"@type":"Answer","text":"Its own Google Play data suggests not, at least historically. As of late July 2026, Wispr Flow's Play Store rating was 3.69/5 from 3,128 ratings (16.6% one-star lifetime), compared to 4.8/5 on the iOS App Store for the same product and backend — a wide gap for identical software. Ratings shift over time, so check the current listings rather than treating this as fixed."}},{"@type":"Question","name":"Is Wispr Flow's Android free tier really unlimited?","acceptedAnswer":{"@type":"Answer","text":"Wispr Flow's pricing page listed the Android free tier as \"Unlimited (limited time only)\" as of July 2026, flagging it as a temporary state. As of this writing that specific \"limited time\" wording is gone from their page, which now just says \"Unlimited on Android\" — whether the allowance changed or the notice was simply dropped isn't confirmed, so check their current pricing directly. OpenWispr's free tier has no cap and has never carried a time-limit notice."}},{"@type":"Question","name":"Is OpenWispr affiliated with Wispr Flow in any way?","acceptedAnswer":{"@type":"Answer","text":"No. OpenWispr is an independent, MIT-licensed project with no affiliation, partnership, or endorsement relationship with Wispr Flow. This comparison exists to answer a common search honestly, using Wispr Flow's own published documentation and public app-store data."}},{"@type":"Question","name":"Does OpenWispr have as many Android users or reviews as Wispr Flow?","acceptedAnswer":{"@type":"Answer","text":"Not yet — OpenWispr's Android app is newer and doesn't have a comparable review history to Wispr Flow's 3,128 Play Store ratings. If an established track record matters most to you, that is currently a real advantage for Wispr Flow."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://openwispr.dev/#compare"},{"@type":"ListItem","position":3,"name":"Wispr Flow alternative for Android","item":"https://openwispr.dev/compare/wispr-flow-alternative-android.html"}]}</script>
 </head>
 <body>
 <div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
@@ -68,24 +68,24 @@
   <div class="ow-hero" style="position:relative; max-width:820px; margin:0 auto; padding:50px 32px 60px; text-align:center;">
     <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
       <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">OpenWispr vs Wispr Flow</span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">Wispr Flow alternative · Android</span>
     </div>
-    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">OpenWispr vs Wispr Flow: a free, on-device alternative</h1>
-    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">Wispr Flow is cloud-only at every price tier — their own security FAQ says the backend must decrypt your audio to transcribe it. OpenWispr is an independent, unaffiliated, MIT-licensed alternative that does the whole job on your device, for free, with the source code public.</p>
+    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">A Wispr Flow alternative built for Android</h1>
+    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">Wispr Flow does ship an Android app — but it's the same cloud-only architecture as its desktop product, with a noticeably rockier Play Store record. OpenWispr is an independent, unaffiliated, MIT-licensed app with Android as a first-class target, not an afterthought.</p>
     <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
       <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">Download for macOS</a>
       <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">Get it on Google Play</a>
     </div>
-    <div style="margin-top:20px; font-size:13px; color:oklch(0.55 0.025 52);">No account needed to try OpenWispr. No credit card, no trial clock.</div>
+    <div style="margin-top:20px; font-size:13px; color:oklch(0.55 0.025 52);">No account needed. Free, with no word cap, on Google Play today.</div>
   </div>
 </div>
-<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/#compare" style="color:oklch(0.55 0.03 50);">Compare</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">vs Wispr Flow</span></div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/#compare" style="color:oklch(0.55 0.03 50);">Compare</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">Wispr Flow alternative for Android</span></div>
 <div style="background:oklch(0.972 0.014 78);">
   <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
-    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The short version</div>
-    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Same category, structurally different architecture.</h2>
-    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">OpenWispr is an independent, open-source project, not affiliated with, endorsed by, or built by Wispr Flow — this page exists because "Wispr Flow alternative" is a real, common search, and the honest answer deserves sourced facts rather than a one-sided pitch. Wispr Flow is a well-funded, widely used cloud dictation product — it has real strengths, including iOS support and Windows support that OpenWispr doesn't have yet. The comparison below isn't "OpenWispr wins everything"; it's the specific, sourced facts, including where OpenWispr is still behind.</p>
-<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The core architectural difference is simple: Wispr Flow's <a href="https://docs.wisprflow.ai" style="color:oklch(0.5 0.1 40); text-decoration:underline;">own security documentation</a> states that "Wispr's backend must decrypt audio to perform transcription" — there is no on-device mode at any tier, free or paid. OpenWispr has no backend at all; transcription and cleanup happen on the device in your hand, and the app is open source under MIT, so the claim is checkable rather than a promise.</p>
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Independent, not affiliated</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">OpenWispr is not built by, endorsed by, or partnered with Wispr Flow</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">This page is content marketing in the plainest sense: people search for "Wispr Flow alternative for Android," and this is the honest answer, sourced from Wispr Flow's own documentation and public app-store data. OpenWispr is an independent, MIT-licensed project with no affiliation to Wispr Flow — nothing here should be read as implying otherwise.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The Android-specific case for switching is different from the general one. Wispr Flow's Android app exists and works, but it runs the identical cloud-only pipeline as its desktop app — the same backend that, per their own security FAQ, "must decrypt audio to perform transcription." There's no on-device mode on Android, or on any platform. OpenWispr's Android app, by contrast, was designed around on-device transcription from the start: nothing is uploaded, nothing requires a signal, and the source is public so that's a checkable claim rather than a marketing line.</p>
   </div>
 </div>
 <div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72); border-bottom:1px solid oklch(0.91 0.012 72);">
@@ -98,28 +98,28 @@
       <span style="font-size:13.5px; font-weight:700; color:oklch(0.3 0.03 45);">OpenWispr</span>
     </div>
     <div style="padding:18px 20px; border-bottom:1px solid oklch(0.92 0.012 72); border-left:1px solid oklch(0.93 0.01 72); text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
-      <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">Wispr Flow</span>
+      <span style="font-size:13.5px; font-weight:600; color:oklch(0.5 0.03 50);">Wispr Flow (Android)<br><span style="font-size:11px; font-weight:400; color:oklch(0.6 0.02 55);">Same cloud backend as desktop</span></span>
     </div>
   </div>
   <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
-  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Where audio is processed</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Your device, always</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Their servers — &quot;backend must decrypt audio to transcribe&quot;</span></div>
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Where transcription happens</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Your phone, always</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Their servers — the same cloud-only backend used on desktop</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
-  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Works with no internet connection</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes, fully</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No — per their own docs, dictation can fail &quot;without notice&quot; when offline</span></div>
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Works in airplane mode</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes, fully — nothing to lose signal to</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No — per their own docs, dictation &quot;may fail without notice&quot; if the connection drops</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
   <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Price</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Free, no tier</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">$15/mo, or $12/mo billed annually ($144/yr)</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Free, one tier, no cap, no expiry</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Free on Android, no stated cap — their pricing page flagged this &quot;limited time only&quot; as of July 2026; that wording is gone as of this writing, though whether the allowance itself changed is unconfirmed</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
-  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Free-tier usage cap</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">None</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">2,000 words/wk desktop, 1,000/wk iPhone; Android's &quot;unlimited&quot; was flagged limited-time as of July 2026 (that wording is no longer on their pricing page)</span></div>
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Google Play rating</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">New app — building its review history</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">3.69/5 from 3,128 ratings as of July 2026, with 16.6% one-star lifetime — versus 4.8/5 on iOS for the same product and backend (ratings shift over time; check the live listing)</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
   <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Account required</div>
@@ -128,23 +128,18 @@
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
   <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Open source</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes — MIT license</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Yes — MIT license, full source on GitHub</span></div>
   <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">No</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
-  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Screen/context data sent to a server</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">None — no network calls in the source</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes, via &quot;Context Awareness&quot;: on-screen text, code variable names, a screenshot — on by default on Mac/Windows</span></div>
-</div>
-<div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
-  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Platform coverage</div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">macOS + Android (Windows, Linux in progress)</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">macOS, Windows, iOS, Android</span></div>
+  <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Audio kept if a transcription fails</div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.46 0.1 145);">Nothing to lose in transit — it never leaves the device</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Wasn't preserved on failed Android transcriptions until their March 2026 update (v1.4.1)</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
   <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Retry a failed transcription</div>
   <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center; background:oklch(0.985 0.012 74);"><span style="font-size:14px; font-weight:600; color:oklch(0.42 0.03 48);">Actively in development</span></div>
-  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes, but only while audio is retained — disabled entirely under zero-retention mode, and iOS purges failed dictations after the current day</span></div>
+  <div style="padding:16px 20px; border-left:1px solid oklch(0.95 0.01 72); text-align:center;"><span style="font-size:14px; color:oklch(0.58 0.025 50);">Yes, since v1.4.1 — but disabled under their zero-retention privacy setting</span></div>
 </div>
 <div class="ow-cmp-row" style="display:grid; grid-template-columns:1.4fr 1fr 1fr; border-bottom:1px solid oklch(0.95 0.01 72);">
   <div style="padding:16px 24px; font-size:14.5px; font-weight:500; color:oklch(0.36 0.03 48);">Support channel</div>
@@ -157,19 +152,26 @@
 </div>
 <div style="background:oklch(0.972 0.014 78);">
   <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
-    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Read their own docs</div>
-    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">What Wispr Flow's documentation says about itself</h2>
-    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">None of the claims above are guesses. Wispr Flow's <a href="https://docs.wisprflow.ai" style="color:oklch(0.5 0.1 40); text-decoration:underline;">support docs</a> state that if zero data retention is enabled, "audio is never saved to History and retry from saved audio is unavailable" — meaning the more private the setting, the less recoverable a failed transcription becomes. On iOS specifically, "failed dictations are kept for the current day only."</p>
-<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Their <a href="https://docs.wisprflow.ai/articles/4678293671-feature-context-awareness" style="color:oklch(0.5 0.1 40); text-decoration:underline;">Context Awareness feature</a> documentation lists what it sends to the cloud when enabled: "app info, textbox contents (before, selected, and after the cursor), on-screen text, variable and file names in coding apps, your user identifier within the app, the list of apps in your current session, a screenshot, and conversation history." This is on by default on Mac and Windows.</p>
-<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Their own <a href="https://wisprflow.ai/whats-new" style="color:oklch(0.5 0.1 40); text-decoration:underline;">changelog</a> is worth reading directly: audio wasn't preserved for failed Android transcriptions until March 2026, and quitting mid-dictation on desktop destroyed the recording until June 2026 — a heavily funded product without write-ahead audio persistence for years. Their support team has publicly acknowledged the pressure: "we get around a thousand emails and tickets a day… but we only have 11 support team members right now."</p>
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Read the numbers</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Wispr Flow's own app-store data shows Android is its weakest platform</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">As of late July 2026, Wispr Flow's Google Play listing sat at 3.69/5 from 3,128 ratings, with 16.6% one-star lifetime — and among its 400 newest reviews at the time, 27.8% were one-star. Its iOS App Store listing, running the same product against the same cloud backend, showed 4.8/5 from roughly 13,000 ratings. That gap — same company, same architecture, dramatically different reception — was the clearest signal that Android was where Wispr Flow's cloud-only approach showed its weakest side. Ratings shift over time, so check the live listings for today's numbers.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Wispr Flow's pricing page listed its free Android tier as <strong>"Unlimited on Android (limited time only)"</strong> as of July 2026 — an explicit, self-disclosed notice that the free allowance was a temporary state, not a commitment. As of this writing, that specific wording is gone from their pricing page, which now just says "Unlimited on Android" with no time-limit flag. It's unclear whether that means the allowance is now permanent or the notice was simply dropped — check their current pricing directly rather than relying on either the old flag or its absence.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The architecture question</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Cloud-only means the same tradeoffs on Android as everywhere else</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Wispr Flow has no on-device mode on any platform, Android included. Per their own documentation, "Flow does not block dictation when offline. If the connection is lost, the transcription may fail without notice — retry from History." And per their own changelog, audio from failed Android transcriptions wasn't even preserved for a retry until the v1.4.1 update in March 2026 — meaning for however long Wispr Flow has shipped on Android before that, a failed dictation on a spotty mobile connection could simply be gone.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">OpenWispr's Android app takes the opposite architectural bet: transcription and text cleanup run on the device itself, using an on-device Whisper-class speech model downloaded once on first launch. Put the phone in airplane mode and dictation keeps working exactly the same — there's no server round-trip to fail over from in the first place. That's a structural difference, not a tuning difference: it holds regardless of how good Wispr Flow's Android app gets at retrying failed cloud requests.</p>
   </div>
 </div>
 <div style="background:oklch(0.972 0.014 78);">
   <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
     <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Honest gaps</div>
-    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Where Wispr Flow is currently ahead of OpenWispr</h2>
-    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">It would be dishonest to present this as a one-sided win. Wispr Flow ships on iOS and Windows; OpenWispr today covers macOS and Android, with Windows and Linux marked "soon." Wispr Flow also has a mature retry/recovery flow for failed transcriptions once audio is retained — OpenWispr's equivalent (durable write-ahead audio, a proper retry button) is actively being built rather than shipped today.</p>
-<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If you need iOS or Windows dictation right now, or you specifically want retry-from-history on a failed transcription today, Wispr Flow currently covers that and OpenWispr doesn't yet. What OpenWispr offers instead is architectural: nothing to retain in the first place, because nothing leaves the device.</p>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Where OpenWispr's Android app is currently behind</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">It would be dishonest to only tell the flattering half of this. OpenWispr's Android app is younger than Wispr Flow's — it has no meaningful Play Store review history yet, versus Wispr Flow's 3,128 ratings (however mixed). If social proof from a large existing user base matters to your decision, Wispr Flow currently has that and OpenWispr doesn't.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">OpenWispr's retry-on-failure and audio-retention UX is also still being built, the same honest gap this comparison names on the general Wispr Flow page. And Wispr Flow's Context Awareness and iOS/Windows apps (not relevant to this Android-specific page, but real elsewhere) mean Wispr Flow remains the broader, more feature-complete product across its full platform range today — this page is specifically about the Android experience, not a claim that OpenWispr is ahead everywhere.</p>
   </div>
 </div>
 <div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
@@ -181,58 +183,54 @@
     <div style="display:flex; flex-direction:column; gap:12px;">
       <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What's a good free, open-source alternative to Wispr Flow?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Wispr Flow even have an Android app?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">OpenWispr is a free, MIT-licensed alternative to Wispr Flow for macOS and Android. It's an independent project, not affiliated with Wispr Flow — the appeal is architectural: transcription and cleanup run entirely on your device, with no account, no subscription, and no word cap, and the source is public so the claim is checkable rather than a promise.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes. Wispr Flow ships on Android, running the same cloud-only backend as its desktop and iOS apps — there is no on-device mode on Android or any other platform, per their own security FAQ.</div>
 </div>
 <div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Wispr Flow really cloud-only, with no local option?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is there a good Wispr Flow alternative for Android that works offline?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — per Wispr Flow's own security FAQ, "Wispr's backend must decrypt audio to perform transcription," and there is no on-device mode at any pricing tier, including Enterprise.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">OpenWispr is a free, MIT-licensed, independent alternative built with Android as a first-class platform. Its transcription and text cleanup run entirely on-device — put your phone in airplane mode and it keeps working, because there is no cloud step to fail over from.</div>
 </div>
 <div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does OpenWispr have full feature parity with Wispr Flow yet?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Wispr Flow's Android app as good as its iOS app?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No, not yet. Wispr Flow supports iOS and Windows, which OpenWispr doesn't ship today (Windows is in progress). OpenWispr's audio-retention and retry-on-failure handling is also actively being built rather than shipped. Track both on <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.5 0.1 40); text-decoration:underline;">GitHub</a>.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Its own Google Play data suggests not, at least historically. As of late July 2026, Wispr Flow's Play Store rating was 3.69/5 from 3,128 ratings (16.6% one-star lifetime), compared to 4.8/5 on the iOS App Store for the same product and backend — a wide gap for identical software. Ratings shift over time, so check the current listings rather than treating this as fixed.</div>
 </div>
 <div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What happens to my audio if I enable Wispr Flow's zero-retention mode?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Wispr Flow's Android free tier really unlimited?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Per their own documentation, enabling zero data retention means "audio is never saved to History and retry from saved audio is unavailable" — so their most private setting is also their least recoverable one. OpenWispr has no retention policy to trade off, because audio never leaves your device to begin with.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Wispr Flow's pricing page listed the Android free tier as "Unlimited (limited time only)" as of July 2026, flagging it as a temporary state. As of this writing that specific "limited time" wording is gone from their page, which now just says "Unlimited on Android" — whether the allowance changed or the notice was simply dropped isn't confirmed, so check their current pricing directly. OpenWispr's free tier has no cap and has never carried a time-limit notice.</div>
 </div>
 <div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is OpenWispr actually free, or is there a paid tier I'll hit eventually?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is OpenWispr affiliated with Wispr Flow in any way?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">OpenWispr is free and MIT-licensed with a single tier: no word cap, no subscription, no account. Wispr Flow's Pro tier is $15/mo, or $12/mo billed annually ($144/yr), after its free-tier word limits are used up.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No. OpenWispr is an independent, MIT-licensed project with no affiliation, partnership, or endorsement relationship with Wispr Flow. This comparison exists to answer a common search honestly, using Wispr Flow's own published documentation and public app-store data.</div>
 </div>
 <div data-faq="5" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
-    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Wispr Flow send anything besides my voice to its servers?</span>
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does OpenWispr have as many Android users or reviews as Wispr Flow?</span>
     <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
   </div>
-  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">According to their own Context Awareness documentation, when enabled — on by default on Mac and Windows — it can send app info, on-screen text, variable and file names in coding apps, and a screenshot to their cloud. OpenWispr's published source makes no network calls for transcription at all.</div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Not yet — OpenWispr's Android app is newer and doesn't have a comparable review history to Wispr Flow's 3,128 Play Store ratings. If an established track record matters most to you, that is currently a real advantage for Wispr Flow.</div>
 </div>
     </div>
   </div>
 </div>
 <div style="background:oklch(0.972 0.014 78);">
   <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
-    <a href="/compare/wispr-flow-alternative-android.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
-  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Android-specific</div>
-  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">A Wispr Flow alternative for Android</div>
-</a>
-<a href="/compare/superwhisper.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
-  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also compare</div>
-  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs superwhisper</div>
+    <a href="/compare/wispr-flow.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">General comparison</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">OpenWispr vs Wispr Flow (full comparison)</div>
 </a>
 <a href="/android/on-device-whisper-dictation-android.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
   <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Long-tail guide</div>
