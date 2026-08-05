@@ -280,6 +280,12 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     onSkip = { next() },
                 )
             }
+            // The model step no longer blocks on this download (see SetupStep), so once the
+            // user has moved past it a silent background download reads as nothing happening.
+            // A small ambient status keeps it visible without asking anyone to wait for it.
+            if (step in 2..6 && dl == "downloading") {
+                DownloadStatusChip(dlPct)
+            }
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
@@ -421,6 +427,23 @@ private fun LogoCircle(diameter: Int) {
         Icon(
             androidx.compose.ui.res.painterResource(R.drawable.ic_aperture), null,
             tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size((diameter * 0.5f).dp),
+        )
+    }
+}
+
+/** Ambient "still downloading" status shown on steps after the model step, once that
+ *  step stopped blocking on the download — see the `dl == "downloading"` branch above. */
+@Composable
+private fun DownloadStatusChip(pct: Float) {
+    val cs = MaterialTheme.colorScheme
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(Modifier.size(6.dp).clip(CircleShape).background(cs.primary))
+        Text(
+            "Speech model downloading in background · ${(pct * 100).toInt()}%",
+            style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
         )
     }
 }
@@ -572,7 +595,12 @@ private fun SetupStep(
         actions = {
             when (dl) {
                 "done" -> Cta("Continue", onClick = onNext)
-                "downloading" -> Cta("Downloading…", enabled = false, onClick = {})
+                // Keep going — the download survives in the background (same coroutine
+                // scope for the whole onboarding flow) and DoneStep already handles an
+                // still-downloading model gracefully. Making the user sit and watch a
+                // ~631MB download here was the actual complaint: it reads as stuck, not
+                // as progress, and it's the single biggest place onboarding lost people.
+                "downloading" -> Cta("Continue — downloads in background", onClick = onNext)
                 "error" -> Cta("Try again", onClick = onDownload)
                 else -> Cta("Download & continue", onClick = onDownload)
             }
