@@ -56,6 +56,11 @@ data class Settings(
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
     val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
     val hasCompletedOnboarding: Boolean = false, // first-run onboarding shown once; re-launchable from Settings
+    // Experimental: Parakeet vocab-bias via sherpa hotwords + modified_beam_search. Off by
+    // default — that decode path has an open upstream bug (k2-fsa/sherpa-onnx#3267) that
+    // hallucinates or returns empty text on ~20% of NeMo-TDT requests; greedy_search (used
+    // otherwise) is unaffected. See LocalParakeetStt for the full story.
+    val parakeetHotwordsExperimental: Boolean = false,
 ) {
     /**
      * Whether to run the LLM polish layer on dictation. Off by default — the deterministic
@@ -104,6 +109,7 @@ class SettingsRepository(private val context: Context) {
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
         val BUBBLE_ONLY_ON_FIELDS = booleanPreferencesKey("bubbleOnlyOnFields")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("hasCompletedOnboarding")
+        val PARAKEET_HOTWORDS_EXPERIMENTAL = booleanPreferencesKey("parakeetHotwordsExperimental")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -126,6 +132,7 @@ class SettingsRepository(private val context: Context) {
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
             bubbleOnlyOnFields = p[Keys.BUBBLE_ONLY_ON_FIELDS] ?: defaults.bubbleOnlyOnFields,
             hasCompletedOnboarding = p[Keys.HAS_COMPLETED_ONBOARDING] ?: defaults.hasCompletedOnboarding,
+            parakeetHotwordsExperimental = p[Keys.PARAKEET_HOTWORDS_EXPERIMENTAL] ?: defaults.parakeetHotwordsExperimental,
         )
     }
 
@@ -150,6 +157,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
             p[Keys.BUBBLE_ONLY_ON_FIELDS] = s.bubbleOnlyOnFields
             p[Keys.HAS_COMPLETED_ONBOARDING] = s.hasCompletedOnboarding
+            p[Keys.PARAKEET_HOTWORDS_EXPERIMENTAL] = s.parakeetHotwordsExperimental
         }
     }
 
