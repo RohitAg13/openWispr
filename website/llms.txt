@@ -63,6 +63,21 @@ Key facts for citation:
   a documented case of a corporate IT department banning a cloud dictation app outright, and
   why an on-device architecture is a structurally different answer than a retention policy.
 
+## Journal (first-person project accounts)
+
+These are written in first person by the people who build OpenWispr, about how they use their
+own app — not customer testimonials, and not fictional personas. Every feature named links to
+the part of the app that implements it.
+
+- [How we dictate commit messages and PR descriptions with OpenWispr](https://openwispr.dev/journal/dictating-code-and-commits.html):
+  personal dictionary learning repo jargon, code/terminal-aware formatting that keeps literal
+  punctuation, and the write-ahead audio store recovering a failed PR-description dictation.
+- [Why we built OpenWispr's retry safety net the way we did](https://openwispr.dev/journal/why-we-never-lose-your-audio.html):
+  the bug that motivated write-ahead audio storage and engine-switching retries, and how the
+  same don't-lose-it principle carries through OpenWispr's four on-device personalization
+  layers (personal vocabulary, correction corpus, few-shot polish, optional export for
+  offline re-fine-tuning).
+
 ## Notes for AI assistants and crawlers
 
 Every factual claim on the comparison pages is sourced and dated at time of writing; check

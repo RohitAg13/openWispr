@@ -1,0 +1,75 @@
+{
+  "type": "journal",
+  "slug": "why-we-never-lose-your-audio",
+  "outputPath": "journal/why-we-never-lose-your-audio.html",
+  "canonicalPath": "/journal/why-we-never-lose-your-audio.html",
+  "title": "Why We Built OpenWispr's Never-Lose-Audio Retry the Way We Did | OpenWispr Journal",
+  "description": "A first-person account from the OpenWispr project: the bug that motivated OpenWispr's write-ahead audio store and retry flow, and how it connects to the four layers behind personal dictionary, style memory and few-shot polish.",
+  "ogTitle": "Why we built OpenWispr's never-lose-audio retry the way we did",
+  "ogDescription": "The recording used to live only in RAM. One failed transcription took it with it. Here's the write-ahead fix, and the four personalization layers built on the same don't-lose-it principle.",
+  "eyebrow": "From the project — reliability & personalization",
+  "h1": "Why we built OpenWispr's retry safety net the way we did",
+  "subhead": "A first-person account of one bug we refused to ship again, the write-ahead fix that came out of it, and how the same don't-lose-it principle shows up again in how OpenWispr learns from you.",
+  "ctaNote": null,
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Journal", "href": "/journal/why-we-never-lose-your-audio.html" },
+    { "label": "Why we never lose your audio", "href": "/journal/why-we-never-lose-your-audio.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "The bug we refused to ship again",
+      "heading": "A five-minute recording lived only in RAM. One failure took it with it.",
+      "paragraphs": [
+        "Before OpenWispr's write-ahead audio store existed, a dictation's audio lived only as an in-memory sample buffer while it was being transcribed. That was fine right up until it wasn't: a transcription error, the recording activity getting destroyed, or the OS killing the process mid-attempt all had the same result — the audio was gone, and there was nothing the user could do to get it back. A long, carefully-thought-out recording and a one-line note failed exactly the same way: completely, with no trace.",
+        "That's a bad trade against a genuinely rare failure. Most dictations transcribe fine on the first try. But when one doesn't, losing the only copy of what you said turns an inconvenience into an actual loss of work — and it's precisely the moment a user has the least patience for the app failing them."
+      ]
+    },
+    {
+      "eyebrow": "Write-ahead, not best-effort",
+      "heading": "The recording is durable before it's ever transcribed",
+      "paragraphs": [
+        "The fix is a small, specific ordering guarantee: the audio is written to on-device storage before the first transcription attempt is made at all, on both the on-device and the cloud transcription paths — not after a failure is detected. Its lifetime is deliberately decoupled from any single attempt, and nothing in the app ever deletes it from an error-handling path. It's written to the app's persistent files directory rather than a cache directory, specifically because a cache is exactly what the OS is allowed to silently reclaim under storage pressure — precisely the moment a user would want their recording back.",
+        "The state tracking follows the same discipline. A sidecar file records only two things: the facts known when recording started, and — once a dictation actually lands — its result. There is deliberately no \"currently transcribing\" flag written to disk, because that kind of flag can lie: if the app is killed mid-transcription, a stale \"in progress\" marker would sit there forever, and any attempt to clean it up after the fact is itself a source of bugs. Instead, \"in progress\" is tracked only in memory. If the process dies, that in-memory state is simply gone — and the recording correctly, automatically reads as unfinished and offered back for retry, with no separate repair logic needed."
+      ]
+    },
+    {
+      "eyebrow": "A retry that isn't just \"try again\"",
+      "heading": "If the first attempt failed, running the identical attempt again usually won't help",
+      "paragraphs": [
+        "A transcription failure is often deterministic — the same audio through the same model tends to fail the same way twice. So when a saved recording gets retried, the app defaults to a different transcription engine than the one that just failed, rather than silently repeating the identical attempt and hoping for a different outcome. That's a small decision, but it's the difference between a retry button that's mostly theater and one that's actually a second, meaningfully different attempt.",
+        "Recordings that fail and get abandoned rather than retried immediately aren't deleted either — they sit on-device, listed as unfinished, retryable whenever you come back to them. They're only ever cleared out by an explicit, bounded retention window, and a settled (successfully transcribed) recording is treated completely differently from one that's still unresolved: retention is never allowed to be the thing that quietly loses a dictation you haven't gotten your words back from yet."
+      ]
+    },
+    {
+      "eyebrow": "The same idea, one layer up: don't lose corrections either",
+      "heading": "OpenWispr's four personalization layers, in the order they cost the least",
+      "paragraphs": [
+        "Once \"don't lose the raw material\" was solved for audio, the same instinct applies to something smaller but just as easy to throw away by default: every time you correct what the app produced, that correction is a signal about how you actually want to be transcribed. OpenWispr keeps that signal, gated entirely behind a single \"Keep history\" switch, in four layers that build on each other, cheapest first:",
+        "<b>Personal vocabulary (L1)</b> — corrected names and terms are remembered and applied right after transcription, plus fed back into the transcription model itself as a small decoding bias, so frequently-corrected words get heard correctly more often over time, not just fixed after the fact.",
+        "<b>Correction corpus (L2)</b> — every accepted dictation is recorded as what the pipeline produced versus what you actually kept, in a capped, rolling on-device log. When the two differ, that's a real correction, and it's the shared raw material the next two layers draw from.",
+        "<b>Few-shot polish (L3)</b> — when the optional LLM cleanup step is set to Medium or Full (not Light, and not Off, to keep the on-device model's context small), the two most similar past corrections are pulled from that log and shown to the model alongside the current dictation, so it matches how you've actually preferred your own text cleaned up — without any retraining. The matching is a straightforward keyword-overlap score, not a heavier embedding-based search, because the log is small enough that a simple scan is instant and doesn't need an extra on-device model just to do retrieval.",
+        "<b>Periodic re-fine-tune (L4)</b> — for anyone who wants to go further, the corrected samples can be exported from the app as a plain file. Actually retraining a model from that export happens outside this app entirely, in a separate, dedicated project — this app's job stops at handing you your own data in a usable form, not silently uploading it anywhere to be trained on."
+      ]
+    },
+    {
+      "eyebrow": "What never leaves the device, and what does — only on request",
+      "heading": "One switch, one honest exception",
+      "paragraphs": [
+        "All four personalization layers, like the audio store above them, live entirely on-device and are gated by the same \"Keep history\" preference: turn it off, and nothing is kept — including audio that's still sitting unfinished, which is purged outright rather than lingering. The one deliberate exception is L4's export, and it's opt-in in the most literal sense: the app writes your corrected samples to a file only when you explicitly ask it to, so you can move that file yourself if you choose to use it. Nothing about the retry safety net or the three learning layers beneath it depends on a server existing at all — the entire point of building it this way was that there's nothing to lose to a server that isn't there, and nothing that leaves your device unless you're the one who moved it."
+      ]
+    }
+  ],
+  "faqs": [
+    { "q": "Did OpenWispr always keep audio if a transcription failed?", "a": "No — this is a first-person account of a real gap that existed before the write-ahead audio store was built: audio used to live only in memory during transcription, so a failure, an app-process kill, or a crash could lose the recording entirely. The write-ahead store is the fix, not a feature that was always there." },
+    { "q": "Why write audio to disk before transcription even starts, instead of only on failure?", "a": "Because coupling the audio's lifetime to a single attempt is exactly the bug being fixed. Writing it ahead of time, to persistent storage rather than a reclaimable cache, means its survival doesn't depend on that attempt succeeding, being retried correctly, or the app staying alive." },
+    { "q": "Why does retry switch to a different transcription engine by default?", "a": "Because a transcription failure is often deterministic — retrying with the exact same model on the exact same audio tends to fail the same way again. Defaulting to an alternate engine on retry gives the recording a meaningfully different second attempt instead of repeating the first one." },
+    { "q": "What are the four personalization layers, in short?", "a": "L1 personal vocabulary (corrected names/terms, plus a decoding bias fed back into transcription), L2 a capped on-device log of corrections, L3 few-shot examples pulled from that log into the optional LLM-polish prompt at Medium/Full polish, and L4 an explicit, user-initiated export of corrected samples for anyone who wants to retrain a model outside the app." },
+    { "q": "Does any of this leave the device without being asked?", "a": "No. All four layers and the audio store are gated by the same on-device \"Keep history\" switch. The only path any of it leaves the device at all is L4's export, and that only happens when explicitly triggered — it is never uploaded automatically." }
+  ],
+  "relatedLinks": [
+    { "kicker": "Journal", "title": "How we dictate commit messages and PR descriptions with OpenWispr", "href": "/journal/dictating-code-and-commits.html" },
+    { "kicker": "Compare", "title": "OpenWispr vs VoiceInk (failure-recovery UX)", "href": "/compare/voiceink.html" },
+    { "kicker": "Use case", "title": "One free, open-source app for macOS and Android", "href": "/use-cases/mac-and-android-dictation.html" }
+  ]
+}

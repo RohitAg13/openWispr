@@ -198,6 +198,22 @@ function faqSectionHtml(faqs) {
 </div>`;
 }
 
+/**
+ * Disclosure strip for /journal/ pages — states plainly that this is the OpenWispr project's
+ * own first-person account, not a customer testimonial or a named persona. Rendered once, right
+ * under the breadcrumb, before any narrative content. See pseo/README.md "Journal pages" for why
+ * this exists as its own component rather than a line of body prose (it has to be impossible to
+ * miss, and identical wording on every journal page, not something each data file re-phrases).
+ */
+function journalNoteHtml() {
+  return `<div style="max-width:760px; margin:18px auto 0; padding:0 32px;">
+  <div style="display:flex; align-items:flex-start; gap:12px; background:oklch(0.97 0.018 72); border:1px solid oklch(0.9 0.014 72); border-radius:14px; padding:16px 20px;">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:oklch(0.5 0.04 45); text-transform:uppercase; flex:none; padding-top:2px;">From the project</span>
+    <span style="font-size:13.5px; line-height:1.6; color:oklch(0.46 0.03 50);">This is a first-person account from the people building OpenWispr, about how we use our own app day to day — not a customer testimonial, and not a fictional user. Every feature named links to the source that implements it.</span>
+  </div>
+</div>`;
+}
+
 /** Small "keep reading" block linking to sibling generated pages — avoids orphan pages. */
 function relatedLinksHtml(links) {
   if (!links || links.length === 0) return '';
@@ -331,6 +347,7 @@ export {
   proseSectionHtml,
   comparisonTableHtml,
   faqSectionHtml,
+  journalNoteHtml,
   relatedLinksHtml,
   page,
 };
