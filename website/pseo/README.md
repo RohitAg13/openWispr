@@ -197,6 +197,110 @@ coverage):
   shipped — a page targeting a platform-specific query for a platform that doesn't exist yet would
   be premature. Declined until Windows ships.
 
+### 3. Journal pages (`/journal/{slug}.html`) — batch 3, new content type
+
+**What these are, and why the URL/type is separate from `/use-cases/`.** "How I use OpenWispr in
+my workflow" pieces — first-person narrative pages that walk through a real usage pattern and
+surface specific app features along the way, rather than reading as a spec sheet. Given a new
+top-level type (`journal`, not folded into `longtail`) and its own `/journal/` path, distinct from
+`/use-cases/` and `/android/`, for one deliberate reason: this content makes a first-person voice
+claim ("we/us", not "you might find") that no other page type on this site makes, and it needed a
+disclosure guarantee (see below) that shouldn't silently apply to, or be silently skipped by,
+other longtail-shaped pages. Keeping it a distinct `type` in `build.mjs`'s `RENDERERS` map means a
+future contributor can't add a testimonial-shaped page under `longtail` by accident and skip the
+disclosure step.
+
+**The non-negotiable constraint this batch was built under: no fabricated persona.** A "workflow"
+content type is an obvious place to slip into writing a fake customer testimonial — "Sarah, a
+product manager, says…" — which is exactly the kind of invented-claim content the quality bar
+above already rejects for comparison pages, just in a different shape. So every journal page is
+framed as **the OpenWispr project's own** first-person account (how the people building OpenWispr
+use it themselves, e.g. to write their own commit messages), not a fictional user, company, or job
+title. This is enforced structurally, not just by editorial care: `render.mjs`'s `journalNoteHtml()`
+renders a fixed disclosure strip — "This is a first-person account from the people building
+OpenWispr... not a customer testimonial, and not a fictional user" — immediately under the
+breadcrumb on every journal page, before any narrative content, with identical wording each time
+(a data file cannot opt out of it or rephrase it away).
+
+**Every feature claim traces to the actual Android/macOS source, not a marketing assumption.**
+Verified directly against code before writing, not assumed from `docs/personalization.md` alone:
+
+- **Personal vocabulary / auto-learning** — `VocabRepository.kt`'s `learnFromEdit` (up to 5
+  position-aligned corrections per edit, deliberately conservative), and
+  `textproc/VocabCorrector.kt`'s fuzzy matching (Soundex phonetic equality + edit-distance score,
+  gated more strictly for fuzzy/learned matches than exact ones) plus its `biasPrompt` that feeds
+  frequency-ranked corrected terms back into the on-device STT decoder.
+- **Tone-by-app** — `AppToneRepository.kt` + `textproc/AppContext.kt`: a `Category` enum
+  (generic/code/email/chat/social/notes) with per-category default LLM-polish tone fragments
+  (professional for email, casual for chat/social; empty for code and notes). Important nuance
+  actually reflected in the copy: `Category.CODE`'s tone fragment is empty because code/terminal
+  text is instead handled by a *separate, deterministic* path (`textproc/CodeContext.kt`), not by
+  an LLM tone override — the journal copy states this distinction rather than flattening it into
+  "code mode gets a terse tone."
+- **Code/terminal-aware formatting** — `textproc/CodeContext.kt`: dedicated code editors are
+  always code-mode; terminals are decided *by the content of that utterance* (word count ≤10,
+  starts with a known command verb/path/CLI flag), because the file's own doc comment records
+  that ~70% of real terminal dictation turned out to be natural-language AI-agent prompts, not
+  shell commands. The journal piece uses this exact reasoning, not an invented one.
+- **Never-lose-audio / write-ahead store + retry** — `PendingAudio.kt`'s class doc (the RAM-only
+  failure this was built to prevent), its write-ahead-to-`filesDir`-before-first-attempt
+  guarantee, `inFlight` as in-memory-only "running" state, and `unfinished()`/`expired()` retention
+  rules; `RewriteActivity.kt`'s retry path, which explicitly prefers a different STT engine on
+  retry since a transcription failure is often deterministic. This feature was flagged **declined,
+  not yet shipped** in Batch 2's punch list (tracked then on the `never-lose-audio` branch); it has
+  since merged into `main` (commit `c4a2df7`, "Never lose the audio when a dictation fails (#25)"),
+  so it's now a truthful claim about the shipped app rather than the misrepresentation Batch 2
+  correctly avoided.
+- **Personalization layers L1–L4** — `docs/personalization.md` (the map used to scope the second
+  article), cross-checked against `CorrectionCorpus.kt` (ring-capped 500-entry on-device log of
+  `{cleaned, final, edited}`), the few-shot retrieval in `CorrectionCorpus.similar`/`score` (token-
+  Jaccard, `MIN_JACCARD = 0.2`, boosted for same app-context/edited rows — explicitly *not* dense
+  RAG, and the copy says so), `Settings.kt`'s `PolishLevel` enum (`OFF`/`LIGHT`/`MEDIUM`/`FULL`,
+  few-shot examples only injected at Medium/Full), and `CorrectionCorpus.exportJsonl` for the L4
+  export path (explicit user action, training happens in the separate `openwispr-finetune` repo,
+  never automatic upload).
+- **On-device STT (Parakeet default, Whisper alternative)** — `OnDeviceStt.kt`: `"local"`
+  provider's default model resolves to Parakeet (`ParakeetModelManager.MODEL_ID`); Whisper
+  (tiny/base/small, `WhisperModelManager`) is the alternative on-device engine. Matches
+  `llms.txt`'s existing "NVIDIA Parakeet-TDT (default) or Whisper" framing, not a new claim.
+- **macOS parity, checked, not assumed** — before writing "we" without hedging, confirmed the
+  Android features named above have real macOS equivalents in the same repo:
+  `macos/OpenWisprCore/Sources/OpenWisprCore/VocabCorrector.swift`, `CorrectionCorpus.swift`, and
+  `AppContext.swift`, plus `macos/App/Sources/PendingAudioStore.swift` and `StyleMemoryView.swift`.
+  The journal copy speaks about the app in general rather than calling out one platform's file
+  names, which is accurate given this parity — it would not have been accurate to write "we" if
+  the feature only existed on one platform.
+
+**Declined for lack of verification — named explicitly so nothing here is silently assumed:**
+- **A specific quantified claim about how much time dictation actually saves per commit/PR.** No
+  file in the repo or `research/` measures this; the articles describe the workflow and the
+  mechanism, not a fabricated time-savings number.
+- **IDE plugin / editor extension integration.** No such integration exists in the Android or
+  macOS source — `CodeContext.kt`'s "dedicated code editors" list is a *package-name detection*
+  list (the app runs alongside those apps as any Android/macOS IME/accessibility-style dictation
+  tool would), not a plugin architecture. The articles do not claim one.
+  Fair reading was verified: `CodeContext.kt` recognizes editor package names to switch
+  normalization mode; it is not itself a VS Code/JetBrains extension.
+- **A specific named example of a real commit message this repo shipped via dictation.** True in
+  substance (a fair amount of this project's own commit history was dictated) but no commit is
+  tagged or logged as dictated vs. typed, so no specific commit SHA is cited as evidence — the
+  claim is kept at the level the record actually supports.
+- **Windows.** Same reasoning as Batch 2: not shipped, so no journal-page claim assumes it.
+
+Two articles shipped this batch, both new pages (no existing page renamed or restructured):
+1. `journal/dictating-code-and-commits.json` → `/journal/dictating-code-and-commits.html` — a
+   coding/technical workflow piece (commit messages, PR descriptions), grounding personal
+   dictionary, tone-by-app/code-aware formatting, and never-lose-audio.
+2. `journal/why-we-never-lose-your-audio.json` → `/journal/why-we-never-lose-your-audio.html` — a
+   reflective piece on why the write-ahead audio store and engine-switching retry were built the
+   way they were, then walking through personalization layers L1–L4 as the same principle applied
+   one layer up.
+
+Both are linked from `index.html`'s `#compare` section (a new "From the project journal:" row,
+additive, placed after the existing "Guides:" row so it doesn't disturb prior links), from each
+other via `relatedLinks`, and from `llms.txt`'s new "Journal" section — so neither is an orphan
+page, consistent with the internal-linking rule in the quality bar below.
+
 ### What's explicitly NOT built (spam-policy discipline)
 
 Google's Scaled Content Abuse policy (cited directly in the AutoMata handover,
@@ -239,19 +343,24 @@ website/pseo/
 │   ├── compare-amical.json              # batch 2
 │   ├── usecase-mac-and-android-dictation.json    # batch 2
 │   ├── usecase-multilingual-dictation.json       # batch 2
-│   └── usecase-dictation-it-wont-block.json      # batch 2
+│   ├── usecase-dictation-it-wont-block.json      # batch 2
+│   ├── journal-dictating-code-and-commits.json          # batch 3
+│   └── journal-why-we-never-lose-your-audio.json        # batch 3
 ├── lib/
-│   └── render.mjs          # shared design-system components (nav, footer, FAQ, table, CTA)
+│   └── render.mjs          # shared design-system components (nav, footer, FAQ, table, CTA,
+│                            # journalNoteHtml — batch 3's disclosure strip)
 │                            # — copy-pasted/adapted from index.html's inline styles so
 │                            # generated pages are visually indistinguishable from hand-written ones
-└── build.mjs                # reads data/*.json, dispatches on "type", writes static .html files
-                              # into website/compare/, website/android/, and website/use-cases/,
-                              # plus sitemap.xml/robots.txt — generically, from each data file's own
-                              # outputPath/canonicalPath, so it needed zero code changes for batch 2
+└── build.mjs                # reads data/*.json, dispatches on "type" (comparison/longtail/journal
+                              # as of batch 3), writes static .html files into website/compare/,
+                              # website/android/, website/use-cases/, and website/journal/, plus
+                              # sitemap.xml/robots.txt — generically, from each data file's own
+                              # outputPath/canonicalPath, so batch 3 needed one new "type" branch
+                              # in build.mjs (renderJournalPage) but no changes to existing renderers
 ```
 
-16 data files → 16 generated pages as of Batch 2 (4 from Batch 1, 12 from Batch 2), plus the 2
-hand-written pages (`index.html`, `privacy.html`) = **18 pages live on the site.**
+18 data files → 18 generated pages as of Batch 3 (4 from Batch 1, 12 from Batch 2, 2 from Batch 3),
+plus the 2 hand-written pages (`index.html`, `privacy.html`) = **20 pages live on the site.**
 
 Run it with:
 
@@ -373,3 +482,18 @@ keys, following `docs/ai-seo-handover/01-setup-checklist.md`'s bring-up order.
   Search Console history. Once GSC data exists, prefer `topic-opportunities.ts`-driven page ideas
   (see above) over more hand-guessed breadth from `research/` — the volume-first mode was a
   cold-start strategy, not the intended steady state.
+- **Batch 3 status (this pass).** Added the `journal` page type and its first 2 pages — see
+  "Journal pages (`/journal/{slug}.html`) — batch 3" above for the full grounding writeup. Notably,
+  this pass also confirmed the never-lose-audio feature, declined for a page claim in Batch 2's
+  punch list because it was still in-progress on a branch, has since merged to `main` (commit
+  `c4a2df7`) — so it's now fair game for future comparison-page and use-case-page updates too, not
+  just the journal pages built this round. A logical next step for a future batch: revisit the
+  Batch 2 comparison pages that hedged "actively in development" on audio retention/retry and
+  update that language now that it has shipped — not done in this pass because it's out of scope
+  for "add a new content type," but flagged here so it isn't lost.
+- **Journal page type — future candidates, not built this round.** Only 2 journal pages shipped,
+  matching the task's ask. Other workflow angles that would need their own research/verification
+  pass before writing (not built now, listed so nothing is silently assumed covered): a
+  macOS-specific workflow piece (e.g. using the menu-bar app during a long writing session); an
+  accessibility-angle journal piece (declined for the same reason as Batch 2's accessibility
+  use-case page — no sourced claim yet about OpenWispr's own VoiceOver/TalkBack support level).

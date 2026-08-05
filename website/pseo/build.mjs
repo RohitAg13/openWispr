@@ -19,6 +19,7 @@ import {
   proseSectionHtml,
   comparisonTableHtml,
   faqSectionHtml,
+  journalNoteHtml,
   relatedLinksHtml,
   page,
 } from './lib/render.mjs';
@@ -86,9 +87,43 @@ ${relatedLinksHtml(data.relatedLinks)}`;
   });
 }
 
+/**
+ * "How we use OpenWispr" journal pages (`/journal/{slug}.html`) — first-person project accounts,
+ * not testimonials. Structurally identical to a longtail page (hero → sections → FAQ → related)
+ * plus one addition: journalNoteHtml() renders a disclosure strip right under the breadcrumb,
+ * before any narrative content, stating plainly this is the project's own account. See
+ * pseo/README.md "Journal pages" for why this is a distinct type rather than reusing "longtail"
+ * outright — the disclosure requirement is specific to first-person narrative content and
+ * shouldn't accidentally apply to (or be skipped on) other longtail pages.
+ */
+function renderJournalPage(data) {
+  const body = `${heroHtml({
+    eyebrow: data.eyebrow,
+    h1: data.h1,
+    subhead: data.subhead,
+    ctaNote: data.ctaNote,
+  })}
+${breadcrumbHtml(data.breadcrumbs)}
+${journalNoteHtml()}
+${data.sections.map((s) => proseSectionHtml(s)).join('\n')}
+${faqSectionHtml(data.faqs)}
+${relatedLinksHtml(data.relatedLinks)}`;
+  return page({
+    title: data.title,
+    description: data.description,
+    canonicalPath: data.canonicalPath,
+    ogTitle: data.ogTitle,
+    ogDescription: data.ogDescription,
+    bodyHtml: body,
+    faqs: data.faqs,
+    breadcrumbs: data.breadcrumbs,
+  });
+}
+
 const RENDERERS = {
   comparison: renderComparisonPage,
   longtail: renderLongtailPage,
+  journal: renderJournalPage,
 };
 
 function build() {
