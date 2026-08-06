@@ -41,6 +41,8 @@ final class ParakeetSTT: STT {
         return trimmed
     }
 
+    func warm() async { await engine.warm() }
+
     /// Serializes every sherpa decode call and owns the recognizer's lifetime. The recognizer is
     /// created on first use and kept warm across takes; it's released when the provider is.
     private actor Engine {
@@ -72,6 +74,10 @@ final class ParakeetSTT: STT {
                 tokens: path("tokens.txt"),
                 numThreads: threadCount)
         }
+
+        /// Build the recognizer ahead of the first take. Idempotent — `loadIfNeeded()`
+        /// early-returns once `recognizer` is set.
+        func warm() { try? loadIfNeeded() }
 
         func transcribe(_ samples: [Float]) throws -> String {
             try loadIfNeeded()

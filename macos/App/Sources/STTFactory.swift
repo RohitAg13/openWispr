@@ -19,6 +19,15 @@ enum STTFactory {
     /// session. Built once on first use of the Parakeet engine.
     private static var cachedParakeet: ParakeetSTT?
 
+    /// Load the model for whatever provider `make()` would resolve to right now, so the app's
+    /// first dictation after launch doesn't pay the cold-load cost inline. Safe to call
+    /// speculatively — it never downloads a model or requests a permission; on a
+    /// not-yet-downloaded engine `make()` already falls back to `AppleSpeechSTT`, whose `warm()`
+    /// is a no-op.
+    static func warmCurrent() async {
+        await make().warm()
+    }
+
     /// The provider to use for the next take.
     static func make() -> STT {
         let settings = AppSettings.shared

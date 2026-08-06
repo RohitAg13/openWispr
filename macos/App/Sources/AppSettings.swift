@@ -280,11 +280,11 @@ final class AppSettings: ObservableObject {
             hotKeyModifiers = HotKey.defaultModifiers
         }
 
-        // On-device defaults: a fresh install gets Whisper (`base`, the recommended on-device
-        // engine) for STT and the OpenWispr fine-tune for polish. The `?? default` only applies
-        // when nothing is stored, so any prior explicit user choice is preserved on upgrade.
+        // On-device defaults: a fresh install gets Parakeet (the fastest on-device engine) for
+        // STT and the OpenWispr fine-tune for polish. The `?? default` only applies when nothing
+        // is stored, so any prior explicit user choice is preserved on upgrade.
         sttProvider = defaults.string(forKey: Key.sttProvider)
-            .flatMap(STTProvider.init(rawValue:)) ?? .whisper
+            .flatMap(STTProvider.init(rawValue:)) ?? .parakeet
         whisperModel = defaults.string(forKey: Key.whisperModel)
             .flatMap(WhisperModel.init(rawValue:)) ?? .base
         polishLevel = defaults.string(forKey: Key.polishLevel)

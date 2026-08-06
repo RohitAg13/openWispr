@@ -45,6 +45,8 @@ final class WhisperSTT: STT {
         return trimmed
     }
 
+    func warm() async { await engine.warm() }
+
     /// A compact glossary prompt from the bias terms (capped so it can't crowd the context).
     private static func initialPrompt(from bias: [String]) -> String? {
         let terms = bias.map { $0.trimmingCharacters(in: .whitespaces) }
@@ -91,6 +93,10 @@ final class WhisperSTT: STT {
             }
             ctx = loaded
         }
+
+        /// Load the model ahead of the first take. Idempotent — `loadIfNeeded()` early-returns
+        /// once `ctx` is set.
+        func warm() { try? loadIfNeeded() }
 
         func transcribe(_ samples: [Float], initialPrompt: String? = nil) throws -> String {
             try loadIfNeeded()

@@ -14,12 +14,19 @@ public protocol STT {
     /// the user's words. Default ignores the bias and calls the plain form; providers that can
     /// use it (Whisper `initial_prompt`, Apple Speech `contextualStrings`) override this.
     func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String
+
+    /// Load the model into memory ahead of the first dictation, so the first take after launch
+    /// doesn't pay the cold-load cost inline. Default is a no-op; on-device providers with a
+    /// heavy native model override this.
+    func warm() async
 }
 
 public extension STT {
     func transcribe(_ samples: [Float], sampleRate: Int, bias: [String]) async throws -> String {
         try await transcribe(samples, sampleRate: sampleRate)
     }
+
+    func warm() async {}
 }
 
 /// Errors a `STT` provider may surface.
