@@ -34,6 +34,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 showOnboarding()
             }
+
+            // Load the STT model in the background now, so the first dictation after launch
+            // doesn't pay the cold-load cost inline. Off the main actor once it reaches the
+            // provider's native `Engine`, so it doesn't compete with window setup.
+            Task.detached(priority: .utility) { await STTFactory.warmCurrent() }
         }
     }
 
