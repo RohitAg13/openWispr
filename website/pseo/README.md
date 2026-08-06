@@ -50,6 +50,84 @@ plainly: **more maintenance surface** — 11 comparison pages and 5 long-tail pa
 re-verification whenever a competitor's pricing or feature set changes, not 2 and 2. That cost is
 accepted in exchange for indexing more of the site's real, sourced content sooner.
 
+## Batch 4 — "Wispr Flow alternative" bottom-funnel pages (one-page-vs-two-page decision log)
+
+The user asked to target two distinct keyword shapes: **"wispr flow alternative"** (general) and
+**"wisprflow alternative for android" / "wispr flow alternative android"**. Both are bottom-of-funnel
+"I already decided I want to leave/avoid Wispr Flow" searches, distinct from the existing
+head-to-head `/compare/wispr-flow.html` comparison page's more neutral "how do these two products
+differ" framing — but the two keyword shapes needed separate judgment calls against each other.
+
+**General query ("wispr flow alternative") → optimized the existing page, did not fork it.**
+`/compare/wispr-flow.html` already *is* the honest, sourced answer to "is there a good Wispr Flow
+alternative" — a second page making essentially the same architecture/pricing/privacy argument
+with different headlines would be exactly the near-duplicate-content risk this README's own
+quality bar (#2, "not a template stamp") warns against, just aimed at ourselves instead of at a
+competitor-name list. Instead, `data/compare-wispr-flow.json` was edited in place: `title`,
+`ogTitle`, `h1`, `description`, and `subhead` now carry "alternative" phrasing naturally
+("A Free, On-Device Wispr Flow Alternative"), the intro paragraph gained an explicit
+independent/unaffiliated sentence (see fair-use section below), a new FAQ entry
+("What's a good free, open-source alternative to Wispr Flow?") answers the query shape directly,
+and a new `relatedLinks` entry points to the Android-specific page. No new URL, no duplicate
+content, one canonical page still owns this intent — consistent with quality-bar rule #4 ("one
+canonical URL per topic").
+
+**Android query ("wisprflow alternative for android") → built as a new, genuinely distinct page,**
+`/compare/wispr-flow-alternative-android.html`. This clears the "not a template stamp" bar because
+the research supports a materially different, Android-specific argument that the general page
+doesn't make in depth:
+- **Wispr Flow does ship on Android** (`research/02-competitors-desktop.md`'s comparison table:
+  Android ✅) — running the identical cloud-only backend as desktop. This page corrects a
+  plausible assumption (that Android is a newer/limited gap for Wispr Flow, the way it is for
+  superwhisper/Spokenly/VoiceInk) rather than asserting it, because the research doesn't support
+  that framing for Wispr Flow specifically.
+- **A large, sourced platform-specific reputation gap**: Wispr Flow's own Google Play data shows
+  3.69/5 from 3,128 ratings (16.6% one-star lifetime, 27.8% among its 400 newest reviews) versus
+  4.8/5 on iOS for "the same product, same backend" (`research/04-pain-points.md` #5, "Android is
+  the weak flank by a wide margin"). This is a genuinely Android-specific fact with no equivalent
+  on the general comparison page.
+- **A self-disclosed, pre-announced free-tier tightening specific to Android**: Wispr Flow's own
+  pricing page flags its Android free tier as "Unlimited (limited time only)"
+  (`research/04-pain-points.md` #7, "the best-timed Android wedge available" per the research's
+  own framing). The general page's comparison table mentions this fact in one row; this page
+  builds an entire section and FAQ around it because it's specifically an Android-buyer's
+  consideration, not a general one.
+- **An Android-specific historical reliability bug**: audio from failed Android transcriptions
+  wasn't preserved until Wispr Flow's March 2026 v1.4.1 update (`research/02-competitors-desktop.md`'s
+  changelog table) — a dated fact about the Android build specifically, not the desktop product.
+- **OpenWispr's own Android app is a first-class target, not a port** — matching the task's framing
+  that this may be a sharper Android-specific differentiator. This is stated honestly, not oversold:
+  the page's own "Honest gaps" section admits OpenWispr's Android app has no meaningful Play Store
+  review history yet, against Wispr Flow's 3,128 ratings (however mixed) — sourced from
+  `research/07-recommendations.md` ("0 reviews is a larger conversion drag than any keyword").
+
+This is the "one strong page vs. two thin pages" judgment call the task asked to make explicitly:
+the general query got an *optimization*, not a new page, because forking it would have been
+keyword-stuffing dressed up as coverage; the Android query got a *new* page because the research
+genuinely supports an argument the general page doesn't make.
+
+**Model claim discipline, since this batch touches Android specifics directly:** the new page
+describes OpenWispr's Android on-device model as "an on-device Whisper-class speech model,"
+matching what `data/android-on-device-whisper-dictation.json` (Batch 1) already states about the
+current shipped model (~488 MB Whisper small) — it does **not** claim Parakeet for Android, even
+though `llms.txt` and recent commits (`a8ff738`, experimental Parakeet vocab-bias decoding) show
+Parakeet work is landing. Without a research doc or shipped-feature confirmation that Parakeet is
+Android's *default* today, claiming it here would repeat the exact "invent a fact not in
+`research/`" mistake this pipeline's quality bar exists to prevent. Revisit this page's model
+claim once Parakeet is confirmed as Android's shipped default.
+
+**Trademark/fair-use stance for this batch:** both pages state early and plainly that OpenWispr is
+independent and unaffiliated with Wispr Flow — not defensively, but as a natural extension of the
+site's existing "MIT, no venture positioning" tone. Neither page uses Wispr Flow's logo, visual
+branding, or color scheme (both reuse the same neutral text-only competitor-name treatment already
+used across every comparison page in this pipeline). Neither page implies partnership or
+endorsement. Every fact about Wispr Flow traces to `research/02-competitors-desktop.md` or
+`research/04-pain-points.md` — no new claims about Wispr Flow were invented beyond what those two
+docs (already used for the Batch 1 comparison page) establish. The framing throughout is "here's
+the sourced comparison for people who already want to leave/avoid Wispr Flow," including admitting
+OpenWispr's own gaps (younger Android app, no review history, retry-on-failure still in progress)
+— not a page built to capture or confuse Wispr Flow's own branded search traffic.
+
 ## Page types chosen, and why
 
 ### 1. Comparison pages (`/compare/{slug}.html`)
@@ -345,7 +423,10 @@ website/pseo/
 │   ├── usecase-multilingual-dictation.json       # batch 2
 │   ├── usecase-dictation-it-wont-block.json      # batch 2
 │   ├── journal-dictating-code-and-commits.json          # batch 3
-│   └── journal-why-we-never-lose-your-audio.json        # batch 3
+│   ├── journal-why-we-never-lose-your-audio.json        # batch 3
+│   └── compare-wispr-flow-alternative-android.json  # batch 4 (new page; compare-wispr-flow.json
+│                                                      # itself was edited in place, not forked —
+│                                                      # see "Batch 4" below)
 ├── lib/
 │   └── render.mjs          # shared design-system components (nav, footer, FAQ, table, CTA,
 │                            # journalNoteHtml — batch 3's disclosure strip)
@@ -359,8 +440,9 @@ website/pseo/
                               # in build.mjs (renderJournalPage) but no changes to existing renderers
 ```
 
-18 data files → 18 generated pages as of Batch 3 (4 from Batch 1, 12 from Batch 2, 2 from Batch 3),
-plus the 2 hand-written pages (`index.html`, `privacy.html`) = **20 pages live on the site.**
+19 data files → 19 generated pages as of Batch 4 (4 from Batch 1, 12 from Batch 2, 2 from Batch 3,
+1 new from Batch 4 — `compare-wispr-flow.json` was edited in place, not added), plus the 2
+hand-written pages (`index.html`, `privacy.html`) = **21 pages live on the site.**
 
 Run it with:
 
@@ -491,6 +573,16 @@ keys, following `docs/ai-seo-handover/01-setup-checklist.md`'s bring-up order.
   Batch 2 comparison pages that hedged "actively in development" on audio retention/retry and
   update that language now that it has shipped — not done in this pass because it's out of scope
   for "add a new content type," but flagged here so it isn't lost.
+- **Batch 4 status (this pass).** Added the Wispr Flow alternative pages — see "Batch 4" above.
+  Also caught a real freshness bug before shipping: the research this batch draws on
+  (`research/04-pain-points.md`, `08-open-questions.md`) is an explicit 2026-07-28 snapshot that
+  flags Wispr Flow's Android "limited time only" free-tier notice and Play Store rating as
+  time-sensitive, with a note to re-verify before acting on either. Live-checked both before
+  merging: the "limited time only" wording is already gone from Wispr Flow's pricing page. Every
+  occurrence of both claims was reworded to explicit past-tense, dated statements rather than
+  presenting July data as current fact — a concrete example of why the re-verify note in
+  `08-open-questions.md` exists, and a reminder to actually do it before shipping any batch that
+  touches a time-sensitive competitor claim.
 - **Journal page type — future candidates, not built this round.** Only 2 journal pages shipped,
   matching the task's ask. Other workflow angles that would need their own research/verification
   pass before writing (not built now, listed so nothing is silently assumed covered): a

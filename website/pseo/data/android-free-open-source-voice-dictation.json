@@ -43,6 +43,7 @@
   ],
   "relatedLinks": [
     { "kicker": "Also read", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
+    { "kicker": "Compare", "title": "A Wispr Flow alternative for Android", "href": "/compare/wispr-flow-alternative-android.html" },
     { "kicker": "Compare", "title": "OpenWispr vs Wispr Flow ($15/mo, capped free tier)", "href": "/compare/wispr-flow.html" },
     { "kicker": "Compare", "title": "OpenWispr vs superwhisper (paid tier for larger models)", "href": "/compare/superwhisper.html" }
   ]

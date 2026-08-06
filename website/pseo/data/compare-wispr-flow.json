@@ -3,13 +3,13 @@
   "slug": "wispr-flow",
   "outputPath": "compare/wispr-flow.html",
   "canonicalPath": "/compare/wispr-flow.html",
-  "title": "OpenWispr vs Wispr Flow — free, on-device dictation vs cloud-only",
-  "description": "A fact-checked comparison of OpenWispr and Wispr Flow: pricing, on-device vs cloud processing, offline reliability, and what Wispr Flow's own docs say about audio retention and Context Awareness.",
-  "ogTitle": "OpenWispr vs Wispr Flow",
+  "title": "OpenWispr vs Wispr Flow — A Free, On-Device Wispr Flow Alternative",
+  "description": "Looking for a Wispr Flow alternative? OpenWispr is a free, MIT-licensed, on-device dictation app for macOS and Android. A fact-checked comparison: pricing, on-device vs cloud processing, offline reliability, and what Wispr Flow's own docs say about audio retention and Context Awareness — including where OpenWispr is still behind.",
+  "ogTitle": "OpenWispr vs Wispr Flow — a free, on-device alternative",
   "ogDescription": "Free and MIT-licensed vs $15/mo and cloud-only. Sourced from Wispr Flow's own documentation, changelog, and status page.",
   "eyebrow": "OpenWispr vs Wispr Flow",
-  "h1": "OpenWispr vs Wispr Flow",
-  "subhead": "Wispr Flow is cloud-only at every price tier — their own security FAQ says the backend must decrypt your audio to transcribe it. OpenWispr does the whole job on your device, for free, with the source code public.",
+  "h1": "OpenWispr vs Wispr Flow: a free, on-device alternative",
+  "subhead": "Wispr Flow is cloud-only at every price tier — their own security FAQ says the backend must decrypt your audio to transcribe it. OpenWispr is an independent, unaffiliated, MIT-licensed alternative that does the whole job on your device, for free, with the source code public.",
   "ctaNote": "No account needed to try OpenWispr. No credit card, no trial clock.",
   "breadcrumbs": [
     { "label": "OpenWispr", "href": "/" },
@@ -20,7 +20,7 @@
     "eyebrow": "The short version",
     "heading": "Same category, structurally different architecture.",
     "paragraphs": [
-      "Wispr Flow is a well-funded, widely used cloud dictation product — it has real strengths, including iOS support and Windows support that OpenWispr doesn't have yet. The comparison below isn't \"OpenWispr wins everything\"; it's the specific, sourced facts, including where OpenWispr is still behind.",
+      "OpenWispr is an independent, open-source project, not affiliated with, endorsed by, or built by Wispr Flow — this page exists because \"Wispr Flow alternative\" is a real, common search, and the honest answer deserves sourced facts rather than a one-sided pitch. Wispr Flow is a well-funded, widely used cloud dictation product — it has real strengths, including iOS support and Windows support that OpenWispr doesn't have yet. The comparison below isn't \"OpenWispr wins everything\"; it's the specific, sourced facts, including where OpenWispr is still behind.",
       "The core architectural difference is simple: Wispr Flow's <a href=\"https://docs.wisprflow.ai\" style=\"color:oklch(0.5 0.1 40); text-decoration:underline;\">own security documentation</a> states that \"Wispr's backend must decrypt audio to perform transcription\" — there is no on-device mode at any tier, free or paid. OpenWispr has no backend at all; transcription and cleanup happen on the device in your hand, and the app is open source under MIT, so the claim is checkable rather than a promise."
     ]
   },
@@ -31,7 +31,7 @@
       { "feature": "Where audio is processed", "us": "Your device, always", "them": "Their servers — \"backend must decrypt audio to transcribe\"", "usGood": true },
       { "feature": "Works with no internet connection", "us": "Yes, fully", "them": "No — per their own docs, dictation can fail \"without notice\" when offline", "usGood": true },
       { "feature": "Price", "us": "Free, no tier", "them": "$15/mo, or $12/mo billed annually ($144/yr)", "usGood": true },
-      { "feature": "Free-tier usage cap", "us": "None", "them": "2,000 words/wk desktop, 1,000/wk iPhone; Android's \"unlimited\" is marked limited-time", "usGood": true },
+      { "feature": "Free-tier usage cap", "us": "None", "them": "2,000 words/wk desktop, 1,000/wk iPhone; Android's \"unlimited\" was flagged limited-time as of July 2026 (that wording is no longer on their pricing page)", "usGood": true },
       { "feature": "Account required", "us": "Never", "them": "Yes", "usGood": true },
       { "feature": "Open source", "us": "Yes — MIT license", "them": "No", "usGood": true },
       { "feature": "Screen/context data sent to a server", "us": "None — no network calls in the source", "them": "Yes, via \"Context Awareness\": on-screen text, code variable names, a screenshot — on by default on Mac/Windows", "usGood": true },
@@ -60,6 +60,7 @@
     }
   ],
   "faqs": [
+    { "q": "What's a good free, open-source alternative to Wispr Flow?", "a": "OpenWispr is a free, MIT-licensed alternative to Wispr Flow for macOS and Android. It's an independent project, not affiliated with Wispr Flow — the appeal is architectural: transcription and cleanup run entirely on your device, with no account, no subscription, and no word cap, and the source is public so the claim is checkable rather than a promise." },
     { "q": "Is Wispr Flow really cloud-only, with no local option?", "a": "Yes — per Wispr Flow's own security FAQ, \"Wispr's backend must decrypt audio to perform transcription,\" and there is no on-device mode at any pricing tier, including Enterprise." },
     { "q": "Does OpenWispr have full feature parity with Wispr Flow yet?", "a": "No, not yet. Wispr Flow supports iOS and Windows, which OpenWispr doesn't ship today (Windows is in progress). OpenWispr's audio-retention and retry-on-failure handling is also actively being built rather than shipped. Track both on <a href=\"https://github.com/RohitAg13/openWispr\" style=\"color:oklch(0.5 0.1 40); text-decoration:underline;\">GitHub</a>." },
     { "q": "What happens to my audio if I enable Wispr Flow's zero-retention mode?", "a": "Per their own documentation, enabling zero data retention means \"audio is never saved to History and retry from saved audio is unavailable\" — so their most private setting is also their least recoverable one. OpenWispr has no retention policy to trade off, because audio never leaves your device to begin with." },
@@ -67,6 +68,7 @@
     { "q": "Does Wispr Flow send anything besides my voice to its servers?", "a": "According to their own Context Awareness documentation, when enabled — on by default on Mac and Windows — it can send app info, on-screen text, variable and file names in coding apps, and a screenshot to their cloud. OpenWispr's published source makes no network calls for transcription at all." }
   ],
   "relatedLinks": [
+    { "kicker": "Android-specific", "title": "A Wispr Flow alternative for Android", "href": "/compare/wispr-flow-alternative-android.html" },
     { "kicker": "Also compare", "title": "OpenWispr vs superwhisper", "href": "/compare/superwhisper.html" },
     { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
     { "kicker": "Long-tail guide", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" }
