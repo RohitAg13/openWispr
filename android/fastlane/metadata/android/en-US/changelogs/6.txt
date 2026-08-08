@@ -1,0 +1,6 @@
+Setup no longer waits on you.
+
+• Onboarding continues while the on-device model downloads in the background — no spinner blocking setup.
+• New: optional vocab-biased decoding for sharper recognition of your personal dictionary terms (Settings → Voice, off by default).
+
+Still 100% on-device by default, no account, no ads, MIT-licensed.
