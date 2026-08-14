@@ -105,6 +105,9 @@ import kotlinx.coroutines.launch
 class RewriteActivity : ComponentActivity() {
 
     companion object {
+        /** How long a dictation waits on an in-flight model download before giving up. */
+        private const val MODEL_WAIT_TIMEOUT_MS = 25_000L
+
         const val EXTRA_MODE = "com.voicerewriter.MODE"
         const val EXTRA_AUTO_RECORD = "com.voicerewriter.AUTO_RECORD"
 
@@ -422,7 +425,7 @@ class RewriteActivity : ComponentActivity() {
 
     // ---------------- voice dictation sheet ----------------
 
-    private enum class Stage { IDLE, RECORDING, TRANSCRIBING, CORRECTING, REVIEW, ERROR }
+    private enum class Stage { IDLE, WAITING_MODEL, RECORDING, TRANSCRIBING, CORRECTING, REVIEW, ERROR }
 
     @Composable
     private fun VoiceSheet() {
@@ -634,11 +637,34 @@ class RewriteActivity : ComponentActivity() {
             }
         }
 
+        fun requestMicThenRecord(s: Settings) {
+            val granted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+            if (granted) startRecording(s) else micPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+
         fun ensurePermissionThenRecord(s: Settings) {
             if (s.sttProvider == "local") {
                 if (!OnDeviceStt.isReady(this, s.sttModel)) {
-                    error = "On-device model not downloaded. Open Settings → Voice → Download model."
-                    stage = Stage.ERROR
+                    // Onboarding starts the model download and deliberately doesn't wait for
+                    // it, so a first dictation legitimately lands mid-download. Sit on a
+                    // spinner and start the moment it lands; only a genuinely stalled or
+                    // failed download should reach the error below.
+                    error = null
+                    stage = Stage.WAITING_MODEL
+                    scope.launch {
+                        val deadline = System.currentTimeMillis() + MODEL_WAIT_TIMEOUT_MS
+                        while (System.currentTimeMillis() < deadline) {
+                            delay(500)
+                            if (OnDeviceStt.isReady(this@RewriteActivity, s.sttModel)) {
+                                requestMicThenRecord(s)
+                                return@launch
+                            }
+                        }
+                        error = "On-device model not downloaded. Open Settings → Voice → Download model."
+                        stage = Stage.ERROR
+                    }
                     return
                 }
             } else if (!s.isSttConfigured) {
@@ -646,10 +672,7 @@ class RewriteActivity : ComponentActivity() {
                 stage = Stage.ERROR
                 return
             }
-            val granted = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-            if (granted) startRecording(s) else micPermission.launch(Manifest.permission.RECORD_AUDIO)
+            requestMicThenRecord(s)
         }
 
         fun onMicTap() {
@@ -733,6 +756,7 @@ class RewriteActivity : ComponentActivity() {
         BottomSheet(onScrimTap = { if (stage == Stage.RECORDING) onMicTap() else cancelAndFinish() }) {
             SheetHeader(
                 when (stage) {
+                    Stage.WAITING_MODEL -> "Finishing setup"
                     Stage.RECORDING -> "Listening"
                     Stage.TRANSCRIBING -> "Transcribing"
                     Stage.CORRECTING -> "Polishing"
@@ -742,6 +766,18 @@ class RewriteActivity : ComponentActivity() {
             )
 
             when (stage) {
+                Stage.WAITING_MODEL -> {
+                    TranscribingRing("Finishing setup")
+                    Text(
+                        "Your speech model is still downloading — I'll start listening the moment it's ready.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { cancelAndFinish() }) { Text("Cancel") }
+                    }
+                }
+
                 Stage.RECORDING -> {
                     ListeningOrb(amps, Modifier.fillMaxWidth().height(132.dp))
                     Text(
