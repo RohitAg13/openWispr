@@ -288,7 +288,7 @@ final class AppSettings: ObservableObject {
         whisperModel = defaults.string(forKey: Key.whisperModel)
             .flatMap(WhisperModel.init(rawValue:)) ?? .base
         polishLevel = defaults.string(forKey: Key.polishLevel)
-            .flatMap(PolishLevel.init(rawValue:)) ?? .off
+            .flatMap(PolishLevel.init(rawValue:)) ?? .full
         llmModel = defaults.string(forKey: Key.llmModel)
             .flatMap(LlmModel.init(rawValue:)) ?? .openwisprCleanup
         vadSensitivity = defaults.string(forKey: Key.vadSensitivity)

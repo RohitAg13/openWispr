@@ -31,7 +31,7 @@ enum class PolishLevel(val key: String, val label: String, val blurb: String, va
             "the corrected version.");
 
     companion object {
-        fun from(key: String?): PolishLevel = entries.firstOrNull { it.key == key } ?: OFF
+        fun from(key: String?): PolishLevel = entries.firstOrNull { it.key == key } ?: FULL
     }
 }
 
@@ -52,7 +52,7 @@ data class Settings(
     // --- Dictation / rewrite behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
-    val polishLevel: PolishLevel = PolishLevel.OFF, // LLM polish intensity (replaces the old on/off toggle)
+    val polishLevel: PolishLevel = PolishLevel.FULL, // LLM polish intensity (replaces the old on/off toggle)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
     val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
     val hasCompletedOnboarding: Boolean = false, // first-run onboarding shown once; re-launchable from Settings
@@ -63,9 +63,9 @@ data class Settings(
     val parakeetHotwordsExperimental: Boolean = false,
 ) {
     /**
-     * Whether to run the LLM polish layer on dictation. Off by default — the deterministic
-     * pipeline handles the cleanup; the model is opt-in via [polishLevel] (tiny on-device
-     * models tend to over-edit, so users dial the intensity).
+     * Whether to run the LLM polish layer on dictation. On by default — onboarding downloads
+     * the polish model up front, and [RewriteActivity] falls back to the deterministic text
+     * whenever the model is missing or over-edits. Dial it down via [polishLevel].
      */
     val llmPolishEnabled: Boolean
         get() = polishLevel != PolishLevel.OFF

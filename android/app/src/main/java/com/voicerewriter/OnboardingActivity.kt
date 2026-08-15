@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -59,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -115,15 +115,10 @@ class OnboardingActivity : ComponentActivity() {
     }
 }
 
-// On-device voice models offered during onboarding — Parakeet first + recommended,
-// matching the app's on-device defaults.
-private data class ModelOption(val id: String, val name: String, val meta: String)
-
-private val MODEL_OPTIONS = listOf(
-    ModelOption(ParakeetModelManager.MODEL_ID, "Parakeet", "~631 MB · most accurate · recommended"),
-    ModelOption("base", "Whisper Base", "~142 MB · more accurate"),
-    ModelOption("tiny", "Whisper Tiny", "~75 MB · fast"),
-)
+// Onboarding downloads exactly these two on-device models — no engine choice. Anything
+// else (Whisper, cloud) stays reachable from Settings for people who go looking.
+private const val ONBOARDING_STT_MODEL = ParakeetModelManager.MODEL_ID
+private val ONBOARDING_LLM_MODEL = LlmModelManager.DEFAULT_MODEL
 
 // Polish-showcase examples cycled on the "It cleans up as you talk" step.
 private data class PolishExample(
@@ -172,11 +167,11 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     var overlayGranted by remember { mutableStateOf(SetupUtils.canDrawOverlays(ctx)) }
     var a11yGranted by remember { mutableStateOf(SetupUtils.accessibilityEnabled(ctx)) }
 
-    var model by remember { mutableStateOf(ParakeetModelManager.MODEL_ID) }
-    var advancedOpen by remember { mutableStateOf(false) }
-    var dl by remember { mutableStateOf(if (OnDeviceStt.isReady(ctx, ParakeetModelManager.MODEL_ID)) "done" else "idle") }
+    var dl by remember { mutableStateOf(if (OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) "done" else "idle") }
     var dlPct by remember { mutableFloatStateOf(0f) }
     var dlError by remember { mutableStateOf<String?>(null) }
+    var llmDl by remember { mutableStateOf(if (LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) "done" else "idle") }
+    var llmPct by remember { mutableFloatStateOf(0f) }
 
     var a11yPhase by remember { mutableStateOf("restricted") }
     var showA11yConsent by remember { mutableStateOf(false) }
@@ -216,7 +211,8 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 a11yGranted = SetupUtils.accessibilityEnabled(ctx)
                 if (a11yGranted && a11yPhase != "skipped") a11yPhase = "on"
                 // keep the model step in sync if a download finished while away
-                if (dl != "downloading" && OnDeviceStt.isReady(ctx, model)) dl = "done"
+                if (dl != "downloading" && OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) dl = "done"
+                if (llmDl != "downloading" && LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) llmDl = "done"
                 refreshPersonalization()
             }
         }
@@ -240,24 +236,44 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     fun persistStt() {
         scope.launch(Dispatchers.IO) {
             val repo = SettingsRepository(ctx)
-            repo.save(repo.get().copy(sttProvider = "local", sttModel = model))
+            repo.save(repo.get().copy(sttProvider = "local", sttModel = ONBOARDING_STT_MODEL))
         }
     }
 
-    fun startDownload() {
-        if (OnDeviceStt.isReady(ctx, model)) { persistStt(); dl = "done"; return }
-        dl = "downloading"; dlPct = 0f; dlError = null
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    if (OnDeviceStt.isParakeet(model)) ParakeetModelManager.download(ctx) { p -> dlPct = p }
-                    else WhisperModelManager.download(ctx, model) { p -> dlPct = p }
+    /** Kicks off speech + polish downloads together; neither one blocks the flow. */
+    fun startDownloads() {
+        if (dl != "downloading") {
+            if (OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) {
+                persistStt(); dl = "done"
+            } else {
+                dl = "downloading"; dlPct = 0f; dlError = null
+                scope.launch {
+                    try {
+                        ParakeetModelManager.download(ctx) { p -> dlPct = p }
+                        persistStt()
+                        dl = "done"
+                    } catch (t: Throwable) {
+                        dlError = t.message ?: "Download failed"
+                        dl = "error"
+                    }
                 }
-                persistStt()
-                dl = "done"
-            } catch (t: Throwable) {
-                dlError = t.message ?: "Download failed"
-                dl = "error"
+            }
+        }
+        if (llmDl != "downloading") {
+            if (LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) {
+                llmDl = "done"
+            } else {
+                llmDl = "downloading"; llmPct = 0f
+                scope.launch {
+                    // A failed polish download is not worth an error state here: dictation
+                    // falls back to the deterministic cleanup when the model is missing.
+                    llmDl = try {
+                        LlmModelManager.download(ctx, ONBOARDING_LLM_MODEL) { p -> llmPct = p }
+                        "done"
+                    } catch (t: Throwable) {
+                        "error"
+                    }
+                }
             }
         }
     }
@@ -283,20 +299,21 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
             // The model step no longer blocks on this download (see SetupStep), so once the
             // user has moved past it a silent background download reads as nothing happening.
             // A small ambient status keeps it visible without asking anyone to wait for it.
-            if (step in 2..6 && dl == "downloading") {
-                DownloadStatusChip(dlPct)
+            if (step in 2..6 && (dl == "downloading" || llmDl == "downloading")) {
+                val active = buildList {
+                    if (dl == "downloading") add(dlPct)
+                    if (llmDl == "downloading") add(llmPct)
+                }
+                DownloadStatusChip(active.average().toFloat())
             }
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
                     0 -> WelcomeStep(onNext = { next() })
                     1 -> SetupStep(
-                        selected = model,
-                        advancedOpen = advancedOpen,
-                        onToggleAdvanced = { advancedOpen = !advancedOpen },
-                        onSelect = { if (dl != "downloading") { model = it; dl = if (OnDeviceStt.isReady(ctx, it)) "done" else "idle" } },
                         dl = dl, dlPct = dlPct, dlError = dlError,
-                        onDownload = { startDownload() }, onNext = { next() },
+                        llmDl = llmDl, llmPct = llmPct,
+                        onDownload = { startDownloads() }, onNext = { next() },
                     )
                     2 -> MicStep(
                         granted = micGranted, blocked = micBlocked,
@@ -333,7 +350,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                         a11yOn = a11yPhase == "on", a11ySkipped = a11yPhase == "skipped",
                         personalCount = listOf(toneDone, styleN > 0, dictN > 0, contactsDone).count { it },
                         onStart = { finishOnboarding() },
-                        onReplay = { step = 0; a11yPhase = "restricted"; advancedOpen = false; if (dl != "done") dlPct = 0f },
+                        onReplay = { step = 0; a11yPhase = "restricted"; if (dl != "done") dlPct = 0f },
                     )
                 }
             }
@@ -442,7 +459,7 @@ private fun DownloadStatusChip(pct: Float) {
     ) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(cs.primary))
         Text(
-            "Speech model downloading in background · ${(pct * 100).toInt()}%",
+            "Downloading on-device models · ${(pct * 100).toInt()}%",
             style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
         )
     }
@@ -511,118 +528,91 @@ private fun WelcomeStep(onNext: () -> Unit) {
 
 @Composable
 private fun SetupStep(
-    selected: String, advancedOpen: Boolean, onToggleAdvanced: () -> Unit, onSelect: (String) -> Unit,
     dl: String, dlPct: Float, dlError: String?,
+    llmDl: String, llmPct: Float,
     onDownload: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
-    val current = MODEL_OPTIONS.first { it.id == selected }
-    val isParakeet = selected == ParakeetModelManager.MODEL_ID
+    val started = dl != "idle" || llmDl != "idle"
     StepScaffold(
         content = {
             Spacer(Modifier.height(4.dp))
             IconTile(Icons.Filled.VerifiedUser, size = 56, corner = 16, iconSize = 27)
             Spacer(Modifier.height(16.dp))
-            Text("Speech stays on your phone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
+            Text("Everything stays on your phone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
             Spacer(Modifier.height(8.dp))
-            Text("OpenWispr downloads a small speech model once, then works fully offline. No account, nothing uploaded.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            Text("OpenWispr downloads two small models once, then works fully offline. No account, nothing uploaded.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
 
-            // Recommended (currently-selected) model card
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(cs.secondaryContainer)
-                    .border(2.dp, cs.primary, RoundedCornerShape(15.dp)).padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp),
-            ) {
-                Box(Modifier.size(40.dp).clip(RoundedCornerShape(11.dp)).background(SunsetBrush), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Mic, null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(20.dp))
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(current.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = cs.onBackground)
-                    Text(current.meta, style = MonoEyebrow, fontSize = 11.sp, color = cs.onSurfaceVariant)
-                }
-                Text(
-                    (if (isParakeet) "Recommended" else "Selected").uppercase(),
-                    style = MonoEyebrow, fontSize = 9.5.sp,
-                    color = if (isParakeet) Color(0xFF3E8E5A) else cs.onSurfaceVariant,
-                )
-            }
+            ModelCard(
+                icon = Icons.Filled.Mic, name = "Speech", meta = "~631 MB · turns your voice into text",
+                state = dl, pct = dlPct, started = started,
+            )
+            Spacer(Modifier.height(11.dp))
+            ModelCard(
+                icon = Icons.Filled.AutoAwesome, name = "Polish", meta = "~397 MB · tidies up what you said",
+                state = llmDl, pct = llmPct, started = started,
+            )
 
-            when (dl) {
-                "downloading" -> {
-                    Spacer(Modifier.height(18.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Downloading…", style = MaterialTheme.typography.titleSmall, color = cs.onBackground)
-                        Text("${(dlPct * 100).toInt()}%", style = MonoEyebrow, color = cs.onSurfaceVariant)
-                    }
-                    Spacer(Modifier.height(9.dp))
-                    Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(cs.outline)) {
-                        Box(Modifier.fillMaxWidth(dlPct.coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(cs.primary))
-                    }
-                }
-                "done" -> { Spacer(Modifier.height(18.dp)); SuccessPill("Ready · works offline") }
-                "error" -> {
-                    Spacer(Modifier.height(16.dp))
-                    Text(dlError ?: "Download failed", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB4502E))
-                }
-                else -> {
-                    // Advanced: choose a different model
-                    Spacer(Modifier.height(18.dp))
-                    Row(
-                        Modifier.clickable { onToggleAdvanced() },
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            Icons.Filled.ChevronRight, null, tint = cs.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp).rotate(if (advancedOpen) 90f else 0f),
-                        )
-                        Text("Choose a different model", style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
-                    }
-                    if (advancedOpen) {
-                        Spacer(Modifier.height(12.dp))
-                        MODEL_OPTIONS.forEach { m ->
-                            ModelRow(m.name, m.meta, selected == m.id) { onSelect(m.id) }
-                            Spacer(Modifier.height(9.dp))
-                        }
-                        Text(
-                            "Prefer a cloud model for max accuracy? You can add an API key later in Settings.",
-                            style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
-                        )
-                    }
-                }
+            if (dl == "error") {
+                Spacer(Modifier.height(16.dp))
+                Text(dlError ?: "Download failed", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB4502E))
+            }
+            if (dl == "done" && llmDl == "done") {
+                Spacer(Modifier.height(18.dp))
+                SuccessPill("Ready · works offline")
             }
         },
         actions = {
-            when (dl) {
-                "done" -> Cta("Continue", onClick = onNext)
-                // Keep going — the download survives in the background (same coroutine
-                // scope for the whole onboarding flow) and DoneStep already handles an
+            when {
+                dl == "error" -> Cta("Try again", onClick = onDownload)
+                dl == "done" && llmDl != "downloading" -> Cta("Continue", onClick = onNext)
+                // Keep going — the downloads survive in the background (same coroutine
+                // scope for the whole onboarding flow) and DoneStep already handles a
                 // still-downloading model gracefully. Making the user sit and watch a
-                // ~631MB download here was the actual complaint: it reads as stuck, not
+                // ~1GB download here was the actual complaint: it reads as stuck, not
                 // as progress, and it's the single biggest place onboarding lost people.
-                "downloading" -> Cta("Continue — downloads in background", onClick = onNext)
-                "error" -> Cta("Try again", onClick = onDownload)
+                started -> Cta("Continue — downloads in background", onClick = onNext)
                 else -> Cta("Download & continue", onClick = onDownload)
             }
         },
     )
 }
 
+/** One of the two on-device models, with its own inline progress once downloading. */
 @Composable
-private fun ModelRow(name: String, meta: String, selected: Boolean, onClick: () -> Unit) {
+private fun ModelCard(icon: ImageVector, name: String, meta: String, state: String, pct: Float, started: Boolean) {
     val cs = MaterialTheme.colorScheme
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(if (selected) cs.secondaryContainer else cs.surface)
-            .border(1.5.dp, if (selected) cs.primary else cs.outline, RoundedCornerShape(12.dp))
-            .clickable { onClick() }.padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(cs.secondaryContainer)
+            .border(1.5.dp, if (state == "done") Color(0xFFBFE0C9) else cs.primary, RoundedCornerShape(15.dp))
+            .padding(16.dp),
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
-            Text(meta, style = MonoEyebrow, fontSize = 10.5.sp, color = cs.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(11.dp)).background(SunsetBrush), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(20.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = cs.onBackground)
+                Text(meta, style = MonoEyebrow, fontSize = 11.sp, color = cs.onSurfaceVariant)
+            }
+            Text(
+                when (state) {
+                    "done" -> "READY"
+                    "downloading" -> "${(pct * 100).toInt()}%"
+                    "error" -> "FAILED"
+                    else -> if (started) "QUEUED" else ""
+                },
+                style = MonoEyebrow, fontSize = 9.5.sp,
+                color = if (state == "done") Color(0xFF3E8E5A) else cs.onSurfaceVariant,
+            )
         }
-        if (selected) Box(Modifier.size(10.dp).clip(CircleShape).background(cs.primary))
+        if (state == "downloading") {
+            Spacer(Modifier.height(12.dp))
+            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(cs.outline)) {
+                Box(Modifier.fillMaxWidth(pct.coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(cs.primary))
+            }
+        }
     }
 }
 
