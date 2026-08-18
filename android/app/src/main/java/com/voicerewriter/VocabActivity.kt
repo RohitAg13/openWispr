@@ -86,7 +86,7 @@ class VocabActivity : ComponentActivity() {
             Text("Personal dictionary", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             Text(
                 "Names and terms the recognizer gets wrong. We snap near-misses back to the " +
-                    "correct spelling after you speak — fully on-device. Add known mishearings as " +
+                    "correct spelling after you speak, fully on-device. Add known mishearings as " +
                     "aliases (comma-separated) for the tricky ones.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

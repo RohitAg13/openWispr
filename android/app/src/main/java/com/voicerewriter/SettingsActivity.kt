@@ -324,7 +324,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         ToggleRow(
                             "Vocab-biased decoding (experimental)",
                             "Tries harder to hit your personal dictionary during transcription, not just after. " +
-                                "Uses a decode mode with a known upstream bug — occasionally returns blank or " +
+                                "Uses a decode mode with a known upstream bug that occasionally returns blank or " +
                                 "wrong text. Leave off unless you're testing it.",
                             parakeetHotwordsExperimental,
                         ) { parakeetHotwordsExperimental = it; persist() }
@@ -335,7 +335,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             // ---------------- CLEANUP & POLISH ----------------
             Section("Cleanup & polish") {
                 Card {
-                    ToggleRow("Smart cleanup", "Fillers, punctuation, numbers, backtracking — on-device, instant", deterministicCleanup) { deterministicCleanup = it; persist() }
+                    ToggleRow("Smart cleanup", "Fillers, punctuation, numbers, backtracking · on-device, instant", deterministicCleanup) { deterministicCleanup = it; persist() }
                     Divider()
                     Padded {
                         Text("AI polish", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
@@ -349,7 +349,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         Spacer(Modifier.height(11.dp))
                         Text(polishLevel.blurb, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
-                        Text("Polish always keeps your words and meaning — it falls back to the clean text if it strays.",
+                        Text("Polish always keeps your words and meaning. It falls back to the clean text if it strays.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
 
                         if (polishLevel != PolishLevel.OFF) {

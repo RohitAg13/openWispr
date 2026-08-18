@@ -118,7 +118,7 @@ class StyleMemoryActivity : ComponentActivity() {
             Divider()
 
             if (loaded && samples.isEmpty()) {
-                Text("Nothing yet — your accepted dictations will appear here.",
+                Text("Nothing yet. Your accepted dictations will appear here.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {

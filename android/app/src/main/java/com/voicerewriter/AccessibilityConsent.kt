@@ -57,7 +57,7 @@ fun AccessibilityConsentDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Spacer(Modifier.height(14.dp))
                 DisclosureBullet(
                     "What it accesses",
-                    "The text field you're currently focused in — so it can place your text there.",
+                    "The text field you're currently focused in, so it can place your text there.",
                 )
                 Spacer(Modifier.height(10.dp))
                 DisclosureBullet(
@@ -72,7 +72,7 @@ fun AccessibilityConsentDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text("I understand — open settings") }
+            TextButton(onClick = onConfirm) { Text("I understand, open settings") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Not now") }
