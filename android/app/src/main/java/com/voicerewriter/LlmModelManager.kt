@@ -1,7 +1,13 @@
 package com.voicerewriter
 
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -105,4 +111,32 @@ object LlmModelManager {
             if (!part.renameTo(target)) throw IllegalStateException("Couldn't finalize the model file.")
             onProgress(1f)
         }
+
+    // --- Lifecycle-independent download — see ParakeetModelManager's for rationale. ---
+
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val _downloadState = MutableStateFlow("idle") // "idle" | "downloading" | "done" | "error"
+    val downloadState: StateFlow<String> = _downloadState.asStateFlow()
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+    private val _downloadError = MutableStateFlow<String?>(null)
+    val downloadError: StateFlow<String?> = _downloadError.asStateFlow()
+
+    /** Idempotent: no-ops if already downloaded or a download is already in flight. */
+    fun ensureDownloading(context: Context, id: String) {
+        if (_downloadState.value == "downloading") return
+        val appContext = context.applicationContext
+        if (isReady(appContext, id)) { _downloadState.value = "done"; return }
+        _downloadState.value = "downloading"; _downloadProgress.value = 0f; _downloadError.value = null
+        managerScope.launch {
+            try {
+                download(appContext, id) { p -> _downloadProgress.value = p }
+                _downloadState.value = "done"
+            } catch (t: Throwable) {
+                _downloadError.value = t.message ?: "Download failed"
+                _downloadState.value = "error"
+            }
+        }
+    }
 }

@@ -69,6 +69,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -431,6 +432,7 @@ class RewriteActivity : ComponentActivity() {
     private fun VoiceSheet() {
         val scope = rememberCoroutineScope()
         val haptics = LocalHapticFeedback.current
+        val parakeetDlPct by ParakeetModelManager.downloadProgress.collectAsState()
 
         var settings by remember { mutableStateOf<Settings?>(null) }
         var stage by remember { mutableStateOf(Stage.IDLE) }
@@ -650,7 +652,9 @@ class RewriteActivity : ComponentActivity() {
                     // Onboarding starts the model download and deliberately doesn't wait for
                     // it, so a first dictation legitimately lands mid-download. Sit on a
                     // spinner and start the moment it lands; only a genuinely stalled or
-                    // failed download should reach the error below.
+                    // failed download should reach the error below. Nudge the download too,
+                    // in case it hasn't started yet (e.g. this is a resumed process).
+                    if (OnDeviceStt.isParakeet(s.sttModel)) ParakeetModelManager.ensureDownloading(this)
                     error = null
                     stage = Stage.WAITING_MODEL
                     scope.launch {
@@ -767,12 +771,21 @@ class RewriteActivity : ComponentActivity() {
 
             when (stage) {
                 Stage.WAITING_MODEL -> {
+                    val showPct = settings?.sttModel?.let { OnDeviceStt.isParakeet(it) } == true
                     TranscribingRing("Finishing setup")
                     Text(
-                        "Your speech model is still downloading — I'll start listening the moment it's ready.",
+                        if (showPct) "Your speech model is still downloading (${(parakeetDlPct * 100).toInt()}%) — I'll start listening the moment it's ready."
+                        else "Your speech model is still downloading — I'll start listening the moment it's ready.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (showPct) {
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { parakeetDlPct.coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = { cancelAndFinish() }) { Text("Cancel") }
                     }
