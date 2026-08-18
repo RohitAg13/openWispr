@@ -84,8 +84,8 @@ enum PolishLevel: String, CaseIterable {
     /// One-line description of what this level does, shown under the segmented control.
     var blurb: String {
         switch self {
-        case .off:    return "Deterministic cleanup only — no LLM rewrite."
-        case .light:  return "Light touch — fix obvious slips, keep your words."
+        case .off:    return "Deterministic cleanup only, no LLM rewrite."
+        case .light:  return "Light touch. Fixes obvious slips, keeps your words."
         case .medium: return "Tidy sentences and flow while preserving meaning."
         case .full:   return "Fuller rewrite for clear, well-structured text."
         }

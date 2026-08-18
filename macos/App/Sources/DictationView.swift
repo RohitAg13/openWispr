@@ -125,11 +125,11 @@ final class DictationController: ObservableObject {
                 self.didInsert = false
             }
         case .unverified:
-            deliveryNote = "Couldn't confirm the insert — the text is on your clipboard."
+            deliveryNote = "Couldn't confirm the insert. The text is on your clipboard."
         case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
-            deliveryNote = "Couldn't insert — the text is on your clipboard."
+            deliveryNote = "Couldn't insert. The text is on your clipboard."
         }
     }
 
@@ -296,7 +296,7 @@ final class DictationController: ObservableObject {
         if let id = pendingID {
             PendingAudioStore.shared.release(id)
             pendingID = nil
-            phase = .error("\(message) Your recording is saved below — you can run it again.")
+            phase = .error("\(message) Your recording is saved below. You can run it again.")
         } else {
             phase = .error(message)
         }
@@ -430,7 +430,7 @@ struct DictationView: View {
                     .foregroundStyle(controller.canInsert ? OW.success : OW.textMuted)
             }
             .help(controller.canInsert
-                ? "Accessibility granted — auto-insert enabled"
+                ? "Accessibility granted · auto-insert enabled"
                 : "Accessibility not granted")
         }
     }
@@ -599,7 +599,7 @@ struct DictationView: View {
     private func transcript(label: String, text: String, mono: Bool, faint: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             MonoLabel(text: label, color: OW.textDim, size: 9, tracking: 1.4)
-            Text(text.isEmpty ? "—" : text)
+            Text(text.isEmpty ? "(empty)" : text)
                 .font(mono ? OW.mono(13) : OW.ui(14))
                 .foregroundStyle(faint ? OW.textFaint : OW.text)
                 .textSelection(.enabled)

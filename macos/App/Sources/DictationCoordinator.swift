@@ -290,7 +290,7 @@ final class DictationCoordinator {
         if let id = pendingID {
             PendingAudioStore.shared.release(id)
             pendingID = nil
-            hud.update(.error("\(message) Your recording is saved — retry it from OpenWispr."))
+            hud.update(.error("\(message) Your recording is saved. Retry it from OpenWispr."))
             autoHide(after: 3.5)
         } else {
             hud.update(.error(message))
@@ -343,14 +343,14 @@ final class DictationCoordinator {
             hud.update(.inserted)
             autoHide(after: 1.0)
         case .unverified:
-            hud.update(.message("Couldn't confirm the insert — it's on your clipboard."))
+            hud.update(.message("Couldn't confirm the insert. It's on your clipboard."))
             autoHide(after: 3.0)
         case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
             hud.update(.message(
                 TextInserter.isTrusted ? "Copied to your clipboard."
-                                       : "Copied — grant Accessibility to auto-insert."
+                                       : "Copied. Grant Accessibility to auto-insert."
             ))
             autoHide(after: 2.5)
         }
@@ -427,7 +427,7 @@ final class DictationCoordinator {
     private static func message(for error: STTError) -> String {
         switch error {
         case .unavailable:      return "Speech recognition isn't available."
-        case .notAuthorized:    return "Speech access denied — enable in Settings."
+        case .notAuthorized:    return "Speech access denied. Enable in Settings."
         case .noSpeechDetected: return "Didn't catch any speech."
         case .failed(let reason): return "Transcription failed: \(reason)"
         }
