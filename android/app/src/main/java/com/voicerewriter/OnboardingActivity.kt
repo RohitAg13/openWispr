@@ -280,7 +280,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 when (step) {
                     0 -> WelcomeStep(onNext = { next() })
                     1 -> PrivacyStep(
-                        dl = dl, dlPct = dlPct, dlError = dlError, llmDl = llmDl, llmPct = llmPct,
+                        dl = dl, dlPct = dlPct, dlError = dlError,
                         onRetry = { ParakeetModelManager.ensureDownloading(ctx) }, onNext = { next() },
                     )
                     2 -> MicStep(
@@ -497,17 +497,18 @@ private fun WelcomeStep(onNext: () -> Unit) {
 }
 
 /**
- * The download step, framed as what it actually is. A ~1GB download is the most obvious cost
- * of being on-device — but it's also the only *tangible* proof of the privacy claim: a cloud
- * dictation app has nothing to download because your voice goes to its servers instead. So
- * this step leads with why the download exists rather than apologising for it, and shows one
- * progress bar (speech) instead of two — the polish model isn't what gates the first
- * dictation, and a second bar is just a second thing to worry about.
+ * The setup step. The ~1GB download is the most obvious cost of being on-device, but it's also
+ * the only tangible proof of the privacy claim: a cloud dictation app has nothing to download
+ * because your voice goes to its servers instead. So this step gives the reason in one line
+ * and then gets out of the way.
+ *
+ * Deliberately withheld: file sizes, model names, and the fact that there are two models at
+ * all. None of it changes what the user does next, and every number here is one more thing to
+ * feel anxious about. The second model is sequenced behind the first and simply arrives.
  */
 @Composable
 private fun PrivacyStep(
     dl: String, dlPct: Float, dlError: String?,
-    llmDl: String, llmPct: Float,
     onRetry: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
@@ -519,33 +520,21 @@ private fun PrivacyStep(
             Text("Your voice never leaves this phone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
             Spacer(Modifier.height(10.dp))
             Text(
-                "Most dictation apps send your voice to a server to turn it into text. OpenWispr doesn't, which means the speech model has to live here, on your phone. That's what's downloading now: about a minute on wifi, once, and never again.",
+                "Other dictation apps send your voice to a server. OpenWispr doesn't, so it sets itself up here. Takes about a minute.",
                 style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
             )
             Spacer(Modifier.height(20.dp))
 
-            ModelCard(
-                icon = Icons.Filled.Mic, name = "Speech model",
-                meta = "631 MB · one time",
-                state = dl, pct = dlPct,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                if (llmDl == "downloading")
-                    "A second, smaller model for polish is landing now (397 MB). It strips filler words and adds punctuation."
-                else
-                    "A second, smaller model for polish (397 MB) follows after. You can start dictating before it arrives.",
-                style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
-            )
+            ModelCard(icon = Icons.Filled.Mic, name = "Setting up", state = dl, pct = dlPct)
 
             if (dl == "error") {
                 Spacer(Modifier.height(16.dp))
                 Text(dlError ?: "Download failed", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB4502E))
             }
             Spacer(Modifier.height(20.dp))
-            // Concrete, and testable by the user later — which is what makes it land as proof
+            // Concrete and testable by the user later, which is what makes it land as proof
             // rather than as marketing. A cloud app cannot make this claim.
-            Eyebrow("Then it works in airplane mode · no account · nothing uploaded")
+            Eyebrow("Works offline · no account · nothing uploaded")
         },
         actions = {
             // The button always just moves on. Making someone sit and watch a ~1GB download
@@ -554,15 +543,15 @@ private fun PrivacyStep(
             when {
                 dl == "error" -> Cta("Try again", onClick = onRetry)
                 dl == "done" -> Cta("Continue", onClick = onNext)
-                else -> Cta("Continue while it downloads", onClick = onNext)
+                else -> Cta("Continue while it sets up", onClick = onNext)
             }
         },
     )
 }
 
-/** An on-device model with its own inline progress once downloading. */
+/** Setup progress, with an inline bar once it's running. */
 @Composable
-private fun ModelCard(icon: ImageVector, name: String, meta: String, state: String, pct: Float) {
+private fun ModelCard(icon: ImageVector, name: String, state: String, pct: Float) {
     val cs = MaterialTheme.colorScheme
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(cs.secondaryContainer)
@@ -573,10 +562,10 @@ private fun ModelCard(icon: ImageVector, name: String, meta: String, state: Stri
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(11.dp)).background(SunsetBrush), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(20.dp))
             }
-            Column(Modifier.weight(1f)) {
-                Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = cs.onBackground)
-                Text(meta, style = MonoEyebrow, fontSize = 11.sp, color = cs.onSurfaceVariant)
-            }
+            Text(
+                name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                color = cs.onBackground, modifier = Modifier.weight(1f),
+            )
             Text(
                 when (state) {
                     "done" -> "READY"
@@ -678,61 +667,43 @@ private fun A11yStep(
             },
             actions = { Cta("Continue", onClick = onNext) },
         )
+        // Kept deliberately sparse. This is the scariest screen in the flow, and the instinct
+        // is to reassure with more words, which backfires: a wall of text about a permission
+        // reads as something being justified. The picture of the row they're hunting for does
+        // the real work; everything else is one line or gone.
         else -> StepScaffold( // "list"
             content = {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(16.dp))
+                IconTile(Icons.Filled.TouchApp, size = 56, corner = 16, iconSize = 27)
+                Spacer(Modifier.height(16.dp))
                 Text("Let it type for you", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Android calls this Accessibility, which sounds far broader than what we use it for. Precisely:",
+                    "It only inserts your text. It never reads your screen.",
                     style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(14.dp))
-                // Naming what it will never do reassures more than any amount of what it will.
-                Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface)
-                        .border(1.dp, cs.outline, RoundedCornerShape(14.dp)).padding(15.dp),
-                ) {
-                    Eyebrow("What it does")
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "Puts your finished text into whatever app you're in, and shows the tap-to-talk bubble.",
-                        style = MaterialTheme.typography.bodyMedium, color = cs.onBackground,
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    Eyebrow("What it never does")
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "Read your screen, log what you type, or send anything anywhere.",
-                        style = MaterialTheme.typography.bodyMedium, color = cs.onBackground,
-                    )
-                }
 
-                Spacer(Modifier.height(22.dp))
-                Text("Here's exactly what you'll see:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
+                Spacer(Modifier.height(26.dp))
+                MockSettingsRow(label = "OpenWispr", subtitle = "Downloaded app", on = true)
                 Spacer(Modifier.height(12.dp))
-                NumberedStep(1, "Find OpenWispr in the list") {
-                    MockSettingsRow(label = "OpenWispr", subtitle = "Downloaded app", on = false)
-                }
-                Spacer(Modifier.height(12.dp))
-                NumberedStep(2, "Turn its switch on") {
-                    MockSettingsRow(label = "OpenWispr", subtitle = "Downloaded app", on = true)
-                }
-                Spacer(Modifier.height(12.dp))
-                // The system confirmation is where people bail — it's worded to sound alarming
+                Text(
+                    "Find this switch and turn it on.",
+                    style = MaterialTheme.typography.bodyMedium, color = cs.onBackground,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(6.dp))
+                // The system confirmation is where people bail: it's worded to sound alarming
                 // and gives no hint that every accessibility app triggers the identical dialog.
-                NumberedStep(3, "Android shows a scary-sounding confirmation. That's normal: every app with this permission gets the same one. Tap Allow.")
+                Text(
+                    "Android will ask you to confirm. That's normal.",
+                    style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
 
                 if (!overlayGranted) {
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(24.dp))
                     BubblePermissionRow(onAllow = onGrantOverlay)
                 }
-
-                Spacer(Modifier.height(18.dp))
-                Text(
-                    "Rather not? OpenWispr copies your finished text instead and you paste it yourself. Everything else works the same.",
-                    style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
-                )
             },
             actions = {
                 Cta("Open Accessibility settings", onClick = onOpenA11y)
@@ -745,24 +716,6 @@ private fun A11yStep(
     }
     // confirm-on-resume is handled by the parent ON_RESUME observer flipping phase to "on";
     // the user taps Continue on the "on" screen to advance.
-}
-
-/** A numbered instruction, optionally illustrated by a mock of the row they're hunting for. */
-@Composable
-private fun NumberedStep(n: Int, text: String, illustration: (@Composable () -> Unit)? = null) {
-    val cs = MaterialTheme.colorScheme
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-        Box(Modifier.size(22.dp).clip(RoundedCornerShape(7.dp)).background(cs.primaryContainer), contentAlignment = Alignment.Center) {
-            Text("$n", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = cs.primary)
-        }
-        Column(Modifier.weight(1f)) {
-            Text(text, style = MaterialTheme.typography.bodyMedium, color = cs.onBackground)
-            if (illustration != null) {
-                Spacer(Modifier.height(9.dp))
-                illustration()
-            }
-        }
-    }
 }
 
 /**
