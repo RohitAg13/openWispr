@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VerifiedUser
@@ -49,9 +48,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -167,13 +166,19 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     var overlayGranted by remember { mutableStateOf(SetupUtils.canDrawOverlays(ctx)) }
     var a11yGranted by remember { mutableStateOf(SetupUtils.accessibilityEnabled(ctx)) }
 
-    var dl by remember { mutableStateOf(if (OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) "done" else "idle") }
-    var dlPct by remember { mutableFloatStateOf(0f) }
-    var dlError by remember { mutableStateOf<String?>(null) }
-    var llmDl by remember { mutableStateOf(if (LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) "done" else "idle") }
-    var llmPct by remember { mutableFloatStateOf(0f) }
+    // Downloads live on the model managers themselves (not this composition), so they keep
+    // running across activity/process transitions — e.g. finishing onboarding before either
+    // one completes. This screen just observes and, below, kicks them off.
+    val dl by ParakeetModelManager.downloadState.collectAsState()
+    val dlPct by ParakeetModelManager.downloadProgress.collectAsState()
+    val dlError by ParakeetModelManager.downloadError.collectAsState()
+    val llmDl by LlmModelManager.downloadState.collectAsState()
+    val llmPct by LlmModelManager.downloadProgress.collectAsState()
 
-    var a11yPhase by remember { mutableStateOf("restricted") }
+    // Play Store installs don't hit Android's "restricted settings" lockout that sideloaded
+    // (GitHub-sourced) APKs used to — that gate only applies to apps installed outside a
+    // trusted app store, so onboarding can go straight to the accessibility list.
+    var a11yPhase by remember { mutableStateOf("list") }
     var showA11yConsent by remember { mutableStateOf(false) }
     var polishTab by remember { mutableIntStateOf(0) }
 
@@ -210,9 +215,6 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 overlayGranted = SetupUtils.canDrawOverlays(ctx)
                 a11yGranted = SetupUtils.accessibilityEnabled(ctx)
                 if (a11yGranted && a11yPhase != "skipped") a11yPhase = "on"
-                // keep the model step in sync if a download finished while away
-                if (dl != "downloading" && OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) dl = "done"
-                if (llmDl != "downloading" && LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) llmDl = "done"
                 refreshPersonalization()
             }
         }
@@ -240,43 +242,13 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
         }
     }
 
-    /** Kicks off speech + polish downloads together; neither one blocks the flow. */
-    fun startDownloads() {
-        if (dl != "downloading") {
-            if (OnDeviceStt.isReady(ctx, ONBOARDING_STT_MODEL)) {
-                persistStt(); dl = "done"
-            } else {
-                dl = "downloading"; dlPct = 0f; dlError = null
-                scope.launch {
-                    try {
-                        ParakeetModelManager.download(ctx) { p -> dlPct = p }
-                        persistStt()
-                        dl = "done"
-                    } catch (t: Throwable) {
-                        dlError = t.message ?: "Download failed"
-                        dl = "error"
-                    }
-                }
-            }
-        }
-        if (llmDl != "downloading") {
-            if (LlmModelManager.isReady(ctx, ONBOARDING_LLM_MODEL)) {
-                llmDl = "done"
-            } else {
-                llmDl = "downloading"; llmPct = 0f
-                scope.launch {
-                    // A failed polish download is not worth an error state here: dictation
-                    // falls back to the deterministic cleanup when the model is missing.
-                    llmDl = try {
-                        LlmModelManager.download(ctx, ONBOARDING_LLM_MODEL) { p -> llmPct = p }
-                        "done"
-                    } catch (t: Throwable) {
-                        "error"
-                    }
-                }
-            }
-        }
+    // Both downloads start the moment onboarding opens — no "download" tap needed. The setup
+    // step below just shows progress; its button always just continues.
+    LaunchedEffect(Unit) {
+        ParakeetModelManager.ensureDownloading(ctx)
+        LlmModelManager.ensureDownloading(ctx, ONBOARDING_LLM_MODEL)
     }
+    LaunchedEffect(dl) { if (dl == "done") persistStt() }
 
     fun finishOnboarding() {
         scope.launch {
@@ -313,7 +285,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     1 -> SetupStep(
                         dl = dl, dlPct = dlPct, dlError = dlError,
                         llmDl = llmDl, llmPct = llmPct,
-                        onDownload = { startDownloads() }, onNext = { next() },
+                        onRetry = { ParakeetModelManager.ensureDownloading(ctx) }, onNext = { next() },
                     )
                     2 -> MicStep(
                         granted = micGranted, blocked = micBlocked,
@@ -326,8 +298,6 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     3 -> A11yStep(
                         phase = a11yPhase,
                         overlayGranted = overlayGranted,
-                        onOpenRestricted = { ctx.startActivity(SetupUtils.appInfoIntent(ctx)) },
-                        onNotGreyed = { a11yPhase = "list" },
                         onOpenA11y = { showA11yConsent = true },
                         onConfirm = { a11yGranted = SetupUtils.accessibilityEnabled(ctx); if (a11yGranted) a11yPhase = "on" },
                         onGrantOverlay = { ctx.startActivity(SetupUtils.overlaySettingsIntent(ctx)) },
@@ -350,7 +320,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                         a11yOn = a11yPhase == "on", a11ySkipped = a11yPhase == "skipped",
                         personalCount = listOf(toneDone, styleN > 0, dictN > 0, contactsDone).count { it },
                         onStart = { finishOnboarding() },
-                        onReplay = { step = 0; a11yPhase = "restricted"; if (dl != "done") dlPct = 0f },
+                        onReplay = { step = 0; a11yPhase = "list" },
                     )
                 }
             }
@@ -530,7 +500,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
 private fun SetupStep(
     dl: String, dlPct: Float, dlError: String?,
     llmDl: String, llmPct: Float,
-    onDownload: () -> Unit, onNext: () -> Unit,
+    onRetry: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
     val started = dl != "idle" || llmDl != "idle"
@@ -564,16 +534,15 @@ private fun SetupStep(
             }
         },
         actions = {
+            // Downloads start on their own the moment this step appears — there's nothing
+            // to tap to kick them off. Making the user sit and watch a ~1GB download here
+            // was the actual complaint: it reads as stuck, not as progress, and it was the
+            // single biggest place onboarding lost people. So this button always just moves
+            // on; the downloads keep running in the background regardless.
             when {
-                dl == "error" -> Cta("Try again", onClick = onDownload)
-                dl == "done" && llmDl != "downloading" -> Cta("Continue", onClick = onNext)
-                // Keep going — the downloads survive in the background (same coroutine
-                // scope for the whole onboarding flow) and DoneStep already handles a
-                // still-downloading model gracefully. Making the user sit and watch a
-                // ~1GB download here was the actual complaint: it reads as stuck, not
-                // as progress, and it's the single biggest place onboarding lost people.
-                started -> Cta("Continue — downloads in background", onClick = onNext)
-                else -> Cta("Download & continue", onClick = onDownload)
+                dl == "error" -> Cta("Try again", onClick = onRetry)
+                dl == "done" && llmDl == "done" -> Cta("Continue", onClick = onNext)
+                else -> Cta("Continue — downloads in background", onClick = onNext)
             }
         },
     )
@@ -656,31 +625,11 @@ private fun MicStep(granted: Boolean, blocked: Boolean, onAllow: () -> Unit, onS
 @Composable
 private fun A11yStep(
     phase: String, overlayGranted: Boolean,
-    onOpenRestricted: () -> Unit, onNotGreyed: () -> Unit,
     onOpenA11y: () -> Unit, onConfirm: () -> Unit, onGrantOverlay: () -> Unit,
     onSkip: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
     when (phase) {
-        "restricted" -> StepScaffold(
-            content = {
-                Spacer(Modifier.height(18.dp))
-                IconTile(Icons.Filled.Lock)
-                Spacer(Modifier.height(22.dp))
-                Eyebrow("One-time unlock · sideloaded apps")
-                Spacer(Modifier.height(9.dp))
-                Text("First, allow restricted settings", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
-                Spacer(Modifier.height(12.dp))
-                Text("Because you installed OpenWispr from GitHub, Android greys out the next switch until you unlock it:", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
-                Spacer(Modifier.height(18.dp))
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface).border(1.dp, cs.outline, RoundedCornerShape(14.dp)).padding(vertical = 6.dp)) {
-                    NumberedRow(1, "Open App info")
-                    NumberedRow(2, "Tap the ⋮ menu (top-right)")
-                    NumberedRow(3, "Choose Allow restricted settings")
-                }
-            },
-            actions = { Cta("Open App info", onClick = onOpenRestricted); SubLink("My switch isn't greyed out", onClick = onNotGreyed) },
-        )
         "on" -> StepScaffold(
             content = {
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -757,14 +706,6 @@ private fun BubblePermissionRow(onAllow: () -> Unit) {
     }
 }
 
-@Composable
-private fun NumberedRow(n: Int, text: String) {
-    val cs = MaterialTheme.colorScheme
-    Row(Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("$n", style = MonoEyebrow, color = cs.primary, modifier = Modifier.width(16.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = cs.onBackground)
-    }
-}
 
 @Composable
 private fun PolishStep(tab: Int, onTab: (Int) -> Unit, onNext: () -> Unit) {
