@@ -75,7 +75,7 @@ class AppToneActivity : ComponentActivity() {
         ) {
             Text("Tone by app", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             Text(
-                "How dictation is polished in each kind of app — used only when “Polish with LLM” is on. " +
+                "How dictation is polished in each kind of app, used only when “Polish with LLM” is on. " +
                     "Leave blank for no tone change.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

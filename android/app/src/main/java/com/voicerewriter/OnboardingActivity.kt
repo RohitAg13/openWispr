@@ -30,15 +30,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VerifiedUser
@@ -73,17 +68,23 @@ import com.voicerewriter.ui.MonoEyebrow
 import com.voicerewriter.ui.OpenWisprTheme
 import com.voicerewriter.ui.SunsetBrush
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * First-run onboarding: a guided, on-device-by-default setup mirroring the OpenWispr
- * onboarding design. Steps: welcome → speech model (download) → microphone →
+ * First-run onboarding. Six steps: welcome → why the download exists → microphone →
  * auto-insert (accessibility, with the tap-to-talk bubble/overlay permission folded in) →
- * polish showcase → personalization → first dictation → done.
+ * first dictation → done.
  *
- * On-device is the only path here; cloud transcription stays available later in Settings.
+ * The shape is dictated by one constraint: the speech model is ~631MB, so unlike a cloud
+ * dictation app we cannot let the user succeed before asking for anything. Instead the
+ * download starts immediately and the permission steps cover it, so by the time they reach
+ * the try-it step the model has usually landed — and if it hasn't, that step shows progress
+ * rather than a wall. The download is presented as what it is: the reason nothing has to be
+ * uploaded, rather than a toll on the way in.
+ *
+ * On-device is the only path here; cloud transcription stays available later in Settings, as
+ * does personalization (dictionary, contacts, tone), which is deliberately not in this flow.
  * Special-access grants (overlay, accessibility) deliver no result callback, so live state
  * is re-read from [SetupUtils] on every ON_RESUME. Shown once on first launch (gated by
  * [Settings.hasCompletedOnboarding]); re-launchable from Settings.
@@ -119,38 +120,15 @@ class OnboardingActivity : ComponentActivity() {
 private const val ONBOARDING_STT_MODEL = ParakeetModelManager.MODEL_ID
 private val ONBOARDING_LLM_MODEL = LlmModelManager.DEFAULT_MODEL
 
-// Polish-showcase examples cycled on the "It cleans up as you talk" step.
-private data class PolishExample(
-    val tab: String, val tag: String, val raw: String,
-    val clean: List<String>, val list: Boolean, val note: String,
-)
+// Read aloud at the try-it step. Deliberately full of filler and a mid-sentence correction,
+// so the cleanup is visible in the before/after we show the user afterwards.
+private const val TRY_IT_SCRIPT = "um so send it to mark, I mean john, tomorrow at 2 period"
 
-private val POLISH_EXAMPLES = listOf(
-    PolishExample(
-        "Fillers", "Fillers removed",
-        "um so, uh, I think we should, like, just ship it",
-        listOf("I think we should just ship it."), false,
-        "No more “um,” “uh,” “like,” or false starts.",
-    ),
-    PolishExample(
-        "Punctuation", "Auto-punctuation",
-        "hey are you free tomorrow lets grab coffee",
-        listOf("Hey, are you free tomorrow? Let’s grab coffee."), false,
-        "Commas, periods, question marks and capitals — added for you.",
-    ),
-    PolishExample(
-        "Lists", "Numbered list",
-        "first buy milk second call sam third finish the deck",
-        listOf("Buy milk", "Call Sam", "Finish the deck"), true,
-        "Say “first… second… third…” and it lays out a clean list.",
-    ),
-    PolishExample(
-        "Backtrack", "Backtrack",
-        "send it to mark, I mean john, at 2",
-        listOf("Send it to John at 2."), false,
-        "Correct yourself mid-sentence — OpenWispr keeps only the fix.",
-    ),
-)
+// Apps named on the welcome screen. Concrete names beat "works anywhere" — but we name them
+// as text rather than drawing real icons, which would need <queries> manifest entries.
+private const val WELCOME_APPS = "WhatsApp · Gmail · Slack · Notes · anywhere you type"
+
+private const val LAST_STEP = 5
 
 @Composable
 private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit) {
@@ -180,7 +158,17 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     // trusted app store, so onboarding can go straight to the accessibility list.
     var a11yPhase by remember { mutableStateOf("list") }
     var showA11yConsent by remember { mutableStateOf(false) }
-    var polishTab by remember { mutableIntStateOf(0) }
+    // Android's accessibility grant reports no result, so the parent ON_RESUME below detects
+    // it. This only tracks whether we've sent them out at all, so the manual "I've already
+    // turned it on" fallback stays hidden until it could plausibly be needed.
+    var sentToA11ySettings by remember { mutableStateOf(false) }
+
+    // The user's own first dictation, shown back to them at the try-it step. `tryBaseline` is
+    // the LastDictation value captured when they tapped — anything different afterwards is
+    // theirs, which keeps a replayed onboarding from claiming credit for an older dictation.
+    var tryBaseline by remember { mutableStateOf<String?>(null) }
+    var tryResult by remember { mutableStateOf<String?>(null) }
+    var tryRaw by remember { mutableStateOf<String?>(null) }
 
     // Personalization "set up" status — read from the real on-device stores so returning
     // from an editor reflects what the user actually added (see refreshPersonalization).
@@ -208,6 +196,28 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
         }
     }
 
+    /**
+     * Pull the dictation the user just did back into onboarding. [RewriteActivity] already
+     * persists it via [LastDictation] on the way out (and reports RESULT_CANCELED even on
+     * success), so reading the file beats any activity-result plumbing. The history entry —
+     * when history is on and cleanup actually changed something — additionally gives us the
+     * raw transcript, so the polish can be shown on the user's own words.
+     */
+    fun captureTryResult() {
+        val baseline = tryBaseline ?: return
+        scope.launch {
+            val text = withContext(Dispatchers.IO) { LastDictation.get(ctx) }
+            if (text.isBlank() || text == baseline) return@launch
+            val raw = withContext(Dispatchers.IO) {
+                DictationHistory.all(ctx).firstOrNull()
+                    ?.takeIf { it.after == text && it.before.isNotBlank() && it.before.trim() != it.after.trim() }
+                    ?.before
+            }
+            tryResult = text
+            tryRaw = raw
+        }
+    }
+
     DisposableEffect(lifecycle) {
         val obs = LifecycleEventObserver { _, e ->
             if (e == Lifecycle.Event.ON_RESUME) {
@@ -216,23 +226,14 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 a11yGranted = SetupUtils.accessibilityEnabled(ctx)
                 if (a11yGranted && a11yPhase != "skipped") a11yPhase = "on"
                 refreshPersonalization()
+                captureTryResult()
             }
         }
         lifecycle.addObserver(obs)
         onDispose { lifecycle.removeObserver(obs) }
     }
 
-    // Auto-cycle the polish-showcase tabs while that step is visible.
-    LaunchedEffect(step) {
-        if (step == 4) {
-            while (true) {
-                delay(3400)
-                polishTab = (polishTab + 1) % POLISH_EXAMPLES.size
-            }
-        }
-    }
-
-    fun next() { step = (step + 1).coerceAtMost(7) }
+    fun next() { step = (step + 1).coerceAtMost(LAST_STEP) }
     fun back() { step = (step - 1).coerceAtLeast(0) }
 
     fun persistStt() {
@@ -242,13 +243,15 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
         }
     }
 
-    // Both downloads start the moment onboarding opens — no "download" tap needed. The setup
-    // step below just shows progress; its button always just continues.
-    LaunchedEffect(Unit) {
-        ParakeetModelManager.ensureDownloading(ctx)
-        LlmModelManager.ensureDownloading(ctx, ONBOARDING_LLM_MODEL)
+    // Downloads start the moment onboarding opens — no "download" tap needed. Speech goes
+    // first and alone: it's the only model the first dictation needs, and making it share
+    // bandwidth with the polish model just pushes back the moment the user can actually talk.
+    LaunchedEffect(Unit) { ParakeetModelManager.ensureDownloading(ctx) }
+    LaunchedEffect(dl) {
+        if (dl == "done") persistStt()
+        // Failed speech shouldn't strand polish — start it either way, just not first.
+        if (dl == "done" || dl == "error") LlmModelManager.ensureDownloading(ctx, ONBOARDING_LLM_MODEL)
     }
-    LaunchedEffect(dl) { if (dl == "done") persistStt() }
 
     fun finishOnboarding() {
         scope.launch {
@@ -260,31 +263,24 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-            if (step in 1..6) {
-                TopBar(
-                    progress = step / 7f,
-                    canSkip = step == 4 || step == 5,
-                    onBack = { back() },
-                    onSkip = { next() },
-                )
+            if (step in 1 until LAST_STEP) {
+                TopBar(progress = step / LAST_STEP.toFloat(), onBack = { back() })
             }
-            // The model step no longer blocks on this download (see SetupStep), so once the
-            // user has moved past it a silent background download reads as nothing happening.
-            // A small ambient status keeps it visible without asking anyone to wait for it.
-            if (step in 2..6 && (dl == "downloading" || llmDl == "downloading")) {
-                val active = buildList {
-                    if (dl == "downloading") add(dlPct)
-                    if (llmDl == "downloading") add(llmPct)
-                }
-                DownloadStatusChip(active.average().toFloat())
+            // Steps past the download step keep an ambient status, so a silent background
+            // download doesn't read as nothing happening. Never a blocker — just a signal.
+            if (step in 2 until LAST_STEP && (dl == "downloading" || llmDl == "downloading")) {
+                val speechDownloading = dl == "downloading"
+                DownloadStatusChip(
+                    pct = if (speechDownloading) dlPct else llmPct,
+                    label = if (speechDownloading) "Speech model" else "Polish model",
+                )
             }
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
                     0 -> WelcomeStep(onNext = { next() })
-                    1 -> SetupStep(
+                    1 -> PrivacyStep(
                         dl = dl, dlPct = dlPct, dlError = dlError,
-                        llmDl = llmDl, llmPct = llmPct,
                         onRetry = { ParakeetModelManager.ensureDownloading(ctx) }, onNext = { next() },
                     )
                     2 -> MicStep(
@@ -298,29 +294,31 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     3 -> A11yStep(
                         phase = a11yPhase,
                         overlayGranted = overlayGranted,
+                        canConfirmManually = sentToA11ySettings,
                         onOpenA11y = { showA11yConsent = true },
                         onConfirm = { a11yGranted = SetupUtils.accessibilityEnabled(ctx); if (a11yGranted) a11yPhase = "on" },
                         onGrantOverlay = { ctx.startActivity(SetupUtils.overlaySettingsIntent(ctx)) },
                         onSkip = { a11yPhase = "skipped" },
                         onNext = { next() },
                     )
-                    4 -> PolishStep(tab = polishTab, onTab = { polishTab = it }, onNext = { next() })
-                    5 -> PersonalizeStep(
-                        toneDone = toneDone, styleN = styleN, dictN = dictN, contactsDone = contactsDone,
-                        onTone = { ctx.startActivity(Intent(ctx, AppToneActivity::class.java)) },
-                        onStyle = { ctx.startActivity(Intent(ctx, StyleMemoryActivity::class.java)) },
-                        onDict = { ctx.startActivity(Intent(ctx, VocabActivity::class.java)) },
-                        onContacts = { ctx.startActivity(Intent(ctx, ContactsImportActivity::class.java)) },
+                    4 -> TryItStep(
+                        micGranted = micGranted,
+                        modelReady = dl == "done", dlPct = dlPct,
+                        result = tryResult, raw = tryRaw,
+                        onTry = {
+                            tryBaseline = LastDictation.get(ctx)
+                            onLaunchDictation()
+                        },
                         onNext = { next() },
                     )
-                    6 -> DictateStep(onTry = onLaunchDictation, onNext = { next() })
                     else -> DoneStep(
                         micOn = micGranted,
                         sttOn = dl == "done",
                         a11yOn = a11yPhase == "on", a11ySkipped = a11yPhase == "skipped",
                         personalCount = listOf(toneDone, styleN > 0, dictN > 0, contactsDone).count { it },
+                        onPersonalize = { ctx.startActivity(Intent(ctx, VocabActivity::class.java)) },
                         onStart = { finishOnboarding() },
-                        onReplay = { step = 0; a11yPhase = "list" },
+                        onReplay = { step = 0; a11yPhase = "list"; tryResult = null; tryRaw = null },
                     )
                 }
             }
@@ -331,6 +329,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
         AccessibilityConsentDialog(
             onConfirm = {
                 showA11yConsent = false
+                sentToA11ySettings = true
                 AccessibilityConsent.record(ctx)
                 ctx.startActivity(SetupUtils.accessibilitySettingsIntent())
             },
@@ -344,7 +343,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
 /* ----------------------------------------------------------------------------- */
 
 @Composable
-private fun TopBar(progress: Float, canSkip: Boolean, onBack: () -> Unit, onSkip: () -> Unit) {
+private fun TopBar(progress: Float, onBack: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(14.dp, 14.dp, 18.dp, 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -364,15 +363,10 @@ private fun TopBar(progress: Float, canSkip: Boolean, onBack: () -> Unit, onSkip
                     .clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary),
             )
         }
-        if (canSkip) {
-            Text(
-                "Skip", style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable { onSkip() }.padding(start = 4.dp),
-            )
-        } else {
-            Spacer(Modifier.width(28.dp))
-        }
+        // No "Skip" here: every step's own actions already include a forward path (the CTA
+        // always advances, and the two askable permissions carry their own opt-out link), so
+        // a second skip affordance up here was just one more thing to read.
+        Spacer(Modifier.width(28.dp))
     }
 }
 
@@ -418,10 +412,10 @@ private fun LogoCircle(diameter: Int) {
     }
 }
 
-/** Ambient "still downloading" status shown on steps after the model step, once that
- *  step stopped blocking on the download — see the `dl == "downloading"` branch above. */
+/** Ambient download status for the steps after the download step. Deliberately phrased as
+ *  something arriving rather than something the user is waiting on. */
 @Composable
-private fun DownloadStatusChip(pct: Float) {
+private fun DownloadStatusChip(pct: Float, label: String) {
     val cs = MaterialTheme.colorScheme
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 6.dp),
@@ -429,7 +423,7 @@ private fun DownloadStatusChip(pct: Float) {
     ) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(cs.primary))
         Text(
-            "Downloading on-device models · ${(pct * 100).toInt()}%",
+            "$label arriving · ${(pct * 100).toInt()}% · keep going",
             style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
         )
     }
@@ -486,8 +480,14 @@ private fun WelcomeStep(onNext: () -> Unit) {
             )
             Spacer(Modifier.height(14.dp))
             Text(
-                "OpenWispr turns your voice into clean, finished text in any app — right on your phone. Setup takes a minute.",
+                "OpenWispr turns your voice into clean, finished text, right on your phone. Setup takes a minute.",
                 style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant, textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                WELCOME_APPS,
+                style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
         Cta("Get started", onClick = onNext)
@@ -496,61 +496,62 @@ private fun WelcomeStep(onNext: () -> Unit) {
     }
 }
 
+/**
+ * The setup step. The ~1GB download is the most obvious cost of being on-device, but it's also
+ * the only tangible proof of the privacy claim: a cloud dictation app has nothing to download
+ * because your voice goes to its servers instead. So this step gives the reason in one line
+ * and then gets out of the way.
+ *
+ * Deliberately withheld: file sizes, model names, and the fact that there are two models at
+ * all. None of it changes what the user does next, and every number here is one more thing to
+ * feel anxious about. The second model is sequenced behind the first and simply arrives.
+ */
 @Composable
-private fun SetupStep(
+private fun PrivacyStep(
     dl: String, dlPct: Float, dlError: String?,
-    llmDl: String, llmPct: Float,
     onRetry: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
-    val started = dl != "idle" || llmDl != "idle"
     StepScaffold(
         content = {
             Spacer(Modifier.height(4.dp))
             IconTile(Icons.Filled.VerifiedUser, size = 56, corner = 16, iconSize = 27)
             Spacer(Modifier.height(16.dp))
-            Text("Everything stays on your phone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
-            Spacer(Modifier.height(8.dp))
-            Text("OpenWispr downloads two small models once, then works fully offline. No account, nothing uploaded.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            Text("Your voice never leaves this phone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Other dictation apps send your voice to a server. OpenWispr doesn't, so it sets itself up here. Takes about a minute.",
+                style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
+            )
             Spacer(Modifier.height(20.dp))
 
-            ModelCard(
-                icon = Icons.Filled.Mic, name = "Speech", meta = "~631 MB · turns your voice into text",
-                state = dl, pct = dlPct, started = started,
-            )
-            Spacer(Modifier.height(11.dp))
-            ModelCard(
-                icon = Icons.Filled.AutoAwesome, name = "Polish", meta = "~397 MB · tidies up what you said",
-                state = llmDl, pct = llmPct, started = started,
-            )
+            ModelCard(icon = Icons.Filled.Mic, name = "Setting up", state = dl, pct = dlPct)
 
             if (dl == "error") {
                 Spacer(Modifier.height(16.dp))
                 Text(dlError ?: "Download failed", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB4502E))
             }
-            if (dl == "done" && llmDl == "done") {
-                Spacer(Modifier.height(18.dp))
-                SuccessPill("Ready · works offline")
-            }
+            Spacer(Modifier.height(20.dp))
+            // Concrete and testable by the user later, which is what makes it land as proof
+            // rather than as marketing. A cloud app cannot make this claim.
+            Eyebrow("Works offline · no account · nothing uploaded")
         },
         actions = {
-            // Downloads start on their own the moment this step appears — there's nothing
-            // to tap to kick them off. Making the user sit and watch a ~1GB download here
-            // was the actual complaint: it reads as stuck, not as progress, and it was the
-            // single biggest place onboarding lost people. So this button always just moves
-            // on; the downloads keep running in the background regardless.
+            // The button always just moves on. Making someone sit and watch a ~1GB download
+            // reads as stuck, not as progress, and it was the single biggest place onboarding
+            // lost people; the download keeps running regardless of where they are.
             when {
                 dl == "error" -> Cta("Try again", onClick = onRetry)
-                dl == "done" && llmDl == "done" -> Cta("Continue", onClick = onNext)
-                else -> Cta("Continue — downloads in background", onClick = onNext)
+                dl == "done" -> Cta("Continue", onClick = onNext)
+                else -> Cta("Continue while it sets up", onClick = onNext)
             }
         },
     )
 }
 
-/** One of the two on-device models, with its own inline progress once downloading. */
+/** Setup progress, with an inline bar once it's running. */
 @Composable
-private fun ModelCard(icon: ImageVector, name: String, meta: String, state: String, pct: Float, started: Boolean) {
+private fun ModelCard(icon: ImageVector, name: String, state: String, pct: Float) {
     val cs = MaterialTheme.colorScheme
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(cs.secondaryContainer)
@@ -561,16 +562,16 @@ private fun ModelCard(icon: ImageVector, name: String, meta: String, state: Stri
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(11.dp)).background(SunsetBrush), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(20.dp))
             }
-            Column(Modifier.weight(1f)) {
-                Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = cs.onBackground)
-                Text(meta, style = MonoEyebrow, fontSize = 11.sp, color = cs.onSurfaceVariant)
-            }
+            Text(
+                name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                color = cs.onBackground, modifier = Modifier.weight(1f),
+            )
             Text(
                 when (state) {
                     "done" -> "READY"
                     "downloading" -> "${(pct * 100).toInt()}%"
                     "error" -> "FAILED"
-                    else -> if (started) "QUEUED" else ""
+                    else -> "STARTING"
                 },
                 style = MonoEyebrow, fontSize = 9.5.sp,
                 color = if (state == "done") Color(0xFF3E8E5A) else cs.onSurfaceVariant,
@@ -596,7 +597,7 @@ private fun MicStep(granted: Boolean, blocked: Boolean, onAllow: () -> Unit, onS
             Text("Let OpenWispr hear you", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
             Spacer(Modifier.height(12.dp))
             Text(
-                "The microphone is the one thing it can't work without. Your audio is transcribed on your device and never recorded to a file or uploaded.",
+                "This is the one thing it genuinely can't work without. Your audio is turned into text by the model you just downloaded. Never saved to a file, never uploaded.",
                 style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant,
             )
             Spacer(Modifier.height(24.dp))
@@ -624,7 +625,7 @@ private fun MicStep(granted: Boolean, blocked: Boolean, onAllow: () -> Unit, onS
 
 @Composable
 private fun A11yStep(
-    phase: String, overlayGranted: Boolean,
+    phase: String, overlayGranted: Boolean, canConfirmManually: Boolean,
     onOpenA11y: () -> Unit, onConfirm: () -> Unit, onGrantOverlay: () -> Unit,
     onSkip: () -> Unit, onNext: () -> Unit,
 ) {
@@ -655,7 +656,7 @@ private fun A11yStep(
                         Icon(Icons.Filled.ContentPaste, null, tint = cs.onSurfaceVariant, modifier = Modifier.size(32.dp))
                     }
                     Spacer(Modifier.height(22.dp))
-                    Text("No problem — clipboard it is", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground, textAlign = TextAlign.Center)
+                    Text("No problem, clipboard it is", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(10.dp))
                     Text("Without auto-insert, OpenWispr copies your finished text so you can paste it yourself. You can enable auto-insert anytime in Settings.", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant, textAlign = TextAlign.Center)
                     if (!overlayGranted) {
@@ -666,24 +667,90 @@ private fun A11yStep(
             },
             actions = { Cta("Continue", onClick = onNext) },
         )
+        // Kept deliberately sparse. This is the scariest screen in the flow, and the instinct
+        // is to reassure with more words, which backfires: a wall of text about a permission
+        // reads as something being justified. The picture of the row they're hunting for does
+        // the real work; everything else is one line or gone.
         else -> StepScaffold( // "list"
             content = {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(16.dp))
+                IconTile(Icons.Filled.TouchApp, size = 56, corner = 16, iconSize = 27)
+                Spacer(Modifier.height(16.dp))
                 Text("Let it type for you", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "It only inserts your text. It never reads your screen.",
+                    style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
+                )
+
+                Spacer(Modifier.height(26.dp))
+                MockSettingsRow(label = "OpenWispr", subtitle = "Downloaded app", on = true)
                 Spacer(Modifier.height(12.dp))
-                Text("OpenWispr uses Accessibility for one job only: dropping your finished text into whatever app you're in — and showing the floating tap-to-talk bubble. It never reads your screen, and nothing leaves your phone.", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
-                Spacer(Modifier.height(18.dp))
-                Text("Find OpenWispr → turn it on → tap Allow on the confirmation.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+                Text(
+                    "Find this switch and turn it on.",
+                    style = MaterialTheme.typography.bodyMedium, color = cs.onBackground,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(6.dp))
+                // The system confirmation is where people bail: it's worded to sound alarming
+                // and gives no hint that every accessibility app triggers the identical dialog.
+                Text(
+                    "Android will ask you to confirm. That's normal.",
+                    style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+
                 if (!overlayGranted) {
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(24.dp))
                     BubblePermissionRow(onAllow = onGrantOverlay)
                 }
             },
-            actions = { Cta("Open accessibility settings", onClick = onOpenA11y); SubLink("I've turned it on", onClick = onConfirm); SubLink("Skip — I'll paste manually", onClick = onSkip) },
+            actions = {
+                Cta("Open Accessibility settings", onClick = onOpenA11y)
+                // The parent's ON_RESUME observer normally detects the grant on its own, so
+                // this manual fallback only earns its place once they've actually been out.
+                if (canConfirmManually) SubLink("I've already turned it on", onClick = onConfirm)
+                SubLink("Skip, I'll paste manually", onClick = onSkip)
+            },
         )
     }
     // confirm-on-resume is handled by the parent ON_RESUME observer flipping phase to "on";
     // the user taps Continue on the "on" screen to advance.
+}
+
+/**
+ * A mock of the Android settings row the user is about to go hunting for. Drawn rather than
+ * screenshotted so it stays correct across themes and OS versions — the point is to make the
+ * target recognisable at a glance, since this hand-off into system settings is where an
+ * Android dictation app loses the most people.
+ */
+@Composable
+private fun MockSettingsRow(label: String, subtitle: String, on: Boolean) {
+    val cs = MaterialTheme.colorScheme
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(cs.surface)
+            .border(1.5.dp, cs.primary, RoundedCornerShape(12.dp)).padding(13.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(SunsetBrush), contentAlignment = Alignment.Center) {
+            Icon(
+                androidx.compose.ui.res.painterResource(R.drawable.ic_aperture), null,
+                tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(16.dp),
+            )
+        }
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+        }
+        // Fake switch, matching the platform's shape closely enough to be recognisable.
+        Box(
+            Modifier.size(width = 40.dp, height = 23.dp).clip(RoundedCornerShape(12.dp))
+                .background(if (on) cs.primary else cs.outline),
+            contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
+        ) {
+            Box(Modifier.padding(horizontal = 3.dp).size(17.dp).clip(CircleShape).background(com.voicerewriter.ui.MarkCream))
+        }
+    }
 }
 
 /** Folded-in overlay grant for the tap-to-talk bubble (design has no standalone step). */
@@ -700,151 +767,13 @@ private fun BubblePermissionRow(onAllow: () -> Unit) {
         }
         Column(Modifier.weight(1f)) {
             Text("Show the tap-to-talk bubble", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
-            Text("Lets you dictate from any app · needs display-over-apps", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+            // Pre-empts the usual floating-overlay objection: people assume it parks itself
+            // on screen forever.
+            Text("Appears when there's a text field to type into, and goes away when you're done.", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
         }
         Text("Allow", style = MaterialTheme.typography.titleSmall, color = cs.primary, modifier = Modifier.clickable { onAllow() })
     }
 }
-
-
-@Composable
-private fun PolishStep(tab: Int, onTab: (Int) -> Unit, onNext: () -> Unit) {
-    val cs = MaterialTheme.colorScheme
-    val ex = POLISH_EXAMPLES[tab]
-    StepScaffold(
-        content = {
-            Spacer(Modifier.height(6.dp))
-            Text("It cleans up as you talk", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
-            Spacer(Modifier.height(8.dp))
-            Text("Speak naturally — OpenWispr does the tidying. Here's what it handles automatically.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
-            Spacer(Modifier.height(18.dp))
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                POLISH_EXAMPLES.forEachIndexed { i, e ->
-                    val on = i == tab
-                    Box(
-                        Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
-                            .background(if (on) cs.primary else cs.surface)
-                            .border(1.dp, if (on) cs.primary else cs.outline, RoundedCornerShape(10.dp))
-                            .clickable { onTab(i) }.padding(horizontal = 2.dp, vertical = 9.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            e.tab, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
-                            color = if (on) cs.onPrimary else cs.onSurfaceVariant, textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-            Spacer(Modifier.height(18.dp))
-
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(cs.surface).border(1.dp, cs.outline, RoundedCornerShape(16.dp)).padding(20.dp)) {
-                Eyebrow("You say")
-                Spacer(Modifier.height(9.dp))
-                Text("“${ex.raw}”", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
-                Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Box(Modifier.weight(1f).height(1.dp).background(cs.outline))
-                    Text(ex.tag.uppercase(), style = MonoEyebrow, fontSize = 10.sp, color = cs.primary)
-                    Box(Modifier.weight(1f).height(1.dp).background(cs.outline))
-                }
-                Eyebrow("OpenWispr writes")
-                Spacer(Modifier.height(10.dp))
-                if (ex.list) {
-                    ex.clean.forEachIndexed { i, line ->
-                        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Box(Modifier.size(22.dp).clip(RoundedCornerShape(7.dp)).background(cs.primaryContainer), contentAlignment = Alignment.Center) {
-                                Text("${i + 1}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = cs.primary)
-                            }
-                            Text(line, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
-                        }
-                    }
-                } else {
-                    Text(ex.clean.first(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-            Text(ex.note, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-        },
-        actions = { Cta("Nice — what else?", onClick = onNext) },
-    )
-}
-
-@Composable
-private fun PersonalizeStep(
-    toneDone: Boolean, styleN: Int, dictN: Int, contactsDone: Boolean,
-    onTone: () -> Unit, onStyle: () -> Unit, onDict: () -> Unit, onContacts: () -> Unit, onNext: () -> Unit,
-) {
-    val cs = MaterialTheme.colorScheme
-    StepScaffold(
-        content = {
-            Spacer(Modifier.height(6.dp))
-            Text("Make it sound like you", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
-            Spacer(Modifier.height(8.dp))
-            Text("Optional — set up what helps. Everything you add stays and learns on-device.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
-            Spacer(Modifier.height(18.dp))
-            PersonalizeRow(
-                Icons.Filled.ChatBubbleOutline, "App tone",
-                "Casual in chat, formal in email — on automatically. Tune it per app.",
-                done = toneDone, actionLabel = "Customize", statusLabel = "Tuned", onClick = onTone,
-            )
-            Spacer(Modifier.height(11.dp))
-            PersonalizeRow(
-                Icons.Filled.EditNote, "Style memory",
-                "Paste a few writing samples so rewrites sound like your voice.",
-                done = styleN > 0, actionLabel = "Add samples", statusLabel = "$styleN samples", onClick = onStyle,
-            )
-            Spacer(Modifier.height(11.dp))
-            PersonalizeRow(
-                Icons.AutoMirrored.Filled.MenuBook, "Personal dictionary",
-                "Add names and custom terms so they're always spelled right.",
-                done = dictN > 0, actionLabel = "Add terms", statusLabel = "$dictN terms", onClick = onDict,
-            )
-            Spacer(Modifier.height(11.dp))
-            PersonalizeRow(
-                Icons.Filled.Group, "Match contact names",
-                "Spells the people you know correctly. Matched on-device — contacts never leave your phone.",
-                done = contactsDone, actionLabel = "Import", statusLabel = "Imported", onClick = onContacts,
-            )
-        },
-        actions = { Cta("Continue", onClick = onNext) },
-    )
-}
-
-@Composable
-private fun PersonalizeRow(
-    icon: ImageVector, title: String, sub: String,
-    done: Boolean, actionLabel: String, statusLabel: String, onClick: () -> Unit,
-) {
-    val cs = MaterialTheme.colorScheme
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface)
-            .border(1.dp, cs.outline, RoundedCornerShape(14.dp)).clickable { onClick() }.padding(15.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp),
-    ) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(cs.primaryContainer), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = cs.primary, modifier = Modifier.size(19.dp))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
-        }
-        if (done) StatusPill(statusLabel) else ActionPill(actionLabel)
-    }
-}
-
-/** Green "done" chip with a check — matches the personalization set-up rows. */
-@Composable
-private fun StatusPill(text: String) {
-    val green = Color(0xFF3E8E5A)
-    Row(
-        Modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFFE7F3EA)).padding(horizontal = 11.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        Icon(Icons.Filled.Check, null, tint = green, modifier = Modifier.size(13.dp))
-        Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = green)
-    }
-}
-
 /** Outlined coral call-to-action chip with a chevron — the not-yet-set-up state. */
 @Composable
 private fun ActionPill(text: String) {
@@ -858,29 +787,95 @@ private fun ActionPill(text: String) {
     }
 }
 
+/**
+ * The payoff. Everything before this was the user spending trust; this is the first moment
+ * they get something back, so it has to visibly land — the previous version bounced them to
+ * [RewriteActivity] and returned them to an identical screen, which reads as nothing having
+ * happened. Now their own sentence comes back, with the cleanup shown on their words rather
+ * than on canned examples.
+ */
 @Composable
-private fun DictateStep(onTry: () -> Unit, onNext: () -> Unit) {
+private fun TryItStep(
+    micGranted: Boolean, modelReady: Boolean, dlPct: Float,
+    result: String?, raw: String?,
+    onTry: () -> Unit, onNext: () -> Unit,
+) {
     val cs = MaterialTheme.colorScheme
     StepScaffold(
         content = {
             Spacer(Modifier.height(8.dp))
-            Text("Try it once", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Text("Tap the bubble and read this aloud — watch Backtrack fix it live.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(20.dp))
-            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp)).background(cs.primaryContainer).padding(14.dp)) {
-                Text("“um so send it to mark, I mean john, tomorrow at 2 period”", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
-            }
-            Spacer(Modifier.height(28.dp))
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(96.dp).clip(CircleShape).background(SunsetBrush).clickable { onTry() }, contentAlignment = Alignment.Center) {
-                    Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_aperture), null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(48.dp))
+            if (result == null) {
+                Text("Try it once", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Tap the circle and read this aloud, mistakes and all. The filler and the mid-sentence correction are the point.",
+                    style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(20.dp))
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp)).background(cs.primaryContainer).padding(14.dp)) {
+                    Text("“$TRY_IT_SCRIPT”", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
                 }
+                Spacer(Modifier.height(28.dp))
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.size(96.dp).clip(CircleShape).background(SunsetBrush)
+                            .clickable(enabled = modelReady && micGranted) { onTry() },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_aperture), null, tint = com.voicerewriter.ui.MarkCream, modifier = Modifier.size(48.dp))
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    when {
+                        // The wait framed as an arrival with a number on it, never a dead end —
+                        // and Continue below stays live throughout.
+                        !modelReady -> Eyebrow("Speech model ${(dlPct * 100).toInt()}% · almost there")
+                        !micGranted -> Eyebrow("Needs the microphone · go back a step")
+                        else -> Eyebrow("Tap to talk")
+                    }
+                }
+            } else {
+                Text("That was all on your phone.", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = cs.onBackground, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "No account, no upload, no server. Here's what you just said:",
+                    style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(20.dp))
+                Column(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(cs.surface)
+                        .border(1.dp, cs.outline, RoundedCornerShape(16.dp)).padding(18.dp),
+                ) {
+                    // Only when cleanup actually changed something — otherwise the "before"
+                    // is just the answer twice, which undersells rather than demonstrates.
+                    if (raw != null) {
+                        Eyebrow("You said")
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "“$raw”", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        )
+                        Row(Modifier.fillMaxWidth().padding(vertical = 13.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            Box(Modifier.weight(1f).height(1.dp).background(cs.outline))
+                            Text("CLEANED UP", style = MonoEyebrow, fontSize = 10.sp, color = cs.primary)
+                            Box(Modifier.weight(1f).height(1.dp).background(cs.outline))
+                        }
+                    }
+                    Eyebrow("OpenWispr wrote")
+                    Spacer(Modifier.height(9.dp))
+                    Text(result, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
+                }
+                Spacer(Modifier.height(18.dp))
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { SuccessPill("Nice, that worked") }
             }
-            Spacer(Modifier.height(16.dp))
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Eyebrow("Tap to talk") }
         },
-        actions = { Cta("Continue", onClick = onNext) },
+        actions = {
+            if (result == null) Cta("Skip for now", onClick = onNext)
+            else Cta("Continue", onClick = onNext)
+        },
     )
 }
 
@@ -888,7 +883,7 @@ private fun DictateStep(onTry: () -> Unit, onNext: () -> Unit) {
 private fun DoneStep(
     micOn: Boolean, sttOn: Boolean,
     a11yOn: Boolean, a11ySkipped: Boolean, personalCount: Int,
-    onStart: () -> Unit, onReplay: () -> Unit,
+    onPersonalize: () -> Unit, onStart: () -> Unit, onReplay: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -902,10 +897,32 @@ private fun DoneStep(
             Spacer(Modifier.height(24.dp))
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface).border(1.dp, cs.outline, RoundedCornerShape(14.dp))) {
                 RecapRow("Microphone", if (micOn) "On" else "Later", micOn, false)
-                RecapRow("On-device model", if (sttOn) "On" else "Later", sttOn, false)
+                RecapRow("Speech model", if (sttOn) "On" else "Downloading", sttOn, false)
                 RecapRow("Auto-insert", if (a11yOn) "On" else if (a11ySkipped) "Clipboard" else "Later", a11yOn, a11ySkipped)
-                RecapRow("Personalization", if (personalCount > 0) "$personalCount set up" else "Later", personalCount > 0, false)
             }
+            Spacer(Modifier.height(12.dp))
+            // Personalization used to be a whole step of four rows, each launching its own
+            // editor — a maze in the middle of onboarding, for something nobody needs before
+            // their first dictation. It lives in Settings; this is the signpost to it.
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface)
+                    .border(1.dp, cs.outline, RoundedCornerShape(14.dp)).clickable { onPersonalize() }.padding(15.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Teach it your words", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = cs.onBackground)
+                    Text(
+                        "Names, jargon, contacts, tone per app. All learned on-device.",
+                        style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                    )
+                }
+                ActionPill(if (personalCount > 0) "$personalCount set up" else "Set up")
+            }
+            Spacer(Modifier.height(14.dp))
+            Text(
+                "Every permission here can be changed later in Settings.",
+                style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant, textAlign = TextAlign.Center,
+            )
         }
         Cta("Start using OpenWispr", onClick = onStart)
         SubLink("Replay onboarding", onClick = onReplay)

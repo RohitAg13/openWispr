@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
  * trained behavior); levels steer the cloud / generic on-device models.
  */
 enum class PolishLevel(val key: String, val label: String, val blurb: String, val instruction: String) {
-    OFF("off", "Off", "Deterministic cleanup only — no model. Fast and safe.", ""),
+    OFF("off", "Off", "Deterministic cleanup only, no model. Fast and safe.", ""),
     LIGHT("light", "Light", "Model fixes only capitalization, spacing and punctuation.",
         "Only fix capitalization, spacing and punctuation. Keep all words the same."),
     MEDIUM("medium", "Medium", "Also splits run-on sentences and fixes small grammar.",

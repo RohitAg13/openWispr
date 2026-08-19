@@ -520,7 +520,7 @@ class HomeActivity : ComponentActivity() {
                     MetaChip("audio saved", dot = true)
                 }
                 Text(
-                    "This one didn't finish transcribing. The recording is still on this device — run it again.",
+                    "This one didn't finish transcribing. The recording is still on this device. Run it again.",
                     fontFamily = Mulish, fontSize = 13.sp, lineHeight = 19.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -953,7 +953,7 @@ class HomeActivity : ComponentActivity() {
         return if (minutes >= 60) "%.1fh".format(minutes / 60.0) else "${minutes.toInt()}m"
     }
 
-    private fun rateLabel(pct: Int): String = if (pct < 0) "—" else "$pct%"
+    private fun rateLabel(pct: Int): String = if (pct < 0) "n/a" else "$pct%"
 
     private fun durationLabel(sec: Int): String = "${sec / 60}:${(sec % 60).toString().padStart(2, '0')}"
 

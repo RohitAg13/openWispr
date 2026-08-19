@@ -198,7 +198,7 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             if (t != null) {
                 pendingText = null
                 setClipboard(t)
-                toast("No text field focused — copied instead")
+                toast("No text field focused, copied instead")
             }
         }, retryDelays.last() + 300)
     }

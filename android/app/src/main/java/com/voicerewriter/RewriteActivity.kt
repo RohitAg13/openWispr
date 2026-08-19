@@ -395,9 +395,9 @@ class RewriteActivity : ComponentActivity() {
         return when {
             e is java.net.UnknownHostException || e is java.net.ConnectException ||
                 "unable to resolve host" in low || "failed to connect" in low ->
-                "No connection — check your network, or switch to on-device in Settings."
+                "No connection. Check your network, or switch to on-device in Settings."
             e is java.net.SocketTimeoutException || "timeout" in low || "timed out" in low ->
-                "That took too long — try again."
+                "That took too long. Try again."
             "401" in low || "403" in low || "unauthor" in low || "api key" in low || "invalid key" in low ->
                 "Check your API key in Settings."
             else -> msg
@@ -461,7 +461,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun toReview(text: String) {
             // A blank result (e.g. cleanup or polish ate everything) should not leave an empty sheet.
-            if (text.isBlank()) { error = "Nothing to insert — try again."; stage = Stage.ERROR; return }
+            if (text.isBlank()) { error = "Nothing to insert. Try again."; stage = Stage.ERROR; return }
             finalText = text; editText = text; countdown = 1f; editing = false; stage = Stage.REVIEW
         }
 
@@ -512,7 +512,7 @@ class RewriteActivity : ComponentActivity() {
                     { output += it },
                     { _ ->
                         // The polish is optional — never throw away a good transcript on its failure.
-                        notice = "Couldn't polish — using the cleaned text."
+                        notice = "Couldn't polish. Using the cleaned text."
                         toReview(cleaned)
                     },
                     {
@@ -520,7 +520,7 @@ class RewriteActivity : ComponentActivity() {
                         // with invented content, fall back to the deterministic text.
                         val polished = RewriteEngine.cleanOutput(output)
                         if (polished.isBlank() || !RewriteEngine.preservesContent(cleaned, polished, relaxed)) {
-                            notice = "Polish changed too much — using the cleaned text."
+                            notice = "Polish changed too much. Using the cleaned text."
                             toReview(cleaned)
                         } else {
                             toReview(dropChatTerminalPeriod(polished, category))
@@ -599,7 +599,7 @@ class RewriteActivity : ComponentActivity() {
             if (rec == null && s.sttProvider != "local") {
                 // The cloud upload needs a file and we just failed to write one — say so
                 // rather than proceeding as if a recoverable copy existed.
-                error = "Couldn't save the recording — free up some storage and try again."
+                error = "Couldn't save the recording. Free up some storage and try again."
                 stage = Stage.ERROR
                 return
             }
@@ -774,8 +774,8 @@ class RewriteActivity : ComponentActivity() {
                     val showPct = settings?.sttModel?.let { OnDeviceStt.isParakeet(it) } == true
                     TranscribingRing("Finishing setup")
                     Text(
-                        if (showPct) "Your speech model is still downloading (${(parakeetDlPct * 100).toInt()}%) — I'll start listening the moment it's ready."
-                        else "Your speech model is still downloading — I'll start listening the moment it's ready.",
+                        if (showPct) "Your speech model is still downloading (${(parakeetDlPct * 100).toInt()}%). I'll start listening the moment it's ready."
+                        else "Your speech model is still downloading. I'll start listening the moment it's ready.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -794,7 +794,7 @@ class RewriteActivity : ComponentActivity() {
                 Stage.RECORDING -> {
                     ListeningOrb(amps, Modifier.fillMaxWidth().height(132.dp))
                     Text(
-                        "Speak now — I'll stop when you pause.",
+                        "Speak now. I'll stop when you pause.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -898,9 +898,9 @@ class RewriteActivity : ComponentActivity() {
                     if (saved != null) {
                         Text(
                             if (alt != null)
-                                "Your recording is saved on this device — nothing was lost. " +
+                                "Your recording is saved on this device. Nothing was lost. " +
                                     "Retry runs it again on ${alt.second}."
-                            else "Your recording is saved on this device — nothing was lost.",
+                            else "Your recording is saved on this device. Nothing was lost.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -969,7 +969,7 @@ class RewriteActivity : ComponentActivity() {
                     return@launch
                 }
                 if (sourceState.value.isBlank()) {
-                    error = "Nothing to transform — copy some text first."
+                    error = "Nothing to transform. Copy some text first."
                     streaming = false
                     return@launch
                 }

@@ -69,7 +69,7 @@ object Defaults {
             endpoint = "",
             // Recommended on-device default: the dictation-cleanup fine-tune.
             defaultModel = LlmModelManager.FINETUNE_MODEL_ID,
-            keyHelp = "Runs a small LLM on your phone — offline, private, no API key. Pick and download a model below.",
+            keyHelp = "Runs a small LLM on your phone. Offline, private, no API key. Pick and download a model below.",
             keyUrl = "",
             modelHint = "On-device model (managed below).",
         ),
@@ -126,7 +126,7 @@ object Defaults {
             endpoint = "",
             // Recommended on-device default: Parakeet (fastest + most accurate).
             defaultModel = ParakeetModelManager.MODEL_ID,
-            keyHelp = "Runs speech-to-text directly on your phone — fully offline, private, no API key. Pick and download a model below.",
+            keyHelp = "Runs speech-to-text directly on your phone. Fully offline, private, no API key. Pick and download a model below.",
             keyUrl = "",
             modelHint = "Managed below.",
         ),
