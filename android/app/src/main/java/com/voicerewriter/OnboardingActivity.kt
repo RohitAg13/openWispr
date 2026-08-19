@@ -169,6 +169,10 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     var tryBaseline by remember { mutableStateOf<String?>(null) }
     var tryResult by remember { mutableStateOf<String?>(null) }
     var tryRaw by remember { mutableStateOf<String?>(null) }
+    // What the cleanup actually did to their sentence, and a line for whatever it didn't get
+    // to show off. Derived from the raw transcript by [PolishHighlights].
+    var tryDid by remember { mutableStateOf<List<String>>(emptyList()) }
+    var tryAlso by remember { mutableStateOf<String?>(null) }
 
     // Personalization "set up" status — read from the real on-device stores so returning
     // from an editor reflects what the user actually added (see refreshPersonalization).
@@ -213,8 +217,15 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     ?.takeIf { it.after == text && it.before.isNotBlank() && it.before.trim() != it.after.trim() }
                     ?.before
             }
+            // Naming what the cleanup did is only honest when we have the raw transcript to
+            // derive it from; with history off we show the result and nothing more.
+            val highlights = withContext(Dispatchers.Default) {
+                raw?.let { PolishHighlights.labels(it) to PolishHighlights.alsoHandles(it) }
+            }
             tryResult = text
             tryRaw = raw
+            tryDid = highlights?.first.orEmpty()
+            tryAlso = highlights?.second
         }
     }
 
@@ -304,7 +315,7 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                     4 -> TryItStep(
                         micGranted = micGranted,
                         modelReady = dl == "done", dlPct = dlPct,
-                        result = tryResult, raw = tryRaw,
+                        result = tryResult, raw = tryRaw, did = tryDid, also = tryAlso,
                         onTry = {
                             tryBaseline = LastDictation.get(ctx)
                             onLaunchDictation()
@@ -318,7 +329,10 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                         personalCount = listOf(toneDone, styleN > 0, dictN > 0, contactsDone).count { it },
                         onPersonalize = { ctx.startActivity(Intent(ctx, VocabActivity::class.java)) },
                         onStart = { finishOnboarding() },
-                        onReplay = { step = 0; a11yPhase = "list"; tryResult = null; tryRaw = null },
+                        onReplay = {
+                            step = 0; a11yPhase = "list"
+                            tryResult = null; tryRaw = null; tryDid = emptyList(); tryAlso = null
+                        },
                     )
                 }
             }
@@ -797,7 +811,7 @@ private fun ActionPill(text: String) {
 @Composable
 private fun TryItStep(
     micGranted: Boolean, modelReady: Boolean, dlPct: Float,
-    result: String?, raw: String?,
+    result: String?, raw: String?, did: List<String>, also: String?,
     onTry: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
@@ -868,8 +882,30 @@ private fun TryItStep(
                     Spacer(Modifier.height(9.dp))
                     Text(result, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = cs.onBackground)
                 }
-                Spacer(Modifier.height(18.dp))
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { SuccessPill("Nice, that worked") }
+                // Teaching the feature set on the sentence they just said, rather than on
+                // canned examples. Every line here is something the cleanup verifiably did to
+                // their own words, so it reads as evidence rather than a brochure.
+                if (did.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    did.forEach { label ->
+                        Row(
+                            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(9.dp),
+                        ) {
+                            Icon(Icons.Filled.Check, null, tint = Color(0xFF3E8E5A), modifier = Modifier.size(15.dp))
+                            Text(label, style = MaterialTheme.typography.bodyMedium, color = cs.onBackground)
+                        }
+                    }
+                }
+                if (also != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(also, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                }
+                if (did.isEmpty() && also == null) {
+                    Spacer(Modifier.height(18.dp))
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { SuccessPill("Nice, that worked") }
+                }
             }
         },
         actions = {
