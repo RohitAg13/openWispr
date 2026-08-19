@@ -120,9 +120,17 @@ class OnboardingActivity : ComponentActivity() {
 private const val ONBOARDING_STT_MODEL = ParakeetModelManager.MODEL_ID
 private val ONBOARDING_LLM_MODEL = LlmModelManager.DEFAULT_MODEL
 
-// Read aloud at the try-it step. Deliberately full of filler and a mid-sentence correction,
-// so the cleanup is visible in the before/after we show the user afterwards.
-private const val TRY_IT_SCRIPT = "um so send it to mark, I mean john, tomorrow at 2 period"
+// Read aloud at the try-it step, and chosen by running candidates through the real pipeline:
+// this one fires filler removal, spoken punctuation and list formatting, and turns a single
+// run-on sentence into a numbered list, which is the most legible proof of the cleanup we can
+// get in one breath.
+//
+// A self-correction ("I mean john") would be the fourth trick, but corrections and spoken
+// lists cannot currently be demoed together: a multi-word correction inside a list drops the
+// text before it (see PolishHighlightsTest). Until that's fixed, corrections stay in the
+// also-handles line rather than the script.
+private const val TRY_IT_SCRIPT =
+    "um first email john, second book the room at two thirty, third send the deck period"
 
 // Apps named on the welcome screen. Concrete names beat "works anywhere" — but we name them
 // as text rather than drawing real icons, which would need <queries> manifest entries.
