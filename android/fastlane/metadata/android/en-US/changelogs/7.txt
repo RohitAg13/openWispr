@@ -1,0 +1,8 @@
+Setup is shorter, calmer, and harder to break.
+
+• Rebuilt onboarding around one idea: your voice never leaves your phone. Fewer screens, less text, no model picker.
+• Your first dictation now shows you what the cleanup actually did to your own words.
+• Model downloads resume where they left off instead of restarting, and are checksum verified.
+• Fewer pop-up toasts getting in your way.
+
+Still 100% on-device by default, no account, no ads, MIT-licensed.
