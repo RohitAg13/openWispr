@@ -12,7 +12,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
-import android.widget.Toast
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
@@ -198,7 +197,6 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             if (t != null) {
                 pendingText = null
                 setClipboard(t)
-                toast("No text field focused, copied instead")
             }
         }, retryDelays.last() + 300)
     }
@@ -220,8 +218,9 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             Log.i(TAG, "inserted into host field")
             pendingText = null
             main.removeCallbacksAndMessages(null)
+            // The haptic tick is the confirmation. A toast on top of text visibly appearing in
+            // the field is telling the user something they can already see.
             vibrateTick()
-            toast("Inserted")
         }
     }
 
@@ -276,9 +275,6 @@ class OpenWisprAccessibilityService : AccessibilityService() {
         val cb = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cb.setPrimaryClip(ClipData.newPlainText("rewrite", text))
     }
-
-    private fun toast(msg: String) =
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
     /** Light confirmation buzz when text lands in the field. */
     private fun vibrateTick() {

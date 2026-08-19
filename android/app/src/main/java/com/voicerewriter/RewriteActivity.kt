@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import com.voicerewriter.textproc.AppContext
 import com.voicerewriter.textproc.TextProcessor
 import com.voicerewriter.textproc.TextProcessingConfig
@@ -216,7 +215,6 @@ class RewriteActivity : ComponentActivity() {
             setResult(Activity.RESULT_OK, Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, result))
         } else {
             setClipboard(result)
-            Toast.makeText(this, "Copied (this field is read-only)", Toast.LENGTH_LONG).show()
             setResult(Activity.RESULT_CANCELED)
         }
         finish()
@@ -224,11 +222,11 @@ class RewriteActivity : ComponentActivity() {
 
     /** Voice path: hand the result to the accessibility service (auto-insert) and close. */
     private fun acceptVoice(result: String) {
+        // No toast on the clipboard fallback: users who skipped Accessibility chose the
+        // clipboard deliberately, so being told about it after every single dictation (and
+        // nudged to grant the permission again) is nagging, not information.
         val enqueued = OpenWisprAccessibilityService.enqueueInsert(result)
-        if (!enqueued) {
-            setClipboard(result)
-            Toast.makeText(this, "Copied. Enable accessibility to auto-insert.", Toast.LENGTH_LONG).show()
-        }
+        if (!enqueued) setClipboard(result)
         LastDictation.set(this, result)
         // Delivery is confirmed — inserted, or on the clipboard where the user can reach it —
         // and the transcript is already in history. Only now is the recording settled, which
