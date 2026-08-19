@@ -40,8 +40,8 @@ struct DictationStats: Equatable {
             : "\(Int(timeSavedMinutes))m"
     }
 
-    /// "97%" or "—" when there's no data yet.
-    static func rateLabel(_ pct: Int) -> String { pct < 0 ? "—" : "\(pct)%" }
+    /// "97%" or "n/a" when there's no data yet.
+    static func rateLabel(_ pct: Int) -> String { pct < 0 ? "n/a" : "\(pct)%" }
 }
 
 /// Persistent dictation history shared by **both** dictation flows — the hands-free hotkey

@@ -248,7 +248,7 @@ struct HomeView: View {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 11)).foregroundStyle(OW.success)
-                Text("Accessibility granted — auto-insert ready")
+                Text("Accessibility granted · auto-insert ready")
                     .font(OW.ui(11)).foregroundStyle(OW.textMuted)
             }
         } else {
@@ -324,7 +324,7 @@ struct HomeView: View {
                 Text("\(record.appName ?? "Dictation") · \(record.durationSec)s")
                     .font(OW.ui(13, weight: .semibold))
                     .foregroundStyle(OW.text)
-                Text("This one didn't finish transcribing. The audio is still here — run it again.")
+                Text("This one didn't finish transcribing. The audio is still here. Run it again.")
                     .font(OW.ui(12))
                     .foregroundStyle(OW.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -528,7 +528,7 @@ struct HomeView: View {
     private func transcript(label: String, text: String, mono: Bool, faint: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             MonoLabel(text: label, color: OW.textDim, size: 9, tracking: 1.4)
-            Text(text.isEmpty ? "—" : text)
+            Text(text.isEmpty ? "(empty)" : text)
                 .font(mono ? OW.mono(13) : OW.ui(15))
                 .foregroundStyle(faint ? OW.textFaint : OW.text)
                 .textSelection(.enabled)

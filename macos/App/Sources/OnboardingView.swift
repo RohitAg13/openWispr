@@ -125,7 +125,7 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)
                 .padding(.bottom, 14)
-            Text("OpenWispr turns speech into clean text in any app — transcribed and polished entirely on this Mac. No cloud, no account.")
+            Text("OpenWispr turns speech into clean text in any app, transcribed and polished entirely on this Mac. No cloud, no account.")
                 .font(OW.ui(15))
                 .foregroundStyle(OW.textDim)
                 .multilineTextAlignment(.center)
@@ -236,7 +236,7 @@ struct OnboardingView: View {
     }
 
     private var voiceContinueTitle: String {
-        modelsReady ? "Continue" : "Continue — downloads in background"
+        modelsReady ? "Continue" : "Continue · downloads in background"
     }
 
     /// Kicks off both downloads concurrently. Both managers are idempotent, so a re-tap is safe.
@@ -302,7 +302,7 @@ struct OnboardingView: View {
             } else {
                 Button("Open System Settings") { MacPermissions.requestAccessibility() }
                     .buttonStyle(OWPrimaryButtonStyle(large: true))
-                Button("Skip — paste manually") { advance(1) }.buttonStyle(OWGhostButtonStyle())
+                Button("Skip and paste manually") { advance(1) }.buttonStyle(OWGhostButtonStyle())
             }
         }
     }
@@ -358,7 +358,7 @@ struct OnboardingView: View {
             Spacer().frame(height: 10)
             Text("Try it once")
                 .font(OW.ui(24, weight: .bold)).foregroundStyle(OW.text)
-            Text("Click below and read this aloud — watch it land as clean text.")
+            Text("Click below and read this aloud. Watch it land as clean text.")
                 .font(OW.ui(14)).foregroundStyle(OW.textDim)
                 .multilineTextAlignment(.center)
                 .padding(.top, 6).padding(.bottom, 16)
@@ -378,7 +378,7 @@ struct OnboardingView: View {
             Spacer()
 
             if dictation.phase == .done {
-                Button("That's the magic — continue") { advance(1) }
+                Button("That's the magic") { advance(1) }
                     .buttonStyle(OWPrimaryButtonStyle(large: true))
             }
             Spacer().frame(height: 10)
@@ -404,7 +404,7 @@ struct OnboardingView: View {
                     Image(systemName: "waveform").font(.system(size: 30)).foregroundStyle(.white)
                 }
                 Button(action: dictation.toggle) {
-                    MonoLabel(text: "Listening — click to stop", color: OW.coralDeep, size: 11, tracking: 1.4)
+                    MonoLabel(text: "Listening · click to stop", color: OW.coralDeep, size: 11, tracking: 1.4)
                 }
                 .buttonStyle(.plain)
             }

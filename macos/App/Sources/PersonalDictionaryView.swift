@@ -133,7 +133,7 @@ struct PersonalDictionaryView: View {
 
             field("Canonical", text: $newCanonical, placeholder: "Rohit")
             field("Aliases", text: $newAliases, placeholder: "row hit, ro heat (comma-separated)")
-            field("Expansion", text: $newExpansion, placeholder: "optional — inserts this verbatim")
+            field("Expansion", text: $newExpansion, placeholder: "optional, inserts this verbatim")
 
             HStack {
                 Spacer()

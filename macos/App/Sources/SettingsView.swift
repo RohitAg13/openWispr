@@ -169,15 +169,15 @@ struct SettingsView: View {
                 // accurate as whisper-small; Whisper is the alternate on-device recognizer and
                 // Apple Speech the built-in one. All three are selectable.
                 engineRow(.parakeet, title: "On-device (Parakeet)",
-                          subtitle: "Private, offline. Fastest — sub-second, accurate.", recommended: true)
+                          subtitle: "Private, offline. Fastest: sub-second, accurate.", recommended: true)
                 engineRow(.whisper, title: "On-device (Whisper)",
                           subtitle: "Private, offline. Runs entirely on this Mac.", recommended: false)
                 engineRow(.appleSpeech, title: "Apple Speech",
                           subtitle: "The built-in macOS recognizer. No download.", recommended: false)
                 // Cloud engines from the design are not implemented on macOS yet (the app is
                 // on-device first) — shown disabled so the roadmap is visible.
-                comingSoonEngineRow(title: "Groq", subtitle: "Cloud — fastest hosted Whisper")
-                comingSoonEngineRow(title: "OpenAI", subtitle: "Cloud — gpt-4o-transcribe")
+                comingSoonEngineRow(title: "Groq", subtitle: "Cloud · fastest hosted Whisper")
+                comingSoonEngineRow(title: "OpenAI", subtitle: "Cloud · gpt-4o-transcribe")
                 comingSoonEngineRow(title: "Custom endpoint", subtitle: "Bring your own API")
             }
             .padding(14)
@@ -361,7 +361,7 @@ struct SettingsView: View {
         group(header: "Cleanup") {
             VStack(alignment: .leading, spacing: 10) {
                 toggleRow("Smart cleanup",
-                          subtitle: "Fix capitalization, punctuation, filler words and spoken commands — on-device, no LLM.",
+                          subtitle: "Fix capitalization, punctuation, filler words and spoken commands. On-device, no LLM.",
                           isOn: $settings.smartCleanup)
             }
             .padding(14)
@@ -432,7 +432,7 @@ struct SettingsView: View {
                 Rectangle().fill(OW.divider).frame(height: 1)
 
                 toggleRow("Anti-AI guardrails",
-                          subtitle: "Keep your own words and tone — never let it sound like a chatbot.",
+                          subtitle: "Keep your own words and tone. Never let it sound like a chatbot.",
                           isOn: $settings.antiAiGuardrails)
             }
             .padding(.top, 2)
@@ -508,7 +508,7 @@ struct SettingsView: View {
 
                 switch settings.triggerKind {
                 case .fnKey:
-                    infoNote("Hold the 🌐 fn key to talk — release to insert. Double-tap fn for hands-free (it keeps listening; tap fn again, or pause, to stop).")
+                    infoNote("Hold the 🌐 fn key to talk, release to insert. Double-tap fn for hands-free (it keeps listening; tap fn again, or pause, to stop).")
                 case .hotkey:
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 10) {
@@ -578,7 +578,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Input Monitoring")
                     .font(OW.ui(14, weight: .medium)).foregroundStyle(OW.text)
-                Text("Lets OpenWispr see the fn key from other apps — required for fn hold / double-tap to work everywhere. A custom shortcut works without it.")
+                Text("Lets OpenWispr see the fn key from other apps. Required for fn hold / double-tap to work everywhere. A custom shortcut works without it.")
                     .font(OW.ui(11.5)).foregroundStyle(OW.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -707,7 +707,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Per-app tone")
                         .font(OW.ui(14, weight: .medium)).foregroundStyle(OW.text)
-                    Text("Polish adapts automatically — casual in chat, tidy in mail and docs.")
+                    Text("Polish adapts automatically: casual in chat, tidy in mail and docs.")
                         .font(OW.ui(11.5)).foregroundStyle(OW.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
