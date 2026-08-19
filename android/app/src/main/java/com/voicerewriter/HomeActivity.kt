@@ -92,6 +92,10 @@ class HomeActivity : ComponentActivity() {
         // First launch: route once into onboarding (it returns here when finished).
         lifecycleScope.launch {
             val done = withContext(Dispatchers.IO) {
+                // Cheap, and this is the app's entry point: drop download leftovers from models
+                // we no longer offer before anything starts fetching ~1GB of new ones. Sidecars
+                // for current models are kept, since those are what a resume needs.
+                ModelDownloader.sweepOrphans(this@HomeActivity)
                 SettingsRepository(this@HomeActivity).get().hasCompletedOnboarding
             }
             if (!done && !isFinishing) startActivity(OnboardingActivity.intent(this@HomeActivity))
