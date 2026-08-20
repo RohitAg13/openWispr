@@ -48,6 +48,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -60,10 +61,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.voicerewriter.ui.MarkCream
 import com.voicerewriter.ui.MonoEyebrow
@@ -99,7 +103,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var loaded by remember { mutableStateOf(false) }
 
     // permissions / setup
-    var bubbleOn by remember { mutableStateOf(BubbleService.isRunning) }
+    var bubbleOn by remember { mutableStateOf(BubbleService.isRunning || BubblePrefs.enabled(context)) }
     var a11yEnabled by remember { mutableStateOf(false) }
     var showA11yConsent by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
@@ -168,6 +172,31 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         micGranted = SetupUtils.micGranted(context)
         loaded = true
     }
+
+    // Re-check the permission rows every time the screen resumes. None of these grants deliver a
+    // result callback (see SetupUtils' header), and accessibility in particular gets revoked out
+    // from under the app by OEM battery managers and Play Protect's restricted settings — so a
+    // row read once at first composition goes stale and tells the user auto-insert is on when it
+    // isn't. This is also where the bubble self-heals if its service was killed.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) {
+                a11yEnabled = SetupUtils.accessibilityEnabled(context)
+                notifOn = SetupUtils.notificationsGranted(context)
+                micGranted = SetupUtils.micGranted(context)
+                val wanted = BubblePrefs.enabled(context) && SetupUtils.canDrawOverlays(context)
+                if (!BubbleService.isRunning && wanted) SetupUtils.startBubble(context)
+                // `isRunning` only flips in the service's onCreate, which hasn't happened yet on
+                // the line after startForegroundService — so trust the intent we just acted on
+                // rather than reading back a flag that is still false.
+                bubbleOn = BubbleService.isRunning || wanted
+            }
+        }
+        lifecycle.addObserver(obs)
+        onDispose { lifecycle.removeObserver(obs) }
+    }
+
     if (!loaded) return
 
     fun snapshot() = Settings(

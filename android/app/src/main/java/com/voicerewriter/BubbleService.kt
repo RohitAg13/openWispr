@@ -187,8 +187,22 @@ class BubbleService : Service() {
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (16 * density).toInt()
-            y = (200 * density).toInt()
+            // Restore where the user last dropped it. Clamped, because the saved point may be off
+            // the current screen: a different orientation, a foldable's inner display, or a
+            // smaller window than the one it was saved on would otherwise strand the bubble
+            // outside the viewport with no way to drag it back.
+            val metrics = resources.displayMetrics
+            val (px, py) = BubblePrefs.resolvePosition(
+                savedX = BubblePrefs.x(this@BubbleService),
+                savedY = BubblePrefs.y(this@BubbleService),
+                defaultX = (16 * density).toInt(),
+                defaultY = (200 * density).toInt(),
+                screenW = metrics.widthPixels,
+                screenH = metrics.heightPixels,
+                size = size,
+            )
+            x = px
+            y = py
         }
 
         var downRawX = 0f
@@ -245,11 +259,17 @@ class BubbleService : Service() {
                     mainHandler.removeCallbacks(longPress)
                     if (moved && overDismiss) {
                         vibrate(longArrayOf(0, 40))
+                        // Drag-to-dismiss is the user switching the bubble off, so it must not
+                        // come back on the next boot. Note the position is deliberately NOT
+                        // saved here: the last thing they did was drag it onto the dismiss
+                        // target, which is nowhere they'd want it to reappear.
+                        BubblePrefs.setEnabled(this@BubbleService, false)
                         stopSelf() // drag-to-dismiss
                         return@setOnTouchListener true
                     }
                     hideDismiss()
                     overDismiss = false
+                    if (moved) BubblePrefs.setPosition(this@BubbleService, params.x, params.y)
                     if (!moved && !longFired) onTap()
                     true
                 }
