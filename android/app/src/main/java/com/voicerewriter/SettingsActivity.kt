@@ -48,6 +48,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -60,10 +61,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.voicerewriter.ui.MarkCream
 import com.voicerewriter.ui.MonoEyebrow
@@ -99,7 +103,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var loaded by remember { mutableStateOf(false) }
 
     // permissions / setup
-    var bubbleOn by remember { mutableStateOf(BubbleService.isRunning) }
+    var bubbleOn by remember { mutableStateOf(BubbleService.isRunning || BubblePrefs.enabled(context)) }
     var a11yEnabled by remember { mutableStateOf(false) }
     var showA11yConsent by remember { mutableStateOf(false) }
     var notifOn by remember { mutableStateOf(true) }
@@ -168,6 +172,31 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         micGranted = SetupUtils.micGranted(context)
         loaded = true
     }
+
+    // Re-check the permission rows every time the screen resumes. None of these grants deliver a
+    // result callback (see SetupUtils' header), and accessibility in particular gets revoked out
+    // from under the app by OEM battery managers and Play Protect's restricted settings — so a
+    // row read once at first composition goes stale and tells the user auto-insert is on when it
+    // isn't. This is also where the bubble self-heals if its service was killed.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) {
+                a11yEnabled = SetupUtils.accessibilityEnabled(context)
+                notifOn = SetupUtils.notificationsGranted(context)
+                micGranted = SetupUtils.micGranted(context)
+                val wanted = BubblePrefs.enabled(context) && SetupUtils.canDrawOverlays(context)
+                if (!BubbleService.isRunning && wanted) SetupUtils.startBubble(context)
+                // `isRunning` only flips in the service's onCreate, which hasn't happened yet on
+                // the line after startForegroundService — so trust the intent we just acted on
+                // rather than reading back a flag that is still false.
+                bubbleOn = BubbleService.isRunning || wanted
+            }
+        }
+        lifecycle.addObserver(obs)
+        onDispose { lifecycle.removeObserver(obs) }
+    }
+
     if (!loaded) return
 
     fun snapshot() = Settings(
@@ -403,7 +432,16 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         if (want) enableBubble() else { SetupUtils.stopBubble(context); bubbleOn = false }
                     }
                     Divider()
-                    ToggleRow("Only on text fields", "Appear only when you can type", bubbleOnlyOnFields) { bubbleOnlyOnFields = it; persist() }
+                    // Field gating is driven by the accessibility service (BubbleService.gateActive
+                    // needs it to know what's focused). With the grant revoked the toggle keeps
+                    // reading "on" while the bubble is in fact always visible, which looks like the
+                    // setting broke. Say so instead.
+                    ToggleRow(
+                        "Only on text fields",
+                        if (bubbleOnlyOnFields && !a11yEnabled) "Needs auto-insert. The bubble stays visible until you turn it back on."
+                        else "Appear only when you can type",
+                        bubbleOnlyOnFields,
+                    ) { bubbleOnlyOnFields = it; persist() }
                 }
             }
 
@@ -480,9 +518,12 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Card {
                     NavRow("Replay onboarding", "Walk through setup again") { context.startActivity(OnboardingActivity.intent(context)) }
                     Divider()
+                    // remember: this is a binder call into PackageManager, and the version can't
+                    // change while the screen is up.
+                    val version = remember { appVersion(context) }
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Version", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                        Text("1.0 · open source", style = MonoEyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("$version · open source", style = MonoEyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -724,4 +765,19 @@ private fun PillOutline(label: String, onClick: () -> Unit) {
     Box(Modifier.clip(RoundedCornerShape(9.dp)).border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(9.dp)).clickable { onClick() }.padding(horizontal = 14.dp, vertical = 7.dp)) {
         Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
     }
+}
+
+/**
+ * The installed version, for the Settings footer. This used to be the string literal "1.0", which
+ * had been wrong since 1.0.1 and told anyone reporting a bug the wrong version to report against.
+ *
+ * Read from PackageManager rather than BuildConfig so it reflects the APK actually on the device,
+ * and because BuildConfig generation is off by default in AGP 8 and would need a new build flag
+ * for one string.
+ */
+private fun appVersion(context: Context): String = try {
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
+} catch (_: Exception) {
+    // Can only really happen if the package is being replaced out from under us.
+    "unknown"
 }

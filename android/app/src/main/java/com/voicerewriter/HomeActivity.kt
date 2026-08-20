@@ -134,7 +134,7 @@ class HomeActivity : ComponentActivity() {
         // Reload every time the screen resumes (stats change as you dictate).
         DisposableEffect(lifecycle) {
             val obs = LifecycleEventObserver { _, e ->
-                if (e == Lifecycle.Event.ON_RESUME) reload()
+                if (e == Lifecycle.Event.ON_RESUME) { reload(); restoreBubbleIfWanted(ctx) }
             }
             lifecycle.addObserver(obs)
             onDispose { lifecycle.removeObserver(obs) }
@@ -933,6 +933,23 @@ class HomeActivity : ComponentActivity() {
     private fun copyToClipboard(text: String) {
         val cb = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cb.setPrimaryClip(ClipData.newPlainText("dictation", text))
+    }
+
+    /**
+     * Second line of defence behind [BootReceiver]: if the user wants the bubble but it isn't
+     * running, start it when they open the app. Covers the cases the boot broadcast misses, which
+     * on real devices is most of them — an OEM battery manager killing the service, a force-stop,
+     * or an aggressive task-killer. Cheap: a SharedPreferences read and a static check.
+     */
+    private fun restoreBubbleIfWanted(ctx: Context) {
+        if (BubbleService.isRunning) return
+        if (!BubblePrefs.enabled(ctx)) return
+        if (!SetupUtils.canDrawOverlays(ctx)) return
+        try {
+            SetupUtils.startBubble(ctx)
+        } catch (e: Exception) {
+            android.util.Log.w("HomeActivity", "couldn't restore the bubble", e)
+        }
     }
 
     // ---------------- data + formatting ----------------
