@@ -432,7 +432,16 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         if (want) enableBubble() else { SetupUtils.stopBubble(context); bubbleOn = false }
                     }
                     Divider()
-                    ToggleRow("Only on text fields", "Appear only when you can type", bubbleOnlyOnFields) { bubbleOnlyOnFields = it; persist() }
+                    // Field gating is driven by the accessibility service (BubbleService.gateActive
+                    // needs it to know what's focused). With the grant revoked the toggle keeps
+                    // reading "on" while the bubble is in fact always visible, which looks like the
+                    // setting broke. Say so instead.
+                    ToggleRow(
+                        "Only on text fields",
+                        if (bubbleOnlyOnFields && !a11yEnabled) "Needs auto-insert. The bubble stays visible until you turn it back on."
+                        else "Appear only when you can type",
+                        bubbleOnlyOnFields,
+                    ) { bubbleOnlyOnFields = it; persist() }
                 }
             }
 
@@ -509,9 +518,12 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                 Card {
                     NavRow("Replay onboarding", "Walk through setup again") { context.startActivity(OnboardingActivity.intent(context)) }
                     Divider()
+                    // remember: this is a binder call into PackageManager, and the version can't
+                    // change while the screen is up.
+                    val version = remember { appVersion(context) }
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Version", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                        Text("1.0 · open source", style = MonoEyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("$version · open source", style = MonoEyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -753,4 +765,19 @@ private fun PillOutline(label: String, onClick: () -> Unit) {
     Box(Modifier.clip(RoundedCornerShape(9.dp)).border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(9.dp)).clickable { onClick() }.padding(horizontal = 14.dp, vertical = 7.dp)) {
         Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
     }
+}
+
+/**
+ * The installed version, for the Settings footer. This used to be the string literal "1.0", which
+ * had been wrong since 1.0.1 and told anyone reporting a bug the wrong version to report against.
+ *
+ * Read from PackageManager rather than BuildConfig so it reflects the APK actually on the device,
+ * and because BuildConfig generation is off by default in AGP 8 and would need a new build flag
+ * for one string.
+ */
+private fun appVersion(context: Context): String = try {
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
+} catch (_: Exception) {
+    // Can only really happen if the package is being replaced out from under us.
+    "unknown"
 }
