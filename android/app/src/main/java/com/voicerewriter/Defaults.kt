@@ -166,7 +166,10 @@ object Defaults {
 
     const val MODE_DICTATE = "dictate" // speak new text → cleaned up → inserted
     const val MODE_REWRITE = "rewrite" // copy text, speak an instruction → rewrite clipboard
-    const val MODE_TRANSFORM = "transform" // long-press: pick an LLM transform for the copied text
+    // MODE_TRANSFORM ("pick an LLM transform for the copied text") is gone: it lived on the
+    // bubble long-press, which is now hold-to-talk. Transforming text you have selected is
+    // still available through the PROCESS_TEXT entry in the selection toolbar, which is the
+    // more natural trigger anyway.
 
     /**
      * Cleanup pass for raw dictation: turn spoken words into clean written text

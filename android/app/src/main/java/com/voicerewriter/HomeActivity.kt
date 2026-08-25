@@ -921,7 +921,6 @@ class HomeActivity : ComponentActivity() {
     private fun openTalk() {
         startActivity(
             Intent(this, RewriteActivity::class.java)
-                .putExtra(RewriteActivity.EXTRA_MODE, Defaults.MODE_DICTATE)
                 .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, true),
         )
     }
