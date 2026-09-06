@@ -312,16 +312,13 @@ struct OnboardingView: View {
     private var shortcutStep: some View {
         stepScaffold(
             icon: "command",
-            title: "Hold fn to talk",
-            subtitle: "Hold the 🌐 fn key anywhere to dictate, then release to insert. Double-tap fn for hands-free (it keeps listening until you tap again or pause). To make it work in every app, grant Input Monitoring below."
+            title: "Two ways to dictate",
+            subtitle: "Double-click \(settings.doubleClickDisplay) anywhere for hands-free — it keeps recording through pauses. Hold \(settings.pttDisplay) to talk, release to insert. Grant Input Monitoring so both work in every app."
         ) {
             VStack(spacing: 12) {
                 HStack(spacing: 8) {
-                    Text(settings.triggerDisplay)
-                        .font(OW.mono(18, weight: .semibold)).foregroundStyle(OW.text)
-                        .padding(.horizontal, 16).padding(.vertical, 9)
-                        .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
-                        .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+                    triggerBadge(settings.doubleClickDisplay, label: "Double-click")
+                    triggerBadge(settings.pttDisplay, label: "Hold")
                 }
                 HStack(spacing: 8) {
                     Text("Input Monitoring")
@@ -340,6 +337,18 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(OWGhostButtonStyle())
             }
+        }
+    }
+
+    private func triggerBadge(_ key: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(key)
+                .font(OW.mono(16, weight: .semibold)).foregroundStyle(OW.text)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
+                .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+            Text(label)
+                .font(OW.ui(11)).foregroundStyle(OW.textMuted)
         }
     }
 
@@ -453,7 +462,7 @@ struct OnboardingView: View {
                 Divider().overlay(OW.divider)
                 recapRow("Auto-insert", ok: axTrusted, alt: axTrusted ? nil : "Clipboard")
                 Divider().overlay(OW.divider)
-                recapRow("\(settings.triggerDisplay) trigger", ok: true, alt: nil)
+                recapRow("Dictation triggers", ok: settings.doubleClickEnabled || settings.pushToTalkEnabled, alt: nil)
             }
             .background(OW.card, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(OW.border, lineWidth: 1))

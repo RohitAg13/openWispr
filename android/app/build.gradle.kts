@@ -18,7 +18,7 @@ android {
         versionCode = 7
         // Kept in step with the git tag and macOS MARKETING_VERSION from 1.1.0 on; before this
         // release the three drifted apart (Android 1.0.1 / tag v0.2.1 / macOS 0.2.1).
-        versionName = "1.3.0"
+        versionName = "1.3.1"
         ndk {
             // Device is arm64; the whisper/llm/mlc4j native libs and the sherpa-onnx AAR
             // all ship arm64-v8a. Restricting here keeps the APK from bundling unused ABIs

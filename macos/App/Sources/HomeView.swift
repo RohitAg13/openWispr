@@ -123,13 +123,23 @@ struct HomeView: View {
     }
 
     private var hotkeyHint: some View {
-        HStack(spacing: 8) {
-            keyCap(settings.triggerDisplay)
-            Text(settings.triggerKind == .fnKey
-                 ? "hold to talk · double-tap for hands-free"
-                 : "to dictate in any app")
-                .font(OW.ui(12))
-                .foregroundStyle(OW.textMuted)
+        VStack(spacing: 6) {
+            if settings.doubleClickEnabled {
+                HStack(spacing: 8) {
+                    keyCap(settings.doubleClickDisplay)
+                    Text("double-click to toggle hands-free")
+                        .font(OW.ui(12))
+                        .foregroundStyle(OW.textMuted)
+                }
+            }
+            if settings.pushToTalkEnabled {
+                HStack(spacing: 8) {
+                    keyCap(settings.pttDisplay)
+                    Text("hold to talk · release to insert")
+                        .font(OW.ui(12))
+                        .foregroundStyle(OW.textMuted)
+                }
+            }
         }
     }
 

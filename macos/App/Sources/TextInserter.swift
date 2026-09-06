@@ -87,10 +87,10 @@ enum TextInserter {
     /// return false, i.e. "couldn't confirm", which is the safe answer.
     private static func didFieldChange(from before: Int?, in app: NSRunningApplication?) -> Bool {
         guard let before = before else { return false }
-        // ~360 ms total: long enough for a slow Electron app to consume the paste, short enough
-        // that the user doesn't notice us waiting.
-        for _ in 0..<9 {
-            spin(milliseconds: 40)
+        // Brief poll only — many targets (Electron, browsers) never expose AX length even
+        // when ⌘V lands, so hanging here just delays the HUD. Three quick checks suffice.
+        for _ in 0..<3 {
+            spin(milliseconds: 30)
             if let now = focusedTextLength(of: app), now != before { return true }
         }
         return false

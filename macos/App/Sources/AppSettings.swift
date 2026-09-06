@@ -1,3 +1,4 @@
+import AppKit
 import Carbon.HIToolbox
 import Combine
 import Foundation
@@ -33,23 +34,6 @@ enum STTProvider: String, CaseIterable {
         case .appleSpeech: return true
         case .whisper:     return true
         case .parakeet:    return true
-        }
-    }
-}
-
-/// What activates a dictation session.
-/// - `.fnKey`: **hold** the 🌐/fn key to talk (release to insert); **double-tap** for hands-free
-///   (tap again, or pause, to stop). The default — most Mac-native, no combo to remember.
-/// - `.hotkey`: a custom global shortcut (the `hotKeyCode`/`hotKeyModifiers` combo) that toggles
-///   a session — press once to start, again to stop. For users who'd rather not use fn.
-enum TriggerKind: String, CaseIterable {
-    case fnKey
-    case hotkey
-
-    var label: String {
-        switch self {
-        case .fnKey:  return "Fn key"
-        case .hotkey: return "Custom shortcut"
         }
     }
 }
@@ -144,9 +128,17 @@ final class AppSettings: ObservableObject {
     private let defaults: UserDefaults
 
     private enum Key {
+        // Legacy (migrated on first launch after upgrade).
         static let triggerKind = "triggerKind"
         static let hotKeyCode = "hotKeyCode"
         static let hotKeyModifiers = "hotKeyModifiers"
+        static let doubleClickEnabled = "doubleClickEnabled"
+        static let doubleClickKeyCode = "doubleClickKeyCode"
+        static let doubleClickKeyModifiers = "doubleClickKeyModifiers"
+        static let pushToTalkEnabled = "pushToTalkEnabled"
+        static let pttKeyCode = "pttKeyCode"
+        static let pttKeyModifiers = "pttKeyModifiers"
+        static let cutoffOnSpeechPause = "cutoffOnSpeechPause"
         static let sttProvider = "sttProvider"
         static let whisperModel = "whisperModel"
         static let polishLevel = "polishLevel"
@@ -158,6 +150,7 @@ final class AppSettings: ObservableObject {
         static let llmCreativity = "llmCreativity"
         static let antiAiGuardrails = "antiAiGuardrails"
         static let useNotchHud = "useNotchHud"
+        static let showDictationIndicator = "showDictationIndicator"
         static let holdToTalk = "holdToTalk"
         static let showMenuBarIcon = "showMenuBarIcon"
         static let dictationLanguage = "dictationLanguage"
@@ -165,17 +158,35 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Persisted properties
 
-    /// What activates dictation — the fn key (hold / double-tap) or a custom toggle shortcut.
-    @Published var triggerKind: TriggerKind {
-        didSet { defaults.set(triggerKind.rawValue, forKey: Key.triggerKind) }
+    /// Independent toggle for hands-free double-click mode.
+    @Published var doubleClickEnabled: Bool {
+        didSet { defaults.set(doubleClickEnabled, forKey: Key.doubleClickEnabled) }
     }
 
-    @Published var hotKeyCode: UInt32 {
-        didSet { defaults.set(Int(hotKeyCode), forKey: Key.hotKeyCode) }
+    @Published var doubleClickKeyCode: UInt32 {
+        didSet { defaults.set(Int(doubleClickKeyCode), forKey: Key.doubleClickKeyCode) }
     }
 
-    @Published var hotKeyModifiers: UInt32 {
-        didSet { defaults.set(Int(hotKeyModifiers), forKey: Key.hotKeyModifiers) }
+    @Published var doubleClickKeyModifiers: UInt32 {
+        didSet { defaults.set(Int(doubleClickKeyModifiers), forKey: Key.doubleClickKeyModifiers) }
+    }
+
+    /// Independent toggle for hold-to-talk mode.
+    @Published var pushToTalkEnabled: Bool {
+        didSet { defaults.set(pushToTalkEnabled, forKey: Key.pushToTalkEnabled) }
+    }
+
+    @Published var pttKeyCode: UInt32 {
+        didSet { defaults.set(Int(pttKeyCode), forKey: Key.pttKeyCode) }
+    }
+
+    @Published var pttKeyModifiers: UInt32 {
+        didSet { defaults.set(Int(pttKeyModifiers), forKey: Key.pttKeyModifiers) }
+    }
+
+    /// When true, VAD auto-stop ends a hands-free session on speech pauses (using mic sensitivity).
+    @Published var cutoffOnSpeechPause: Bool {
+        didSet { defaults.set(cutoffOnSpeechPause, forKey: Key.cutoffOnSpeechPause) }
     }
 
     @Published var sttProvider: STTProvider {
@@ -235,14 +246,20 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(antiAiGuardrails, forKey: Key.antiAiGuardrails) }
     }
 
-    /// Place the listening indicator at the top-center (notch area) instead of near the Dock.
-    /// On by default — `RecordingHUD` reads this to pick its anchor.
+    /// Legacy notch-placement preference. Kept so existing UserDefaults values aren't lost;
+    /// the on-screen indicator is now controlled solely by `showDictationIndicator`.
     @Published var useNotchHud: Bool {
         didSet { defaults.set(useNotchHud, forKey: Key.useNotchHud) }
     }
 
+    /// Master switch for the dictation indicator (menu-bar icon change + on-screen bar on
+    /// every display). **On by default.** Turning this off is the only way to suppress it.
+    @Published var showDictationIndicator: Bool {
+        didSet { defaults.set(showDictationIndicator, forKey: Key.showDictationIndicator) }
+    }
+
     /// Legacy preference retained for migration. With the fn trigger, hold-to-talk is always on
-    /// (hold = talk, double-tap = hands-free); this no longer gates behavior.
+    /// (double-click = hands-free toggle); this no longer gates behavior.
     @Published var holdToTalk: Bool {
         didSet { defaults.set(holdToTalk, forKey: Key.holdToTalk) }
     }
@@ -264,21 +281,50 @@ final class AppSettings: ObservableObject {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
-        // Trigger: fn key (hold / double-tap) by default; any prior explicit choice is preserved.
-        triggerKind = defaults.string(forKey: Key.triggerKind)
-            .flatMap(TriggerKind.init(rawValue:)) ?? .fnKey
-
-        // Hotkey: stored as Int (UserDefaults has no UInt32). 0 / absent → default.
-        if defaults.object(forKey: Key.hotKeyCode) != nil {
-            hotKeyCode = UInt32(defaults.integer(forKey: Key.hotKeyCode))
+        // Dictation triggers — migrate from the old single-choice `triggerKind` on first launch.
+        if defaults.object(forKey: Key.doubleClickEnabled) != nil {
+            doubleClickEnabled = defaults.bool(forKey: Key.doubleClickEnabled)
+            doubleClickKeyCode = Self.loadKeyCode(defaults, key: Key.doubleClickKeyCode,
+                                                  default: Self.defaultDoubleClickKeyCode)
+            doubleClickKeyModifiers = Self.loadKeyCode(defaults, key: Key.doubleClickKeyModifiers, default: 0)
+            pushToTalkEnabled = defaults.bool(forKey: Key.pushToTalkEnabled)
+            pttKeyCode = Self.loadKeyCode(defaults, key: Key.pttKeyCode, default: Self.defaultPTTKeyCode)
+            pttKeyModifiers = Self.loadKeyCode(defaults, key: Key.pttKeyModifiers, default: 0)
         } else {
-            hotKeyCode = HotKey.defaultKeyCode
+            let legacyKind = defaults.string(forKey: Key.triggerKind)
+            let legacyCode = Self.loadKeyCode(defaults, key: Key.hotKeyCode, default: HotKey.defaultKeyCode)
+            let legacyMods = Self.loadKeyCode(defaults, key: Key.hotKeyModifiers, default: HotKey.defaultModifiers)
+            let migratedDoubleClickEnabled: Bool
+            let migratedDoubleClickKeyCode: UInt32
+            let migratedDoubleClickKeyModifiers: UInt32
+            let migratedPushToTalkEnabled: Bool
+            if legacyKind == "hotkey" {
+                migratedDoubleClickEnabled = true
+                migratedDoubleClickKeyCode = legacyCode
+                migratedDoubleClickKeyModifiers = legacyMods
+                migratedPushToTalkEnabled = false
+            } else {
+                migratedDoubleClickEnabled = true
+                migratedDoubleClickKeyCode = Self.defaultDoubleClickKeyCode
+                migratedDoubleClickKeyModifiers = 0
+                migratedPushToTalkEnabled = true
+            }
+            let migratedPttKeyCode = Self.defaultPTTKeyCode
+            let migratedPttKeyModifiers: UInt32 = 0
+            doubleClickEnabled = migratedDoubleClickEnabled
+            doubleClickKeyCode = migratedDoubleClickKeyCode
+            doubleClickKeyModifiers = migratedDoubleClickKeyModifiers
+            pushToTalkEnabled = migratedPushToTalkEnabled
+            pttKeyCode = migratedPttKeyCode
+            pttKeyModifiers = migratedPttKeyModifiers
+            defaults.set(migratedDoubleClickEnabled, forKey: Key.doubleClickEnabled)
+            defaults.set(Int(migratedDoubleClickKeyCode), forKey: Key.doubleClickKeyCode)
+            defaults.set(Int(migratedDoubleClickKeyModifiers), forKey: Key.doubleClickKeyModifiers)
+            defaults.set(migratedPushToTalkEnabled, forKey: Key.pushToTalkEnabled)
+            defaults.set(Int(migratedPttKeyCode), forKey: Key.pttKeyCode)
+            defaults.set(Int(migratedPttKeyModifiers), forKey: Key.pttKeyModifiers)
         }
-        if defaults.object(forKey: Key.hotKeyModifiers) != nil {
-            hotKeyModifiers = UInt32(defaults.integer(forKey: Key.hotKeyModifiers))
-        } else {
-            hotKeyModifiers = HotKey.defaultModifiers
-        }
+        cutoffOnSpeechPause = defaults.object(forKey: Key.cutoffOnSpeechPause) as? Bool ?? false
 
         // On-device defaults: a fresh install gets Parakeet (the fastest on-device engine) for
         // STT and the OpenWispr fine-tune for polish. The `?? default` only applies when nothing
@@ -302,6 +348,8 @@ final class AppSettings: ObservableObject {
         llmCreativity = defaults.object(forKey: Key.llmCreativity) as? Double ?? 0.2
         antiAiGuardrails = defaults.object(forKey: Key.antiAiGuardrails) as? Bool ?? true
         useNotchHud = defaults.object(forKey: Key.useNotchHud) as? Bool ?? true
+        // Always default ON — missing key means show the indicator every session.
+        showDictationIndicator = defaults.object(forKey: Key.showDictationIndicator) as? Bool ?? true
         holdToTalk = defaults.object(forKey: Key.holdToTalk) as? Bool ?? false
         showMenuBarIcon = defaults.object(forKey: Key.showMenuBarIcon) as? Bool ?? true
         dictationLanguage = defaults.string(forKey: Key.dictationLanguage) ?? "English"
@@ -309,35 +357,124 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Helpers
 
-    /// Reset the global hotkey to the app default (⌃⌥Z).
-    func resetHotKeyToDefault() {
-        hotKeyCode = HotKey.defaultKeyCode
-        hotKeyModifiers = HotKey.defaultModifiers
+    static let defaultDoubleClickKeyCode: UInt32 = UInt32(kVK_Function)
+    static let defaultPTTKeyCode: UInt32 = UInt32(kVK_RightOption)
+
+    func resetDoubleClickKeyToDefault() {
+        doubleClickKeyCode = Self.defaultDoubleClickKeyCode
+        doubleClickKeyModifiers = 0
+    }
+
+    func resetPTTKeyToDefault() {
+        pttKeyCode = Self.defaultPTTKeyCode
+        pttKeyModifiers = 0
     }
 
     /// The current VAD ratios for the selected sensitivity.
     var vadRatios: (low: Float, high: Float) { vadSensitivity.ratios }
 
-    /// Human-readable combo, e.g. "⌃⌥Z". Modifiers in the conventional ⌃⌥⇧⌘ order,
-    /// then the key character (letters/digits/space mapped; otherwise "Key <code>").
-    var hotKeyDisplay: String {
-        Self.display(keyCode: hotKeyCode, modifiers: hotKeyModifiers)
+    var doubleClickDisplay: String {
+        Self.display(keyCode: doubleClickKeyCode, modifiers: doubleClickKeyModifiers)
     }
 
-    /// Short label for the active trigger — "🌐 fn" for the fn key, or the custom combo.
+    var pttDisplay: String {
+        Self.display(keyCode: pttKeyCode, modifiers: pttKeyModifiers)
+    }
+
+    /// Whether both enabled modes share the same key binding.
+    var triggerBindingsConflict: Bool {
+        guard doubleClickEnabled, pushToTalkEnabled else { return false }
+        return doubleClickKeyCode == pttKeyCode && doubleClickKeyModifiers == pttKeyModifiers
+    }
+
+    /// Short label for the primary trigger(s) shown in Home / onboarding.
     var triggerDisplay: String {
-        switch triggerKind {
-        case .fnKey:  return "🌐 fn"
-        case .hotkey: return hotKeyDisplay
+        if doubleClickEnabled && pushToTalkEnabled {
+            return "\(doubleClickDisplay) · \(pttDisplay)"
+        }
+        if doubleClickEnabled { return doubleClickDisplay }
+        if pushToTalkEnabled { return pttDisplay }
+        return "No trigger"
+    }
+
+    /// One-line instruction for how to invoke dictation with the active trigger(s).
+    var triggerHint: String {
+        var parts: [String] = []
+        if doubleClickEnabled {
+            parts.append("Double-click \(doubleClickDisplay) to toggle hands-free")
+        }
+        if pushToTalkEnabled {
+            parts.append("hold \(pttDisplay) to talk")
+        }
+        if parts.isEmpty {
+            return "Enable a trigger mode in Settings"
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// Dedicated trigger keys may be bound without extra modifiers (Globe/Fn, Right ⌥, etc.).
+    static func isDedicatedTriggerKey(_ code: UInt32) -> Bool {
+        if code == UInt32(kVK_Function) { return true }
+        return isStandaloneModifierTriggerKey(code)
+    }
+
+    /// Whether a standalone modifier key is currently pressed in a flagsChanged event.
+    static func modifierKeyIsPressed(code: UInt32, flags: NSEvent.ModifierFlags) -> Bool {
+        switch code {
+        case UInt32(kVK_Shift), UInt32(kVK_RightShift):       return flags.contains(.shift)
+        case UInt32(kVK_Control), UInt32(kVK_RightControl):   return flags.contains(.control)
+        case UInt32(kVK_Option), UInt32(kVK_RightOption):     return flags.contains(.option)
+        case UInt32(kVK_Command), UInt32(kVK_RightCommand):   return flags.contains(.command)
+        case UInt32(kVK_Function):                            return flags.contains(.function)
+        default:                                               return false
+        }
+    }
+    static func isStandaloneModifierTriggerKey(_ code: UInt32) -> Bool {
+        switch code {
+        case UInt32(kVK_Shift), UInt32(kVK_RightShift),
+             UInt32(kVK_Control), UInt32(kVK_RightControl),
+             UInt32(kVK_Option), UInt32(kVK_RightOption),
+             UInt32(kVK_Command), UInt32(kVK_RightCommand):
+            return true
+        default:
+            return false
         }
     }
 
-    /// One-line instruction for how to invoke dictation with the active trigger.
-    var triggerHint: String {
-        switch triggerKind {
-        case .fnKey:  return "Hold 🌐 fn to talk · double-tap for hands-free"
-        case .hotkey: return "Press \(hotKeyDisplay) to start and stop"
+    /// Keys that must never be mapped as dictation triggers.
+    static func isBlockedKey(code: UInt32, modifiers: UInt32) -> Bool {
+        let blockedCodes: Set<UInt32> = [
+            UInt32(kVK_Escape), UInt32(kVK_Tab), UInt32(kVK_Return), UInt32(kVK_ANSI_KeypadEnter),
+            UInt32(kVK_Delete), UInt32(kVK_ForwardDelete),
+            UInt32(kVK_UpArrow), UInt32(kVK_DownArrow), UInt32(kVK_LeftArrow), UInt32(kVK_RightArrow),
+            UInt32(kVK_VolumeUp), UInt32(kVK_VolumeDown), UInt32(kVK_Mute),
+            // F14/F15 are the brightness keys on Apple keyboards (no kVK_Brightness* in HIToolbox).
+            UInt32(kVK_F14), UInt32(kVK_F15),
+        ]
+        if blockedCodes.contains(code) { return true }
+        // Bare modifier only — no stable key-up target.
+        if modifiers != 0 && isModifierKeyCode(code) { return true }
+        // Non-dedicated keys require at least one modifier.
+        if modifiers == 0 && !isDedicatedTriggerKey(code) { return true }
+        return false
+    }
+
+    private static func isModifierKeyCode(_ code: UInt32) -> Bool {
+        let modifierCodes: Set<UInt32> = [
+            UInt32(kVK_Shift), UInt32(kVK_RightShift),
+            UInt32(kVK_Control), UInt32(kVK_RightControl),
+            UInt32(kVK_Option), UInt32(kVK_RightOption),
+            UInt32(kVK_Command), UInt32(kVK_RightCommand),
+            UInt32(kVK_CapsLock), UInt32(kVK_Function),
+        ]
+        return modifierCodes.contains(code)
+    }
+
+    private static func loadKeyCode(_ defaults: UserDefaults, key: String, default defaultValue: UInt32) -> UInt32 {
+        if defaults.object(forKey: key) != nil {
+            return UInt32(defaults.integer(forKey: key))
         }
+        return defaultValue
     }
 
     /// Render an arbitrary keycode+Carbon-modifier mask as a combo string.
@@ -371,5 +508,11 @@ final class AppSettings: ObservableObject {
         kVK_ANSI_4: "4", kVK_ANSI_5: "5", kVK_ANSI_6: "6", kVK_ANSI_7: "7",
         kVK_ANSI_8: "8", kVK_ANSI_9: "9",
         kVK_Space: "Space",
+        kVK_Function: "Fn",
+        kVK_RightOption: "Right ⌥",
+        kVK_Option: "⌥",
+        kVK_RightShift: "Right ⇧",
+        kVK_RightControl: "Right ⌃",
+        kVK_RightCommand: "Right ⌘",
     ]
 }

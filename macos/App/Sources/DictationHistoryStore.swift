@@ -1,6 +1,6 @@
 import Foundation
 
-/// One past dictation, persisted for the Home "Recent dictations" list.
+/// One past dictation, persisted for Style memory and the Home "Recent dictations" list.
 struct DictationRecord: Codable, Identifiable, Equatable {
     let id: UUID
     var text: String
@@ -59,13 +59,17 @@ final class DictationHistoryStore: ObservableObject {
 
     private let maxRecords = 200
 
-    // Time-saved model: typing ~40 wpm vs effective speaking ~150 wpm (matches Android).
-    private let typingWPM = 40.0
-    private let speakingWPM = 150.0
-
-    /// Cumulative stat counters, persisted separately from the (capped) feed so all-time totals
-    /// survive pruning and a feed clear. Mirrors the Android `SharedPreferences` counters.
     private let defaults = UserDefaults.standard
+    private enum StoreKey {
+        static let keepDays = "historyKeepDays"
+    }
+
+    /// How many days of dictation text to keep in Style memory / Home. 0 = keep everything
+    /// (still capped by `maxRecords`).
+    var keepDays: Int {
+        get { defaults.object(forKey: StoreKey.keepDays) as? Int ?? 30 }
+        set { defaults.set(newValue, forKey: StoreKey.keepDays); prune(); save() }
+    }
     private enum StatKey {
         static let count = "owstat.count"
         static let words = "owstat.words"
@@ -84,6 +88,7 @@ final class DictationHistoryStore: ObservableObject {
 
     init() {
         load()
+        prune()
         backfillCountersIfNeeded()
         recomputeStats()
     }
@@ -134,7 +139,7 @@ final class DictationHistoryStore: ObservableObject {
         guard !trimmed.isEmpty else { return nil }
         let record = DictationRecord(text: trimmed, ts: ts)
         records.insert(record, at: 0)
-        if records.count > maxRecords { records = Array(records.prefix(maxRecords)) }
+        prune()
         save()
         bumpCounters(text: trimmed, at: ts, accepted: accepted, onDevice: onDevice)
         return record.id
@@ -159,7 +164,34 @@ final class DictationHistoryStore: ObservableObject {
         save()
     }
 
+    /// Plain-text export for backup or manual review — one block per dictation, newest first.
+    func exportPlainText() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return records.map { record in
+            let when = formatter.string(from: Date(timeIntervalSince1970: record.ts))
+            return "[\(when)]\n\(record.text)"
+        }.joined(separator: "\n\n---\n\n")
+    }
+
+    /// Drop entries older than the retention window and enforce the ring cap.
+    private func prune() {
+        let now = Date().timeIntervalSince1970
+        if keepDays > 0 {
+            let cutoff = now - Double(keepDays) * 86_400
+            records.removeAll { $0.ts < cutoff }
+        }
+        if records.count > maxRecords {
+            records = Array(records.prefix(maxRecords))
+        }
+    }
+
     // MARK: - Stats
+
+    // Time-saved model: typing ~40 wpm vs effective speaking ~150 wpm (matches Android).
+    private let typingWPM = 40.0
+    private let speakingWPM = 150.0
 
     /// Bump the cumulative counters for one dictation, then republish `stats`.
     private func bumpCounters(text: String, at ts: Double, accepted: Bool, onDevice: Bool) {

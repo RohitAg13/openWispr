@@ -135,6 +135,9 @@ public final class SpeechSegmenter {
     /// Whether any speech has been detected so far.
     public var hasSpeech: Bool { speechStarted }
 
+    /// True after the hangover silence threshold fired (auto-stop path).
+    public var didAutoStop: Bool { autoStopFired }
+
     /// Feed one frame's probability. `endSample` is the cumulative total of samples
     /// captured *after* this frame (mirrors Android's `totalSamples`). Returns `true`
     /// exactly once — on the frame where the hangover silence threshold is crossed.

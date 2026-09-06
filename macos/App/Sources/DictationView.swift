@@ -117,15 +117,12 @@ final class DictationController: ObservableObject {
         guard !cleaned.isEmpty else { return }
         deliveryNote = nil
         switch TextInserter.insert(cleaned, into: lastTargetApp) {
-        case .inserted:
+        case .inserted, .unverified:
             didInsert = true
-            // Clear the confirmation after a beat.
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
                 self.didInsert = false
             }
-        case .unverified:
-            deliveryNote = "Couldn't confirm the insert. The text is on your clipboard."
         case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
@@ -222,8 +219,8 @@ final class DictationController: ObservableObject {
             }
 
             do {
-                try audio.start(vadAutoStop: true) { [weak self] in
-                    // Fired once on the main queue when the speaker pauses.
+                let cutoff = AppSettings.shared.cutoffOnSpeechPause
+                try audio.start(vadAutoStop: cutoff) { [weak self] in
                     Task { @MainActor in self?.stopAndTranscribe() }
                 }
                 phase = .listening
@@ -356,6 +353,9 @@ final class DictationController: ObservableObject {
 /// and the raw + cleaned transcripts with Copy / Quit once done.
 struct DictationView: View {
     @StateObject private var controller = DictationController()
+    @ObservedObject private var history = DictationHistoryStore.shared
+    @ObservedObject private var settings = AppSettings.shared
+    @State private var copiedRecentID: UUID?
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -363,6 +363,7 @@ struct DictationView: View {
             header
             hotkeyHint
             controlRow
+            quickRecentsSection
             statusArea
             actionRow
         }
@@ -416,10 +417,21 @@ struct DictationView: View {
 
     private var hotkeyHint: some View {
         HStack(spacing: 8) {
-            keyCap(AppSettings.shared.triggerDisplay)
-            Text(AppSettings.shared.triggerKind == .fnKey ? "hold to dictate anywhere" : "to dictate anywhere")
-                .font(OW.ui(12))
-                .foregroundStyle(OW.textMuted)
+            if AppSettings.shared.doubleClickEnabled {
+                keyCap(AppSettings.shared.doubleClickDisplay)
+                Text("double-click hands-free")
+                    .font(OW.ui(12))
+                    .foregroundStyle(OW.textMuted)
+            }
+            if AppSettings.shared.pushToTalkEnabled {
+                if AppSettings.shared.doubleClickEnabled {
+                    Text("·").font(OW.ui(12)).foregroundStyle(OW.textFaint)
+                }
+                keyCap(AppSettings.shared.pttDisplay)
+                Text("hold to talk")
+                    .font(OW.ui(12))
+                    .foregroundStyle(OW.textMuted)
+            }
             Spacer()
             HStack(spacing: 5) {
                 Image(systemName: controller.canInsert ? "checkmark.shield.fill" : "shield.slash")
@@ -520,11 +532,63 @@ struct DictationView: View {
         .disabled(controller.phase == .transcribing)
     }
 
+    /// Last three saved dictations — one tap copies the full text to the clipboard.
+    @ViewBuilder
+    private var quickRecentsSection: some View {
+        if settings.keepHistory, !history.records.isEmpty, !controller.isBusy {
+            VStack(alignment: .leading, spacing: 6) {
+                MonoLabel(text: "Recent · tap to copy", color: OW.textDim, size: 9, tracking: 1.2)
+                ForEach(history.records.prefix(3)) { record in
+                    quickRecentRow(record)
+                }
+            }
+        }
+    }
+
+    private func quickRecentRow(_ record: DictationRecord) -> some View {
+        let copied = copiedRecentID == record.id
+        return Button {
+            copyRecent(record)
+        } label: {
+            HStack(alignment: .center, spacing: 10) {
+                Text(record.text)
+                    .font(OW.ui(12))
+                    .foregroundStyle(OW.text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: copied ? "checkmark.circle.fill" : "doc.on.doc")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(copied ? OW.success : OW.textDim)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(OW.card, in: RoundedRectangle(cornerRadius: OW.rChip))
+            .overlay(RoundedRectangle(cornerRadius: OW.rChip).strokeBorder(OW.border, lineWidth: 1))
+            .contentShape(RoundedRectangle(cornerRadius: OW.rChip))
+        }
+        .buttonStyle(.plain)
+        .help("Copy full dictation")
+    }
+
+    private func copyRecent(_ record: DictationRecord) {
+        guard !record.text.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(record.text, forType: .string)
+        copiedRecentID = record.id
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            if copiedRecentID == record.id { copiedRecentID = nil }
+        }
+    }
+
     @ViewBuilder
     private var statusArea: some View {
         switch controller.phase {
         case .idle:
-            Text("Press Listen and start speaking. It stops automatically when you pause.")
+            Text(settings.cutoffOnSpeechPause
+                 ? "Press Listen and start speaking. It stops automatically when you pause."
+                 : "Press Listen and start speaking. Tap Stop when you're done.")
                 .font(OW.ui(12))
                 .foregroundStyle(OW.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)

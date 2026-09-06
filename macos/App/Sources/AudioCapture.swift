@@ -121,7 +121,9 @@ final class AudioCapture {
         let total = all.count
         if total < config.sampleRate / 4 { return nil } // < ~0.25 s: nothing meaningful
 
-        if let range = segmenter.trimRange(totalSamples: total) {
+        // Only trim when VAD auto-stop actually ended the session. Manual stop (PTT release,
+        // double-click toggle, HUD Stop) keeps the full take so mid-sentence pauses aren't clipped.
+        if vadAutoStop && segmenter.didAutoStop, let range = segmenter.trimRange(totalSamples: total) {
             return Array(all[range])
         }
         return all

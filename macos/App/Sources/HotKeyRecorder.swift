@@ -3,19 +3,17 @@ import Carbon.HIToolbox
 import SwiftUI
 
 /// A SwiftUI control that captures the next key-down combo and reports it back as a
-/// hardware virtual keycode + Carbon modifier mask — the exact pair `RegisterEventHotKey`
-/// (see `HotKey`) wants. Click it to start recording; press a combo (≥1 modifier) to bind,
-/// or Escape to cancel.
-///
-/// `NSEvent.keyCode` is the same hardware virtual keycode numbering Carbon's `kVK_*`
-/// constants use, so it can be passed straight through. Only `modifierFlags` needs
-/// translating from Cocoa's `NSEvent.ModifierFlags` to the Carbon mask.
+/// hardware virtual keycode + Carbon modifier mask. Click to start recording; press a combo
+/// (≥1 modifier, or a dedicated trigger key like Globe/Fn) to bind, or Escape to cancel.
 struct HotKeyRecorder: NSViewRepresentable {
     @Binding var keyCode: UInt32
     @Binding var modifiers: UInt32
+    /// When true, dedicated trigger keys (Globe/Fn) may be captured without modifiers.
+    var allowSingleKey: Bool = true
 
     func makeNSView(context: Context) -> RecorderView {
         let view = RecorderView()
+        view.allowSingleKey = allowSingleKey
         view.onCapture = { code, mods in
             keyCode = code
             modifiers = mods
@@ -24,12 +22,22 @@ struct HotKeyRecorder: NSViewRepresentable {
         return view
     }
 
+    /// Translate Cocoa modifier flags to a Carbon modifier mask.
+    static func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
+        var mask: UInt32 = 0
+        if flags.contains(.control) { mask |= UInt32(controlKey) }
+        if flags.contains(.option)  { mask |= UInt32(optionKey) }
+        if flags.contains(.command) { mask |= UInt32(cmdKey) }
+        if flags.contains(.shift)   { mask |= UInt32(shiftKey) }
+        return mask
+    }
+
     func updateNSView(_ view: RecorderView, context: Context) {
+        view.allowSingleKey = allowSingleKey
         view.onCapture = { code, mods in
             keyCode = code
             modifiers = mods
         }
-        // Reflect external changes (e.g. "Reset to default") while not actively recording.
         if !view.isRecording {
             view.refreshTitle(keyCode: keyCode, modifiers: modifiers)
         }
@@ -39,6 +47,7 @@ struct HotKeyRecorder: NSViewRepresentable {
     /// turns the first valid combo into `(keyCode, carbonModifiers)`.
     final class RecorderView: NSView {
         var onCapture: ((UInt32, UInt32) -> Void)?
+        var allowSingleKey = true
         private(set) var isRecording = false
 
         // Brand "paper" palette (mirrors the `OW` SwiftUI tokens, as NSColors).
@@ -132,36 +141,48 @@ struct HotKeyRecorder: NSViewRepresentable {
                 return
             }
 
-            // Escape cancels recording without changing the binding.
             if event.keyCode == UInt32(kVK_Escape) {
                 window?.makeFirstResponder(nil)
                 return
             }
 
-            let carbon = Self.carbonModifiers(from: event.modifierFlags)
-            // Require at least one modifier — a bare key would be useless as a global
-            // hotkey and would steal the plain keystroke everywhere.
-            guard carbon != 0 else {
-                NSSound.beep()
+            captureKey(code: UInt32(event.keyCode),
+                       modifiers: HotKeyRecorder.carbonModifiers(from: event.modifierFlags))
+        }
+
+        override func flagsChanged(with event: NSEvent) {
+            guard isRecording else {
+                super.flagsChanged(with: event)
                 return
             }
 
             let code = UInt32(event.keyCode)
-            currentKeyCode = code
-            currentModifiers = carbon
-            onCapture?(code, carbon)
-            window?.makeFirstResponder(nil) // commit + resign
+            guard AppSettings.isDedicatedTriggerKey(code) else { return }
+            guard AppSettings.modifierKeyIsPressed(code: code, flags: event.modifierFlags) else { return }
+            captureKey(code: code, modifiers: 0)
         }
 
-        /// Translate Cocoa modifier flags to a Carbon modifier mask, keeping only the
-        /// four meaningful global-hotkey modifiers.
-        static func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
-            var mask: UInt32 = 0
-            if flags.contains(.control) { mask |= UInt32(controlKey) }
-            if flags.contains(.option)  { mask |= UInt32(optionKey) }
-            if flags.contains(.command) { mask |= UInt32(cmdKey) }
-            if flags.contains(.shift)   { mask |= UInt32(shiftKey) }
-            return mask
+        private func captureKey(code: UInt32, modifiers: UInt32) {
+            if AppSettings.isBlockedKey(code: code, modifiers: modifiers) {
+                NSSound.beep()
+                return
+            }
+
+            let dedicated = AppSettings.isDedicatedTriggerKey(code)
+            if modifiers == 0 && !dedicated {
+                NSSound.beep()
+                return
+            }
+            if modifiers == 0 && dedicated && !allowSingleKey {
+                NSSound.beep()
+                return
+            }
+
+            currentKeyCode = code
+            currentModifiers = modifiers
+            onCapture?(code, modifiers)
+            window?.makeFirstResponder(nil)
         }
+
     }
 }

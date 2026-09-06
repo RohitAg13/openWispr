@@ -144,10 +144,16 @@ final class MainWindowController {
 @main
 struct OpenWisprApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @ObservedObject private var indicator = DictationIndicatorCenter.shared
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some Scene {
-        MenuBarExtra("OpenWispr", systemImage: "mic.fill") {
+        MenuBarExtra {
             MenuBarContent()
+        } label: {
+            // Live icon: waveform while dictating (when indicator setting is on), otherwise mic.
+            let active = settings.showDictationIndicator && indicator.isActive
+            Image(systemName: active ? indicator.menuBarSymbol : "mic.fill")
         }
         .menuBarExtraStyle(.window)
 

@@ -1,56 +1,55 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Watches the **fn / 🌐 (Globe)** key process-wide and turns raw press/release events into the
-/// two dictation gestures:
+/// Watches user-selected keys process-wide and routes them to dictation:
 ///
-///  - **Hold** fn (press and keep it down past `holdMin`) → *push-to-talk*: `onStart` fires on the
-///    press, `onFinish` on the release.
-///  - **Double-tap** fn (or a single quick tap) → *hands-free*: `onStart` fires on the first press
-///    and the session stays open (VAD auto-stop, or the next fn press) — `onFinish` then fires.
+///  - **Double-click** (two presses within `doubleClickInterval`) → toggle hands-free dictation.
+///    Single presses are ignored; key release does nothing.
+///  - **Push-to-talk** — key down starts after a `pttHoldGuard` hold; key up finishes.
+///    Speech pauses while holding do not end the session.
 ///
-/// Only the physical fn key (`kVK_Function`, keycode 63) is matched, via `.flagsChanged`. Arrow /
-/// F-keys also set the `.function` modifier flag but arrive as `.keyDown` (which we don't observe),
-/// so they never trip this. Press vs. release is read from whether `.function` is still set.
-///
-/// Observing keys in *other* apps needs the app to be trusted for **Accessibility / Input
-/// Monitoring** (the same grant dictation already needs to type text). The local monitor covers our
-/// own windows so the gesture still works when OpenWispr is focused even before the grant lands.
+/// The 🌐/fn key (`kVK_Function`) is observed via `.flagsChanged`; all other bindings use
+/// `.keyDown` / `.keyUp`. Input Monitoring (or the local monitor while focused) is required
+/// for global capture.
 @MainActor
 final class FnTriggerMonitor {
 
-    /// Begin a listening session (idempotent — the coordinator ignores it if already listening).
-    var onStart: () -> Void = {}
-    /// Finish the session: stop, transcribe, insert.
-    var onFinish: () -> Void = {}
+    var onDoubleClickToggle: () -> Void = {}
+    var onPTTStart: () -> Void = {}
+    var onPTTFinish: () -> Void = {}
+
+    var doubleClickEnabled = false
+    var doubleClickKeyCode: UInt32 = AppSettings.defaultDoubleClickKeyCode
+    var doubleClickKeyModifiers: UInt32 = 0
+
+    var pushToTalkEnabled = false
+    var pttKeyCode: UInt32 = AppSettings.defaultPTTKeyCode
+    var pttKeyModifiers: UInt32 = 0
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
-    /// Below this the press is a "tap" (→ hands-free); at or above it, a "hold" (→ push-to-talk).
-    private let holdMin: TimeInterval = 0.22
-    /// A second tap within this window of the first confirms a double-tap; otherwise the lone tap
-    /// still latches hands-free once the window lapses.
-    private let doubleWindow: TimeInterval = 0.30
+    private let doubleClickInterval: TimeInterval = 0.40
+    /// Long enough to avoid accidental PTT from brief Option/Globe taps while typing.
+    private let pttHoldGuard: TimeInterval = 0.28
 
-    private enum Mode { case idle, active }
-    private var mode: Mode = .idle
-    /// Hands-free latched: the session ignores fn releases and stops on the next fn press.
-    private var locked = false
-    private var awaitingSecondTap = false
-    private var downTime: TimeInterval = 0
-    private var tapTimer: Timer?
+    private var lastClickTime: TimeInterval?
+    private var pendingClickTimer: Timer?
+
+    private var pttHoldTimer: Timer?
+    /// Monitor-side: PTT hold timer fired and `onPTTStart` was dispatched.
+    private var pttActivated = false
+    private var pttKeyIsDown = false
 
     // MARK: - Lifecycle
 
     func start() {
         stop()
-        // NSEvent monitor callbacks are delivered on the main thread, so hop onto the main actor
-        // synchronously rather than spawning a Task (which would need to send the non-Sendable event).
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+        let mask: NSEvent.EventTypeMask = [.flagsChanged, .keyDown, .keyUp]
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
             return event
         }
@@ -59,75 +58,163 @@ final class FnTriggerMonitor {
     func stop() {
         if let g = globalMonitor { NSEvent.removeMonitor(g); globalMonitor = nil }
         if let l = localMonitor { NSEvent.removeMonitor(l); localMonitor = nil }
-        reset()
+        resetClickState()
+        cancelPTTHold()
+        pttActivated = false
+        pttKeyIsDown = false
     }
 
-    /// Called by the coordinator whenever a session ends by any path (VAD auto-stop, error, max
-    /// duration) so a latched hands-free session doesn't leave us out of sync — the next fn press
-    /// then starts fresh instead of no-op'ing a session that's already gone.
-    func sessionDidEnd() { reset() }
+    /// Called when a session ends so a pending first press doesn't pair with the next press.
+    func sessionDidEnd() {
+        resetClickState()
+        pttActivated = false
+        // Leave `pttKeyIsDown` alone — the user may still be holding the key; key-up clears it.
+    }
 
     // MARK: - Event routing
 
     private func handle(_ event: NSEvent) {
-        guard event.keyCode == UInt16(kVK_Function) else { return }
-        if event.modifierFlags.contains(.function) {
-            fnDown(at: event.timestamp)
-        } else {
-            fnUp(at: event.timestamp)
+        let code = UInt32(event.keyCode)
+        let carbonMods = HotKeyRecorder.carbonModifiers(from: event.modifierFlags)
+
+        if event.type == .flagsChanged {
+            handleFlagsChanged(code: code, modifiers: carbonMods, flags: event.modifierFlags,
+                               at: event.timestamp)
+            return
+        }
+
+        switch event.type {
+        case .keyDown:
+            guard !event.isARepeat else { return }
+            // Option+letter (or any combo) while a PTT hold is pending → typing, not PTT.
+            if pttHoldTimer != nil, !isPTTBinding(code: code, modifiers: carbonMods) {
+                cancelPendingPTT()
+            }
+            keyDown(code: code, modifiers: carbonMods, at: event.timestamp)
+        case .keyUp:
+            keyUp(code: code, modifiers: carbonMods)
+        default:
+            break
         }
     }
 
-    private func fnDown(at t: TimeInterval) {
-        // A press during a latched hands-free session stops it.
-        if mode == .active && locked {
-            onFinish()
-            reset()
+    private func handleFlagsChanged(code: UInt32, modifiers: UInt32, flags: NSEvent.ModifierFlags,
+                                    at t: TimeInterval) {
+        if code == UInt32(kVK_Function) {
+            if flags.contains(.function) {
+                keyDown(code: code, modifiers: modifiers, at: t)
+            } else {
+                keyUp(code: code, modifiers: modifiers)
+            }
             return
         }
-        // Second tap of a double-tap → latch hands-free (session already open from the first press).
-        if mode == .active && awaitingSecondTap {
-            awaitingSecondTap = false
-            tapTimer?.invalidate(); tapTimer = nil
-            locked = true
-            return
+
+        guard AppSettings.isStandaloneModifierTriggerKey(code) else { return }
+        if AppSettings.modifierKeyIsPressed(code: code, flags: flags) {
+            keyDown(code: code, modifiers: modifiers, at: t)
+        } else {
+            keyUp(code: code, modifiers: modifiers)
         }
-        guard mode == .idle else { return }
-        mode = .active
-        locked = false
-        downTime = t
-        onStart()
     }
 
-    private func fnUp(at t: TimeInterval) {
-        guard mode == .active, !locked else { return }
-        let held = t - downTime
-        if held >= holdMin {
-            // Push-to-talk release → stop + insert.
-            onFinish()
-            reset()
-        } else {
-            // Quick tap: wait one double-tap window. A second press latches immediately (handled in
-            // fnDown); if none comes, the lone tap still latches hands-free.
-            awaitingSecondTap = true
-            tapTimer?.invalidate()
-            tapTimer = Timer.scheduledTimer(withTimeInterval: doubleWindow, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.confirmLoneTapLatch() }
+    private func keyDown(code: UInt32, modifiers: UInt32, at t: TimeInterval) {
+        let pttMatch = isPTTBinding(code: code, modifiers: modifiers)
+        let dcMatch = isDoubleClickBinding(code: code, modifiers: modifiers)
+
+        if pushToTalkEnabled, pttMatch {
+            guard !pttKeyIsDown else { return }
+            pttKeyIsDown = true
+            cancelPTTHold()
+            pttHoldTimer = Timer.scheduledTimer(withTimeInterval: pttHoldGuard, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.pttKeyIsDown, !self.pttActivated else { return }
+                    self.resetClickState()
+                    self.pttActivated = true
+                    self.onPTTStart()
+                }
+            }
+        }
+
+        // Don't count PTT-key presses toward double-click while a hold is active or PTT is live.
+        if doubleClickEnabled, dcMatch, !pttActivated, !(pttMatch && pttKeyIsDown) {
+            registerDoubleClick(at: t)
+        }
+    }
+
+    private func keyUp(code: UInt32, modifiers: UInt32) {
+        if pushToTalkEnabled, isPTTBinding(code: code, modifiers: modifiers) {
+            let wasActivated = pttActivated
+            pttKeyIsDown = false
+            cancelPTTHold()
+            pttActivated = false
+            if wasActivated {
+                onPTTFinish()
             }
         }
     }
 
-    private func confirmLoneTapLatch() {
-        guard mode == .active, awaitingSecondTap else { return }
-        awaitingSecondTap = false
-        locked = true
+    private func registerDoubleClick(at t: TimeInterval) {
+        if pttActivated { return }
+
+        if let last = lastClickTime, t - last <= doubleClickInterval {
+            resetClickState()
+            cancelPTTHold()
+            onDoubleClickToggle()
+            return
+        }
+
+        lastClickTime = t
+        pendingClickTimer?.invalidate()
+        pendingClickTimer = Timer.scheduledTimer(withTimeInterval: doubleClickInterval, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.resetClickState() }
+        }
     }
 
-    private func reset() {
-        mode = .idle
-        locked = false
-        awaitingSecondTap = false
-        tapTimer?.invalidate()
-        tapTimer = nil
+    private func isPTTBinding(code: UInt32, modifiers: UInt32) -> Bool {
+        pushToTalkEnabled && matchesBinding(code: code, modifiers: modifiers,
+                                            keyCode: pttKeyCode, keyModifiers: pttKeyModifiers)
+    }
+
+    private func isDoubleClickBinding(code: UInt32, modifiers: UInt32) -> Bool {
+        doubleClickEnabled && matchesBinding(code: code, modifiers: modifiers,
+                                             keyCode: doubleClickKeyCode, keyModifiers: doubleClickKeyModifiers)
+    }
+
+    private func cancelPendingPTT() {
+        cancelPTTHold()
+        pttKeyIsDown = false
+        pttActivated = false
+    }
+
+    private func matchesBinding(code: UInt32, modifiers: UInt32,
+                                keyCode: UInt32, keyModifiers: UInt32) -> Bool {
+        guard code == keyCode else { return false }
+        let relevant: UInt32 = UInt32(controlKey | optionKey | shiftKey | cmdKey)
+        let eventMods = stripSelfModifier(code: code, from: modifiers) & relevant
+        let bindingMods = stripSelfModifier(code: keyCode, from: keyModifiers) & relevant
+        return eventMods == bindingMods
+    }
+
+    private func stripSelfModifier(code: UInt32, from mods: UInt32) -> UInt32 {
+        var m = mods
+        switch code {
+        case UInt32(kVK_Option), UInt32(kVK_RightOption): m &= ~UInt32(optionKey)
+        case UInt32(kVK_Shift), UInt32(kVK_RightShift):     m &= ~UInt32(shiftKey)
+        case UInt32(kVK_Control), UInt32(kVK_RightControl):  m &= ~UInt32(controlKey)
+        case UInt32(kVK_Command), UInt32(kVK_RightCommand):  m &= ~UInt32(cmdKey)
+        default: break
+        }
+        return m
+    }
+
+    private func resetClickState() {
+        lastClickTime = nil
+        pendingClickTimer?.invalidate()
+        pendingClickTimer = nil
+    }
+
+    private func cancelPTTHold() {
+        pttHoldTimer?.invalidate()
+        pttHoldTimer = nil
     }
 }
