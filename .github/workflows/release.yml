@@ -83,7 +83,7 @@ jobs:
   # Android downloads too. Publishing to Play and publishing to GitHub are independent shipping
   # channels and now fail independently.
   play:
-    name: Play Store (internal + production)
+    name: Play Store (upload to internal)
     needs: android
     runs-on: ubuntu-latest
     # Tag builds only, and only once the service account exists. The very first upload must be
@@ -118,31 +118,81 @@ jobs:
           echo "uploading $AAB_PATH"
           bundle exec fastlane internal
 
-      # ---- Production rollout ----
-      # Separate step from the upload: if the internal upload fails this must not run, and a
-      # green tick on the internal step should never be read as "it shipped".
+  # Promotion lives in its own job, not another step of `play`. Two reasons, both learned the
+  # hard way (#58): a promote that fails must be re-runnable on its own, and `gh run rerun
+  # --failed` re-runs a whole job — so while the upload shared this job, every retry died on
+  # "Version code N has already been used" before it ever reached the promote. That made the
+  # promote untestable in isolation for four releases running.
+  promote:
+    name: Play Store (promote to production)
+    needs: play
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    env:
+      PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby (fastlane)
+        if: ${{ env.PLAY_JSON != '' }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+
+      # supply reports "Track 'internal' doesn't have any releases" without showing what it
+      # actually read, which is why #58 went four releases undiagnosed. Print the track as Play
+      # returns it, so a failure carries its own evidence instead of needing a re-run to
+      # investigate. Informational only: never fail the job on this.
+      - name: "Dump internal track state (diagnostic for #58)"
+        if: ${{ env.PLAY_JSON != '' }}
+        continue-on-error: true
+        working-directory: android
+        run: |
+          printf '%s' "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          bundle exec ruby -e '
+            require "json"
+            require "googleauth"
+            require "google/apis/androidpublisher_v3"
+            api = Google::Apis::AndroidpublisherV3
+            svc = api::AndroidPublisherService.new
+            svc.authorization = Google::Auth::ServiceAccountCredentials.make_creds(
+              json_key_io: File.open(ENV["RUNNER_TEMP"] + "/play.json"),
+              scope: "https://www.googleapis.com/auth/androidpublisher",
+            )
+            pkg = "com.voicerewriter"
+            edit = svc.insert_edit_app_edit(pkg)
+            %w[internal production].each do |name|
+              begin
+                puts "--- track #{name} ---"
+                puts JSON.pretty_generate(svc.get_edit_track(pkg, edit.id, name).to_h)
+              rescue => e
+                puts "#{name}: #{e.class}: #{e.message}"
+              end
+            end
+            svc.delete_edit_app_edit(pkg, edit.id)
+          '
+
       # Staged at 20% (see the promote_production lane) — Play has no rollback, so the only
       # recovery from a bad production release is halting the rollout, which needs there to be
       # a rollout to halt. Raise it in the Play Console once the crash rate looks sane.
+      #
+      # No retry loop. There used to be one, on the theory that Play's edit API is
+      # read-after-write eventually consistent. The v1.4.0 timestamps disproved it: attempts at
+      # 2s and at 5m15s past the internal commit failed identically, so the lag was never the
+      # problem. Worse, the loop's comment claimed promotion is idempotent — it is not
+      # necessarily, since `upload_to_play_store` defaults to `deactivate_on_promote: true`,
+      # which empties the source track. Had an attempt ever half-succeeded, the retries would
+      # have reported a shipped release as a failure. One attempt, honest exit code; retry by
+      # re-running this job once the cause in #58 is understood.
       - name: Promote to production (staged rollout)
         if: ${{ env.PLAY_JSON != '' }}
         working-directory: android
         run: |
           printf '%s' "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
           export PLAY_JSON_KEY_FILE="$RUNNER_TEMP/play.json"
-          # Play's edit API is read-after-write eventually consistent. On v1.1.0 the promote ran
-          # two seconds after the internal commit and was told "Track 'internal' doesn't have any
-          # releases" — the release was there, the fresh edit just hadn't caught up. Retry with
-          # backoff rather than sleeping a fixed guess; the lag isn't a constant. Promotion is
-          # idempotent (it sets the production track to a release), so a retry after a partial
-          # success is safe.
-          for attempt in 1 2 3 4 5; do
-            if bundle exec fastlane promote_production; then exit 0; fi
-            echo "::warning::promote attempt ${attempt} failed — Play may not have caught up yet"
-            sleep $(( attempt * 30 ))
-          done
-          echo "::error::promote_production still failing after 5 attempts"
-          exit 1
+          bundle exec fastlane promote_production
 
   macos:
     name: macOS DMG
