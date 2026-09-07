@@ -77,6 +77,17 @@ object LlmModelManager {
             ModelDownloader.fetch(model(id).url, modelFile(context, id), onProgress)
         }
 
+    /**
+     * Delete model [id] from disk, freeing its bytes. Returns bytes reclaimed. The Settings UI
+     * only offers this for a downloaded-but-inactive model, per issue #53 — deleting the model
+     * the app is currently polishing with would leave the next dictation with nothing to load.
+     */
+    suspend fun delete(context: Context, id: String): Long = withContext(Dispatchers.IO) {
+        val freed = ModelDownloader.deleteWithSidecars(modelFile(context, id))
+        if (_downloadState.value == "done") _downloadState.value = "idle"
+        freed
+    }
+
     // --- Lifecycle-independent download — see ParakeetModelManager's for rationale. ---
 
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
