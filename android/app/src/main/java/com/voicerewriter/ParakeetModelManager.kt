@@ -81,6 +81,19 @@ object ParakeetModelManager {
         onProgress(1f)
     }
 
+    /**
+     * Delete the whole bundle, freeing its bytes. Returns bytes reclaimed. Only the four files
+     * this manager owns ([bundleFiles]) and their download sidecars are removed — the directory
+     * is shared with nothing, but deleting by name rather than wiping the dir keeps it that way
+     * if that ever changes.
+     */
+    suspend fun delete(context: Context): Long = withContext(Dispatchers.IO) {
+        var freed = 0L
+        for (name in FILES) freed += ModelDownloader.deleteWithSidecars(file(context, name))
+        if (_downloadState.value == "done") _downloadState.value = "idle"
+        freed
+    }
+
     // --- Lifecycle-independent download, so it survives whichever screen started it ---
     // (e.g. onboarding finishing and closing its Activity, which cancels any composition-
     // scoped coroutine). Any screen can observe [downloadState]/[downloadProgress] to show

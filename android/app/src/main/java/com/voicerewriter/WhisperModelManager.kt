@@ -50,6 +50,19 @@ object WhisperModelManager {
     fun isReady(context: Context, id: String): Boolean =
         modelFile(context, id).let { it.exists() && it.length() > MIN_VALID_BYTES }
 
+    /**
+     * Delete model [id] from disk, freeing its bytes. Returns bytes reclaimed (0 if it wasn't
+     * there). Callers are responsible for not deleting the model currently selected — the
+     * Settings UI only offers this on a downloaded-but-inactive model, per issue #53.
+     */
+    suspend fun delete(context: Context, id: String): Long = withContext(Dispatchers.IO) {
+        val freed = ModelDownloader.deleteWithSidecars(modelFile(context, id))
+        // The download flows landed in #55, so a stale "done" can now outlive the file it
+        // referred to. Clear it here rather than leaving onboarding to trust it.
+        if (_downloadState.value == "done") _downloadState.value = "idle"
+        freed
+    }
+
     /** Download model [id], reporting progress 0f..1f. Throws on network error. */
     suspend fun download(context: Context, id: String, onProgress: (Float) -> Unit) =
         withContext(Dispatchers.IO) {

@@ -43,6 +43,9 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -206,6 +209,10 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     val recommendedId = fit.sttModel
     val deviceHint = remember { DeviceFit.recommendationLabel(context) }
 
+    // Issue #53: a downloaded model you no longer want. Holds what's pending while the
+    // confirmation is up; null when nothing is.
+    var pendingDelete by remember { mutableStateOf<DeletableModel?>(null) }
+
     fun snapshot() = Settings(
         provider = provider, model = model.trim(), customEndpoint = customEndpoint.trim(),
         apiKey = apiKey.trim(), voice = voice, antiAI = antiAI, temperature = temperature.toDouble(),
@@ -248,6 +255,29 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             }
         }
     }
+    /**
+     * Delete a downloaded model and refresh the list. Never called for the active model — the
+     * row only offers it on a downloaded, inactive one — so nothing the app is about to load
+     * can disappear underneath it.
+     */
+    fun deleteModel(target: DeletableModel) {
+        launch {
+            val freed = when (target.kind) {
+                ModelKind.STT ->
+                    if (OnDeviceStt.isParakeet(target.id)) ParakeetModelManager.delete(context)
+                    else WhisperModelManager.delete(context, target.id)
+                ModelKind.LLM -> LlmModelManager.delete(context, target.id)
+            }
+            modelsRev++
+            val mb = freed / (1024 * 1024)
+            Toast.makeText(
+                context,
+                if (mb > 0) "Deleted ${target.label} — ${mb}MB freed" else "Deleted ${target.label}",
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
     fun downloadLlm(id: String) {
         dlId = id; dlProgress = 0f
         launch {
@@ -285,6 +315,14 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         }
                     }
                 }
+            }
+
+            pendingDelete?.let { target ->
+                DeleteModelDialog(
+                    target = target,
+                    onConfirm = { deleteModel(target); pendingDelete = null },
+                    onDismiss = { pendingDelete = null },
+                )
             }
 
             if (showA11yConsent) {
@@ -336,6 +374,9 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                                     name = m.name, meta = m.meta, recommended = m.recommended,
                                     state = sttModelState(m.id), progress = dlProgress,
                                     onGet = { downloadStt(m.id) }, onUse = { sttModel = m.id; persist() },
+                                    onDelete = {
+                                        pendingDelete = DeletableModel(ModelKind.STT, m.id, m.name, m.meta)
+                                    },
                                 )
                                 Spacer(Modifier.height(10.dp))
                             }
@@ -407,6 +448,9 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                                             name = m.label, meta = m.sizeLabel, recommended = m.recommended,
                                             state = llmModelState(m.id), progress = dlProgress,
                                             onGet = { downloadLlm(m.id) }, onUse = { provider = "local"; model = m.id; persist() },
+                                            onDelete = {
+                                                pendingDelete = DeletableModel(ModelKind.LLM, m.id, m.label, m.sizeLabel)
+                                            },
                                         )
                                     }
                                     Column {
@@ -568,6 +612,41 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     }
 }
 
+/* ------------------------ deleting a downloaded model (issue #53) ------------------------ */
+
+private enum class ModelKind { STT, LLM }
+
+private data class DeletableModel(
+    val kind: ModelKind,
+    val id: String,
+    val label: String,
+    val size: String,
+)
+
+/**
+ * Confirmation before removing a downloaded model. Worth a dialog rather than an instant
+ * delete: the file is hundreds of megabytes and getting it back means a download, which on a
+ * metered connection is a real cost. The copy says exactly that instead of "are you sure?".
+ */
+@Composable
+private fun DeleteModelDialog(target: DeletableModel, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete ${target.label}?") },
+        text = {
+            Text(
+                "This frees ${target.size.removePrefix("~")} on this device. The model stays " +
+                    "available — you can download it again from this screen whenever you want it, " +
+                    "which needs a connection.",
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text("Delete", color = Color(0xFFB4502E)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Keep") } },
+    )
+}
+
 /* ------------------------ model option tables ------------------------ */
 
 private data class SttModelOption(val id: String, val name: String, val meta: String, val recommended: Boolean)
@@ -699,8 +778,16 @@ private fun Segment(options: List<Pair<String, String>>, selected: String, onSel
     }
 }
 
+/**
+ * One model in a download list. [onDelete] is only rendered when the model is downloaded and
+ * not the active one (issue #53: a second model you no longer want had no way off the device —
+ * only "Use"). Deleting the active model is deliberately not offered: switch first, then delete.
+ */
 @Composable
-private fun ModelRow(name: String, meta: String, recommended: Boolean, state: String, progress: Float, onGet: () -> Unit, onUse: () -> Unit) {
+private fun ModelRow(
+    name: String, meta: String, recommended: Boolean, state: String, progress: Float,
+    onGet: () -> Unit, onUse: () -> Unit, onDelete: (() -> Unit)? = null,
+) {
     val cs = MaterialTheme.colorScheme
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.dp, cs.outline, RoundedCornerShape(12.dp)).padding(13.dp),
@@ -715,7 +802,19 @@ private fun ModelRow(name: String, meta: String, recommended: Boolean, state: St
             }
             when (state) {
                 "active" -> Badge("Active", Color(0xFF3E8E5A), Color(0xFFE7F3EA))
-                "downloaded" -> PillOutline("Use", onUse)
+                "downloaded" -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (onDelete != null) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Delete $name",
+                                tint = cs.onSurfaceVariant,
+                                modifier = Modifier.size(19.dp),
+                            )
+                        }
+                    }
+                    PillOutline("Use", onUse)
+                }
                 "downloading" -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.5.dp, color = cs.primary)
                 else -> PillButton("Get", onGet)
             }

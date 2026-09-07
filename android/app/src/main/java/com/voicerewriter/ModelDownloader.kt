@@ -55,6 +55,29 @@ object ModelDownloader {
         .build()
 
     /**
+     * Remove [target] and every sidecar a download leaves beside it — the `.part` body, the
+     * `.etag` validator, the `.sha256` linked hash. Deleting only the model would leave a
+     * resume state that a later fetch could try to continue from, so they go together.
+     *
+     * Returns the bytes actually reclaimed, for the caller to report.
+     */
+    fun deleteWithSidecars(target: File): Long {
+        var freed = 0L
+        for (f in listOf(
+            target,
+            File(target.parentFile, "${target.name}.part"),
+            File(target.parentFile, "${target.name}.etag"),
+            File(target.parentFile, "${target.name}.sha256"),
+        )) {
+            if (f.exists()) {
+                val n = f.length()
+                if (f.delete()) freed += n
+            }
+        }
+        return freed
+    }
+
+    /**
      * Fetch [url] into [target], resuming any previous partial attempt. [onProgress] reports
      * 0f..1f over the whole file, including bytes carried over from a previous attempt.
      *
