@@ -170,6 +170,13 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     }
     if (!loaded) return
 
+    // Device-fit inputs for the on-device model list below. Computed once per screen: reading
+    // ActivityManager and free space on every recomposition would be wasteful, and neither
+    // answer changes while Settings is open.
+    val fit = remember { DeviceFit.plan(context) }
+    val recommendedId = fit.sttModel
+    val deviceHint = remember { DeviceFit.recommendationLabel(context) }
+
     fun snapshot() = Settings(
         provider = provider, model = model.trim(), customEndpoint = customEndpoint.trim(),
         apiKey = apiKey.trim(), voice = voice, antiAI = antiAI, temperature = temperature.toDouble(),
@@ -286,9 +293,16 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         Padded {
                             Text("Models download once, then run fully offline.",
                                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(6.dp))
+                            // Which model suits *this* phone, not which is biggest. The list
+                            // below shows every option regardless — this is the hint that keeps
+                            // someone on a 3GB device from picking the 631MB one and hitting an
+                            // out-of-memory failure they have no way to diagnose.
+                            Text(deviceHint,
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(12.dp))
                             modelsRev // read so this recomposes after a download finishes
-                            sttModelOptions().forEach { m ->
+                            sttModelOptions(recommendedId).forEach { m ->
                                 ModelRow(
                                     name = m.name, meta = m.meta, recommended = m.recommended,
                                     state = sttModelState(m.id), progress = dlProgress,
@@ -496,9 +510,22 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
 
 private data class SttModelOption(val id: String, val name: String, val meta: String, val recommended: Boolean)
 
-private fun sttModelOptions(): List<SttModelOption> = buildList {
-    add(SttModelOption(ParakeetModelManager.MODEL_ID, "Parakeet", "${ParakeetModelManager.SIZE_LABEL} · most accurate", true))
-    WhisperModelManager.MODELS.forEach { add(SttModelOption(it.id, it.label, it.sizeLabel, false)) }
+/**
+ * Every on-device speech model, with the "recommended" badge on whichever one [DeviceFit]
+ * picked for this phone rather than always on Parakeet. The list itself never shrinks — a
+ * budget device can still choose the large model deliberately, it just isn't told to.
+ */
+private fun sttModelOptions(recommendedId: String): List<SttModelOption> = buildList {
+    add(
+        SttModelOption(
+            ParakeetModelManager.MODEL_ID, "Parakeet",
+            "${ParakeetModelManager.SIZE_LABEL} · most accurate",
+            OnDeviceStt.isParakeet(recommendedId),
+        ),
+    )
+    WhisperModelManager.MODELS.forEach {
+        add(SttModelOption(it.id, it.label, it.sizeLabel, it.id == recommendedId))
+    }
 }
 
 private fun keyPlaceholder(provider: String) = when (provider) {

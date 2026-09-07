@@ -1,7 +1,14 @@
 package com.voicerewriter
 
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -49,4 +56,36 @@ object WhisperModelManager {
             if (isReady(context, id)) { onProgress(1f); return@withContext }
             ModelDownloader.fetch(model(id).url, modelFile(context, id), onProgress)
         }
+
+    // --- Lifecycle-independent download, mirroring [ParakeetModelManager] ---
+    // Onboarding now picks its speech engine per device ([DeviceFit]), so a Whisper size can be
+    // the model the first-run flow is waiting on. That flow observes state rather than owning
+    // the coroutine, because the Activity closing must not cancel a half-finished download.
+
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val _downloadState = MutableStateFlow("idle") // "idle" | "downloading" | "done" | "error"
+    val downloadState: StateFlow<String> = _downloadState.asStateFlow()
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+    private val _downloadError = MutableStateFlow<String?>(null)
+    val downloadError: StateFlow<String?> = _downloadError.asStateFlow()
+
+    /** Idempotent: no-ops if [id] is already downloaded or a download is already in flight. */
+    fun ensureDownloading(context: Context, id: String) {
+        if (_downloadState.value == "downloading") return
+        val appContext = context.applicationContext
+        if (isReady(appContext, id)) { _downloadState.value = "done"; return }
+        _downloadState.value = "downloading"; _downloadProgress.value = 0f; _downloadError.value = null
+        managerScope.launch {
+            try {
+                download(appContext, id) { p -> _downloadProgress.value = p }
+                _downloadState.value = "done"
+            } catch (t: Throwable) {
+                Log.w("WhisperModel", "download failed", t)
+                _downloadError.value = t.message ?: "Download failed"
+                _downloadState.value = "error"
+            }
+        }
+    }
 }
