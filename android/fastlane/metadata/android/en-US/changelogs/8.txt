@@ -1,0 +1,8 @@
+Auto-stop actually works now, and you can hold to talk.
+
+• Fixed: dictation never stopped on its own. Voice detection scored every frame as silence, so it never heard you finish. Auto-stop on pause works now.
+• Hold the bubble to talk, release to send. Tap it for hands-free long-form.
+• Setup picks models your phone can actually run, from its RAM and free space.
+• Delete a model you don't use to get the space back.
+
+Still 100% on-device by default, no account, no ads, MIT-licensed.
