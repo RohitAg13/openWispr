@@ -76,12 +76,16 @@ import kotlinx.coroutines.withContext
  * auto-insert (accessibility, with the tap-to-talk bubble/overlay permission folded in) →
  * first dictation → done.
  *
- * The shape is dictated by one constraint: the speech model is ~631MB, so unlike a cloud
- * dictation app we cannot let the user succeed before asking for anything. Instead the
- * download starts immediately and the permission steps cover it, so by the time they reach
- * the try-it step the model has usually landed — and if it hasn't, that step shows progress
- * rather than a wall. The download is presented as what it is: the reason nothing has to be
- * uploaded, rather than a toll on the way in.
+ * The shape is dictated by one constraint: the speech model is hundreds of megabytes, so
+ * unlike a cloud dictation app we cannot let the user succeed before asking for anything.
+ * Instead the download starts immediately and the permission steps cover it, so by the time
+ * they reach the try-it step the model has usually landed — and if it hasn't, that step shows
+ * progress rather than a wall. The download is presented as what it is: the reason nothing has
+ * to be uploaded, rather than a toll on the way in.
+ *
+ * Which model that is depends on the phone. [DeviceFit] reads RAM and free storage before the
+ * first byte is fetched and picks a pair this device can actually run, so a budget phone gets a
+ * smaller on-device model instead of a 1GB download it will OOM on at the try-it step.
  *
  * On-device is the only path here; cloud transcription stays available later in Settings, as
  * does personalization (dictionary, contacts, tone), which is deliberately not in this flow.
@@ -114,10 +118,10 @@ class OnboardingActivity : ComponentActivity() {
     }
 }
 
-// Onboarding downloads exactly these two on-device models — no engine choice. Anything
-// else (Whisper, cloud) stays reachable from Settings for people who go looking.
-private const val ONBOARDING_STT_MODEL = ParakeetModelManager.MODEL_ID
-private val ONBOARDING_LLM_MODEL = LlmModelManager.DEFAULT_MODEL
+// Onboarding downloads exactly one speech model and one polish model — no engine choice is
+// put to the user. Which pair it is comes from [DeviceFit.plan]: the full pair on a phone with
+// the memory to run it, a smaller on-device pair otherwise. Anything else (a different Whisper
+// size, cloud) stays reachable from Settings for people who go looking.
 
 // Read aloud at the try-it step, and chosen by running candidates through the real pipeline:
 // this one fires filler removal, spoken punctuation and list formatting, and turns a single
@@ -151,12 +155,23 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     var overlayGranted by remember { mutableStateOf(SetupUtils.canDrawOverlays(ctx)) }
     var a11yGranted by remember { mutableStateOf(SetupUtils.accessibilityEnabled(ctx)) }
 
+    // Which models this phone gets, decided from its RAM and free storage before anything is
+    // fetched — see [DeviceFit]. Computed once and remembered, because every flow selection
+    // below keys off it and it must not change mid-flow.
+    val fit = remember { DeviceFit.plan(ctx) }
+    val fitNote = remember(fit) { DeviceFit.explain(fit) }
+
     // Downloads live on the model managers themselves (not this composition), so they keep
     // running across activity/process transitions — e.g. finishing onboarding before either
-    // one completes. This screen just observes and, below, kicks them off.
-    val dl by ParakeetModelManager.downloadState.collectAsState()
-    val dlPct by ParakeetModelManager.downloadProgress.collectAsState()
-    val dlError by ParakeetModelManager.downloadError.collectAsState()
+    // one completes. This screen just observes and, below, kicks them off. Which speech
+    // manager it observes follows [fit]: Parakeet on a phone that can run it, Whisper
+    // otherwise.
+    val sttState = if (fit.usesParakeet) ParakeetModelManager.downloadState else WhisperModelManager.downloadState
+    val sttProgress = if (fit.usesParakeet) ParakeetModelManager.downloadProgress else WhisperModelManager.downloadProgress
+    val sttError = if (fit.usesParakeet) ParakeetModelManager.downloadError else WhisperModelManager.downloadError
+    val dl by sttState.collectAsState()
+    val dlPct by sttProgress.collectAsState()
+    val dlError by sttError.collectAsState()
     val llmDl by LlmModelManager.downloadState.collectAsState()
     val llmPct by LlmModelManager.downloadProgress.collectAsState()
 
@@ -257,18 +272,31 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
     fun persistStt() {
         scope.launch(Dispatchers.IO) {
             val repo = SettingsRepository(ctx)
-            repo.save(repo.get().copy(sttProvider = "local", sttModel = ONBOARDING_STT_MODEL))
+            val cur = repo.get()
+            repo.save(
+                cur.copy(
+                    sttProvider = "local",
+                    sttModel = fit.sttModel,
+                    // Only steer the polish model when polish is still on-device. If someone
+                    // re-runs onboarding after pointing the app at a cloud provider, that's
+                    // their choice to keep, not ours to overwrite with a GGUF id.
+                    model = if (cur.provider == "local") fit.llmModel else cur.model,
+                ),
+            )
         }
     }
 
     // Downloads start the moment onboarding opens — no "download" tap needed. Speech goes
     // first and alone: it's the only model the first dictation needs, and making it share
     // bandwidth with the polish model just pushes back the moment the user can actually talk.
-    LaunchedEffect(Unit) { ParakeetModelManager.ensureDownloading(ctx) }
+    LaunchedEffect(Unit) {
+        if (fit.usesParakeet) ParakeetModelManager.ensureDownloading(ctx)
+        else WhisperModelManager.ensureDownloading(ctx, fit.sttModel)
+    }
     LaunchedEffect(dl) {
         if (dl == "done") persistStt()
         // Failed speech shouldn't strand polish — start it either way, just not first.
-        if (dl == "done" || dl == "error") LlmModelManager.ensureDownloading(ctx, ONBOARDING_LLM_MODEL)
+        if (dl == "done" || dl == "error") LlmModelManager.ensureDownloading(ctx, fit.llmModel)
     }
 
     fun finishOnboarding() {
@@ -298,8 +326,12 @@ private fun OnboardingScreen(onLaunchDictation: () -> Unit, onGoHome: () -> Unit
                 when (step) {
                     0 -> WelcomeStep(onNext = { next() })
                     1 -> PrivacyStep(
-                        dl = dl, dlPct = dlPct, dlError = dlError,
-                        onRetry = { ParakeetModelManager.ensureDownloading(ctx) }, onNext = { next() },
+                        dl = dl, dlPct = dlPct, dlError = dlError, fitNote = fitNote,
+                        onRetry = {
+                            if (fit.usesParakeet) ParakeetModelManager.ensureDownloading(ctx)
+                            else WhisperModelManager.ensureDownloading(ctx, fit.sttModel)
+                        },
+                        onNext = { next() },
                     )
                     2 -> MicStep(
                         granted = micGranted, blocked = micBlocked,
@@ -526,10 +558,15 @@ private fun WelcomeStep(onNext: () -> Unit) {
  * Deliberately withheld: file sizes, model names, and the fact that there are two models at
  * all. None of it changes what the user does next, and every number here is one more thing to
  * feel anxious about. The second model is sequenced behind the first and simply arrives.
+ *
+ * One deliberate exception: [fitNote]. When [DeviceFit] has downgraded this phone to a smaller
+ * model, or found it short on space, the user is going to notice the consequence either way —
+ * as lower accuracy, or as a download that stops partway. Saying it once, here, is the only
+ * version of that where they know why and what to do about it.
  */
 @Composable
 private fun PrivacyStep(
-    dl: String, dlPct: Float, dlError: String?,
+    dl: String, dlPct: Float, dlError: String?, fitNote: String?,
     onRetry: () -> Unit, onNext: () -> Unit,
 ) {
     val cs = MaterialTheme.colorScheme
@@ -551,6 +588,14 @@ private fun PrivacyStep(
             if (dl == "error") {
                 Spacer(Modifier.height(16.dp))
                 Text(dlError ?: "Download failed", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB4502E))
+            }
+            if (fitNote != null) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    fitNote,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = cs.onSurfaceVariant,
+                )
             }
             Spacer(Modifier.height(20.dp))
             // Concrete and testable by the user later, which is what makes it land as proof
