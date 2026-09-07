@@ -3,7 +3,6 @@ package com.voicerewriter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.content.ContextCompat
 
 /**
  * Lets the bubble be started/stopped without the UI — handy for testing
@@ -12,11 +11,11 @@ import androidx.core.content.ContextCompat
  */
 class BubbleControlReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // Routed through SetupUtils so these behave exactly like the in-app toggle, including
+        // persisting the on/off state that BootReceiver reads.
         when (intent.action) {
-            "com.voicerewriter.STOP_BUBBLE" ->
-                context.stopService(Intent(context, BubbleService::class.java))
-            else ->
-                ContextCompat.startForegroundService(context, Intent(context, BubbleService::class.java))
+            "com.voicerewriter.STOP_BUBBLE" -> SetupUtils.stopBubble(context)
+            else -> SetupUtils.startBubble(context)
         }
     }
 }

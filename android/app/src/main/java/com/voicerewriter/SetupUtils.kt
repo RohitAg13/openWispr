@@ -40,10 +40,20 @@ object SetupUtils {
 
     // ---- bubble service ----
 
-    fun startBubble(ctx: Context) =
+    /**
+     * Start the bubble and remember that the user wants it, so [BootReceiver] can bring it back
+     * after a reboot. Recording the intent here rather than in the service means every existing
+     * caller (onboarding, Settings, the debug receiver) gets the persistence for free.
+     */
+    fun startBubble(ctx: Context) {
+        BubblePrefs.setEnabled(ctx, true)
         ContextCompat.startForegroundService(ctx, Intent(ctx, BubbleService::class.java))
+    }
 
-    fun stopBubble(ctx: Context) = ctx.stopService(Intent(ctx, BubbleService::class.java))
+    fun stopBubble(ctx: Context) {
+        BubblePrefs.setEnabled(ctx, false)
+        ctx.stopService(Intent(ctx, BubbleService::class.java))
+    }
 
     // ---- deep-link intents ----
 
