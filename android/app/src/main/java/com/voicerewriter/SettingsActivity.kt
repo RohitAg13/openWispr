@@ -514,6 +514,27 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             }
 
             // ---------------- GENERAL ----------------
+            // ---------------- FEEDBACK ----------------
+            // There was no way to reach us from inside the app at all, so the only channel was a
+            // Play review, which we can reply to but not ask questions in. Both rows prefill the
+            // version/device details and then hand off to the user's own mail app or browser;
+            // nothing is transmitted by us.
+            Section("Feedback") {
+                Card {
+                    NavRow("Send feedback", "Email us. Ideas, bugs, anything.") {
+                        launchOrNotify(context, Feedback.emailIntent(context), "No email app found. Write to ${Feedback.EMAIL}")
+                    }
+                    Divider()
+                    NavRow("Report a problem", "Open an issue on GitHub") {
+                        launchOrNotify(context, Feedback.issueIntent(context), "Couldn't open a browser.")
+                    }
+                    Divider()
+                    NavRow("Rate OpenWispr", "Leave a review on Google Play") {
+                        launchOrNotify(context, Feedback.playListingIntent(context), "Couldn't open Google Play.")
+                    }
+                }
+            }
+
             Section("General") {
                 Card {
                     NavRow("Replay onboarding", "Walk through setup again") { context.startActivity(OnboardingActivity.intent(context)) }
@@ -775,6 +796,19 @@ private fun PillOutline(label: String, onClick: () -> Unit) {
  * and because BuildConfig generation is off by default in AGP 8 and would need a new build flag
  * for one string.
  */
+/**
+ * Start [intent], or say why it didn't work. A phone with no mail client (or no browser) is
+ * unusual but real, and an unhandled ActivityNotFoundException would crash the whole Settings
+ * screen for a tap on a feedback row.
+ */
+private fun launchOrNotify(context: Context, intent: Intent, fallback: String) {
+    try {
+        context.startActivity(intent)
+    } catch (_: Exception) {
+        Toast.makeText(context, fallback, Toast.LENGTH_LONG).show()
+    }
+}
+
 private fun appVersion(context: Context): String = try {
     context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
 } catch (_: Exception) {

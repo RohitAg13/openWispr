@@ -26,7 +26,23 @@ class AudioRecorder(private val context: Context) {
         const val SAMPLE_RATE = 16_000 // Whisper is trained at 16 kHz
         private const val SPEECH_START_PROB = 0.5f
         private const val SPEECH_END_PROB = 0.35f
-        private const val HANGOVER_SAMPLES = (0.8 * SAMPLE_RATE).toInt()  // stop after ~0.8s silence
+
+        /**
+         * Silence needed before auto-stop fires. Was 0.8s, which is shorter than an ordinary
+         * mid-sentence pause ("so... the thing is") and cut people off mid-thought - the main
+         * reason auto-stop felt broken on a phone. Tap is now the long-form gesture, so this
+         * leans patient; hold-to-talk covers the case where you want to end it instantly.
+         */
+        private const val HANGOVER_SAMPLES = (1.6 * SAMPLE_RATE).toInt()
+
+        /**
+         * Speech that must accumulate before auto-stop can arm at all. Without this, one
+         * 32ms frame over the start threshold - a cough, a door, a keyboard click - counted
+         * as "they started talking", and the hangover then ended the recording before the
+         * user had said a word.
+         */
+        private const val MIN_SPEECH_SAMPLES = (0.4 * SAMPLE_RATE).toInt()
+
         private const val PRE_PAD_SAMPLES = (0.2 * SAMPLE_RATE).toInt()
         private const val POST_PAD_SAMPLES = (0.3 * SAMPLE_RATE).toInt()
     }
@@ -45,8 +61,17 @@ class AudioRecorder(private val context: Context) {
     private var firstSpeechSample = 0
     private var lastSpeechSample = 0
     private var autoStopFired = false
+    private var speechSamples = 0
 
     val isRecording: Boolean get() = recording
+
+    /**
+     * Whether this take will actually auto-stop. False when the setting is off *and* when the
+     * Silero model failed to load, which is silent otherwise - the UI used to promise "I'll
+     * stop when you pause" either way and then never stop.
+     */
+    @Volatile var vadActive: Boolean = false
+        private set
 
     /** Current peak amplitude (0..32767) for waveform visualization. */
     fun amplitude(): Int = lastPeak
@@ -66,7 +91,9 @@ class AudioRecorder(private val context: Context) {
         firstSpeechSample = 0
         lastSpeechSample = 0
         autoStopFired = false
+        speechSamples = 0
         vad = if (vadAutoStop) SileroVad.shared(context)?.also { it.reset() } else null
+        vadActive = vad != null
 
         val frame = SileroVad.CHUNK // 512 samples; small reads → responsive VAD
         val minBuf = max(
@@ -118,8 +145,12 @@ class AudioRecorder(private val context: Context) {
                 firstSpeechSample = max(0, endSample - SileroVad.CHUNK - PRE_PAD_SAMPLES)
             }
             lastSpeechSample = endSample
+            speechSamples += SileroVad.CHUNK
         }
-        if (speechStarted && !autoStopFired && prob < SPEECH_END_PROB) {
+        // speechSamples, not speechStarted: a single stray frame over the threshold must not be
+        // enough to arm the auto-stop. Trimming still keys off speechStarted, so a short blip
+        // that never arms this can't lose the audio around it either.
+        if (speechSamples >= MIN_SPEECH_SAMPLES && !autoStopFired && prob < SPEECH_END_PROB) {
             if (endSample - lastSpeechSample >= HANGOVER_SAMPLES) {
                 autoStopFired = true
                 onAutoStop?.let { cb -> mainHandler.post { cb() } }

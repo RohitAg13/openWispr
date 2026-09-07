@@ -33,9 +33,12 @@ import kotlin.math.abs
 
 /**
  * Foreground service that paints a draggable bubble. Gestures:
- *  - single tap  → start dictation (or stop the current recording)
- *  - long press  → start a clipboard-rewrite recording
- *  - drag        → reposition
+ *  - single tap  → start a hands-free dictation (tap again to stop). Long-form: your hands are
+ *                  free, and auto-stop ends it if enabled.
+ *  - hold        → talk while held, release to send. Short-form, and no VAD has to guess where
+ *                  you finished. This is the split Wispr Flow and the desktop tools converged
+ *                  on; see research/07-recommendations.md.
+ *  - drag        → reposition (disabled once a hold-to-talk take is live)
  *
  * Recording itself runs in RewriteActivity (a visible activity legitimately holds
  * the mic on Android 14; a background overlay cannot start a mic service). While
@@ -57,6 +60,14 @@ class BubbleService : Service() {
          */
         @Volatile
         var recordingStopper: (() -> Unit)? = null
+
+        /**
+         * True while a finger is held on the bubble for hold-to-talk. Read by RewriteActivity
+         * the moment its recorder is up, to catch the release that arrived while the activity
+         * was still starting.
+         */
+        @Volatile
+        var holdingToTalk = false
 
         private const val CHANNEL_ID = "bubble"
         private const val NOTIF_ID = 1
@@ -145,7 +156,7 @@ class BubbleService : Service() {
         return builder
             .setSmallIcon(R.drawable.ic_aperture)
             .setContentTitle("OpenWispr")
-            .setContentText("Tap a text field to dictate · long-press to transform")
+            .setContentText("Tap to dictate · hold to talk, release to send")
             .setOngoing(true)
             .build()
     }
@@ -213,12 +224,28 @@ class BubbleService : Service() {
         var longFired = false
         val touchSlop = 12 * density
 
+        // Hold-to-talk. Deliberately the *short* gesture: your finger is pinned for the whole
+        // recording, so it can't run long, and releasing is an unambiguous end - no VAD has to
+        // guess. Tap is the long-form one. Wispr Flow, Handy, Amical, FreeFlow and Muesli all
+        // landed on this same split (see research/07-recommendations.md).
         val longPress = Runnable {
             if (!moved && recordingStopper == null) {
                 longFired = true
-                vibrate(longArrayOf(0, 28, 50, 28)) // double tick distinguishes long-press
-                launchRewrite(Defaults.MODE_TRANSFORM, autoRecord = false)
+                holdingToTalk = true
+                vibrate(longArrayOf(0, 28, 50, 28)) // double tick distinguishes hold from tap
+                launchRewrite(Defaults.MODE_DICTATE, autoRecord = true, pushToTalk = true)
             }
+        }
+
+        /**
+         * End of a hold-to-talk. The recording lives in RewriteActivity, which is still
+         * launching when a quick release lands, so [recordingStopper] may not exist yet.
+         * Clearing [holdingToTalk] covers that: the activity checks it once the recorder is
+         * up and stops itself immediately if the finger is already gone.
+         */
+        fun endHold() {
+            holdingToTalk = false
+            recordingStopper?.let { mainHandler.post(it) }
         }
 
         frame.setOnTouchListener { _, e ->
@@ -234,6 +261,10 @@ class BubbleService : Service() {
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    // Once hold-to-talk is live the bubble is a mic button, not a draggable
+                    // thing. Letting it drag here would both move it mid-sentence and risk
+                    // dropping it on the dismiss target while recording.
+                    if (longFired) return@setOnTouchListener true
                     val dx = e.rawX - downRawX
                     val dy = e.rawY - downRawY
                     if (abs(dx) > touchSlop || abs(dy) > touchSlop) {
@@ -257,6 +288,14 @@ class BubbleService : Service() {
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     mainHandler.removeCallbacks(longPress)
+                    if (longFired) {
+                        // Release ends the take. ACTION_CANCEL lands here too, deliberately:
+                        // if the window system takes the gesture away mid-hold we must not
+                        // leave a recording running with nothing able to stop it.
+                        vibrate(longArrayOf(0, 18))
+                        endHold()
+                        return@setOnTouchListener true
+                    }
                     if (moved && overDismiss) {
                         vibrate(longArrayOf(0, 40))
                         // Drag-to-dismiss is the user switching the bubble off, so it must not
@@ -270,7 +309,7 @@ class BubbleService : Service() {
                     hideDismiss()
                     overDismiss = false
                     if (moved) BubblePrefs.setPosition(this@BubbleService, params.x, params.y)
-                    if (!moved && !longFired) onTap()
+                    if (!moved) onTap()
                     true
                 }
                 else -> false
@@ -362,12 +401,12 @@ class BubbleService : Service() {
         else launchRewrite(Defaults.MODE_DICTATE)
     }
 
-    private fun launchRewrite(mode: String, autoRecord: Boolean = true) {
+    private fun launchRewrite(mode: String, autoRecord: Boolean = true, pushToTalk: Boolean = false) {
         startActivity(
             Intent(this, RewriteActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .putExtra(RewriteActivity.EXTRA_MODE, mode)
                 .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, autoRecord)
+                .putExtra(RewriteActivity.EXTRA_PUSH_TO_TALK, pushToTalk)
         )
     }
 
@@ -513,6 +552,10 @@ class BubbleService : Service() {
         waveView = null
         dismissView = null
         isRunning = false
+        // The bubble going away mid-hold means no ACTION_UP is ever delivered, so clear the flag
+        // here too. A stale `true` would tell the next hold-to-talk take that a finger is still
+        // down, and nothing would be left to stop it.
+        holdingToTalk = false
         if (instance === this) instance = null
     }
 }

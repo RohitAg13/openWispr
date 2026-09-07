@@ -100,7 +100,6 @@ class OnboardingActivity : ComponentActivity() {
     private fun launchDictation() {
         startActivity(
             Intent(this, RewriteActivity::class.java)
-                .putExtra(RewriteActivity.EXTRA_MODE, Defaults.MODE_DICTATE)
                 .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, true),
         )
     }
@@ -937,7 +936,9 @@ private fun DoneStep(
             Spacer(Modifier.height(24.dp))
             Text("You're all set.", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = cs.onBackground, textAlign = TextAlign.Center)
             Spacer(Modifier.height(12.dp))
-            Text("Tap the bubble in any app and start talking. Everything stays on your phone.", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant, textAlign = TextAlign.Center)
+            // Teaches both gestures in one line. Wispr Flow spends a whole onboarding screen on
+            // the second one, which suggests hold-to-talk is not self-discoverable.
+            Text("Tap the bubble to talk, or hold it and release for a quick line. Everything stays on your phone.", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant, textAlign = TextAlign.Center)
             Spacer(Modifier.height(24.dp))
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(cs.surface).border(1.dp, cs.outline, RoundedCornerShape(14.dp))) {
                 RecapRow("Microphone", if (micOn) "On" else "Later", micOn, false)
