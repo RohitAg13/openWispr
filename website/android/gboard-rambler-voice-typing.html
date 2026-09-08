@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gboard Rambler needs a Pixel 11 and a connection — what to use otherwise (2026)</title>
+<meta name="description" content="Google's Rambler voice input is genuinely good AI dictation, and per Google's own help page it requires Pixel 11 series devices and an internet connection for its full feature set. Here's what that leaves for everyone else, and how on-device dictation compares.">
+<meta property="og:title" content="Gboard Rambler: the two prerequisites in Google's own documentation">
+<meta property="og:description" content="Rambler requires a Pixel 11 and a connection for full features. If you have both, use it — it's free and built in. This page is for the phones it doesn't cover.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/android/gboard-rambler-voice-typing.html">
+<link rel="canonical" href="https://openwispr.dev/android/gboard-rambler-voice-typing.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which phones support Gboard Rambler?","acceptedAnswer":{"@type":"Answer","text":"Google's Rambler help page lists Pixel 11 series devices under Prerequisites, along with the latest Gboard as your default keyboard and microphone permission (checked 7 September 2026). At announcement in May 2026, TechCrunch reported an initial rollout to Samsung Galaxy and Pixel phones with wider Android support to follow, so the supported list is likely to grow — check Google's page for the current state."}},{"@type":"Question","name":"Does Gboard Rambler work offline?","acceptedAnswer":{"@type":"Answer","text":"Partly, and Google documents exactly how much. Offline, \"basic cleanup, punctuation, and capitalization remain active,\" while \"advanced stylistic rewrites and complex conversational voice editing resume seamlessly once an active network connection is restored.\" The Prerequisites section asks for \"an active internet connection for full features.\" If connectivity drops mid-dictation you get a Retry button to process the input after you finish."}},{"@type":"Question","name":"Does Rambler send my voice to Google?","acceptedAnswer":{"@type":"Answer","text":"Yes, and Google states the terms: \"your text, audio input, and your corrections to voice output will be temporarily processed by Google… They're never saved, stored, or shared, and they're deleted immediately after your text is delivered.\" The company describes the architecture as a combination of on-device and cloud processing. That is a retention commitment rather than an architectural guarantee — the difference matters only for some people and some content, but it is a real difference."}},{"@type":"Question","name":"Is there an AI dictation option for a non-Pixel or older Android phone?","acceptedAnswer":{"@type":"Answer","text":"Yes — that's the gap OpenWispr is built for. It runs speech recognition and AI cleanup entirely on the device, on Android 7.0 and up, and picks a model sized to your phone's memory rather than assuming a flagship. It is free and MIT-licensed. It is not a keyboard, though: it dictates through a floating bubble alongside whatever keyboard you already use."}},{"@type":"Question","name":"Is Rambler free?","acceptedAnswer":{"@type":"Answer","text":"Yes, on a supported device — it's part of Gboard. Google's help page does note that \"Rambler is subject to usage limits,\" without publishing a number."}},{"@type":"Question","name":"Rambler or OpenWispr?","acceptedAnswer":{"@type":"Answer","text":"If you have a Pixel 11 and a normal connection, try Rambler first: it's already installed, it's free, and its conversational editing goes further than OpenWispr's. Choose OpenWispr if your phone isn't supported, if you dictate somewhere with no signal, if you'd rather your voice never left the device at all, or if you want a tool whose privacy claim you can read the source of."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Android","item":"https://openwispr.dev/android/on-device-whisper-dictation-android.html"},{"@type":"ListItem","position":3,"name":"Gboard Rambler","item":"https://openwispr.dev/android/gboard-rambler-voice-typing.html"}]}</script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden;">
+  <div style="position:absolute; top:-180px; left:50%; transform:translateX(-50%); width:1100px; height:560px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.55), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:820px; margin:0 auto; padding:50px 32px 60px; text-align:center;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:26px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">Android · Gboard Rambler</span>
+    </div>
+    <h1 style="font-size:48px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 20px;">Gboard's AI dictation is very good. It needs a Pixel 11.</h1>
+    <p style="font-size:18px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0 auto 30px; max-width:620px;">Google's Rambler turns rambling speech into clean text, free, inside the keyboard you already have. Its own help page lists two prerequisites: Pixel 11 series devices, and a connection for the full feature set. This page is about what that means for every other Android phone.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.985 0.012 82); background:oklch(0.66 0.13 40); padding:14px 22px; border-radius:12px; box-shadow:0 10px 24px -10px oklch(0.55 0.13 38 / 0.7);">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; color:oklch(0.32 0.03 47); background:oklch(0.995 0.006 85); border:1px solid oklch(0.88 0.014 70); padding:14px 22px; border-radius:12px;">Get it on Google Play</a>
+    </div>
+    <div style="margin-top:20px; font-size:13px; color:oklch(0.55 0.025 52);">Facts below are from Google's own Gboard help page and TechCrunch's launch report, checked 7 September 2026.</div>
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.55 0.03 50);">Android</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">Gboard Rambler</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Start here</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">If you have a Pixel 11, stop reading and use Rambler</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">This is not a page arguing that Google's dictation is bad. Rambler is Gemini-powered voice input built into Gboard: it removes filler words, punctuates and formats as you speak, follows mid-sentence corrections, handles rewrites by voice ("make this sound more professional"), and switches languages mid-sentence across Arabic, English, French, German, Hindi and other Indian languages, Italian, Japanese, Korean, Portuguese, Russian and Spanish. It costs nothing and it is already installed. On a supported phone it is the obvious first thing to try, and we would rather you found that out here than after a download.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The reason this page exists is the <b>Prerequisites</b> section of <a href="https://support.google.com/gboard/answer/17468539" style="color:oklch(0.5 0.1 40); text-decoration:underline;">Google's own Rambler help page</a>. As of 7 September 2026 it lists, verbatim: <b>Pixel 11 series devices</b>, the latest Gboard set as your default keyboard, microphone permission, and <b>"an active internet connection for full features of Rambler. Offline is supported but with limited features."</b></p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">That is a narrower gate than the launch coverage suggested. When Rambler was announced at Android Show: I/O Edition on 12 May 2026, <a href="https://techcrunch.com/2026/05/12/google-adds-gemini-powered-dictation-to-gboard-which-could-be-bad-news-for-dictation-startups/" style="color:oklch(0.5 0.1 40); text-decoration:underline;">TechCrunch reported</a> the features would be "limited to Samsung Galaxy and Google Pixel phones for an initial summer rollout but will eventually reach other Android devices." Four months later, Google's own documentation names one device family. It will presumably widen; today it hasn't.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">What offline actually means here</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">Rambler offline is a reduced Rambler, and it says so</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Google documents the offline behaviour plainly, which is more than most: "When your device has limited network connectivity or offline, Rambler still processes voice input, but without the full set of features. Basic cleanup, punctuation, and capitalization remain active. Advanced stylistic rewrites and complex conversational voice editing resume seamlessly once an active network connection is restored." If you lose connectivity mid-dictation, the documented flow is a <b>Retry</b> button you tap after you finish.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">On the privacy side Google is equally direct, and the wording is worth reading closely: "When you use Rambler, your text, audio input, and your corrections to voice output will be temporarily processed by Google… They're never saved, stored, or shared, and they're deleted immediately after your text is delivered." At the launch briefing, Android Core Experiences director Ben Greenwood described the approach as "a combination of on-device and cloud-based processing."</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">So Rambler's guarantee is a <i>retention policy</i>: your audio goes to Google and is deleted immediately. That is a real and meaningful commitment, and it is a categorically different thing from audio that never leaves the phone, because one depends on a company keeping a promise and the other depends on there being no network call to make. Which of those you need is a genuine judgment call and depends entirely on what you dictate.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">One more documented limit worth knowing before you build a habit on it: Google's help page states that "Rambler is subject to usage limits," designed "to ensure an optimal experience for everyone." No number is published.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">The other phones</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">What ordinary Gboard voice typing does on everything else</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If your phone isn't in the Rambler list, Gboard falls back to standard voice typing — the word-for-word transcription that has been there for years. It is fast and it is free, and it does not do the thing people actually want from AI dictation: it transcribes your "um, so basically" instead of writing what you meant.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">There is a second Gboard tier below Rambler, and it is Pixel-gated too. "Advanced voice typing features" — automatic punctuation as you speak, voice commands like "delete last word", emoji by voice — requires <b>Pixel 6 or up</b> per <a href="https://support.google.com/gboard/answer/11197787" style="color:oklch(0.5 0.1 40); text-decoration:underline;">Google's help page</a>, which also states that with it on, "the text you speak stays on your device and isn't sent to Google servers <i>except when you use the 'Fix it' or detailed edits features</i>." So Google does ship genuinely on-device dictation on Android — on its own recent phones. And the smartest part of it, "Fix it", carries its own eligibility list: Pixel 8 or 8 Pro and later, <b>English only, United States, and network connectivity</b>.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Which leaves the rest of the world's Android phones on plain word-for-word voice typing, much of it recognised on Google's servers. That is the actual gap on Android in 2026, and it is not the one the marketing fights over. It isn't "cloud AI versus on-device AI" — Google has both. It is that every good version is gated on buying a recent Pixel, and the phone in most people's pocket is not that.</p>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Where OpenWispr fits</div>
+    <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">The same job, on the phone you already own, with no round trip</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">OpenWispr does the same two-stage job — transcribe, then clean up — with both stages running on the phone. Speech recognition is Parakeet or Whisper depending on the device; the cleanup pass is a small language model fine-tuned for exactly this task. Filler words go, punctuation and capitalisation arrive, spoken lists become lists. After the one-time model download there is no network call in the path at all, which is checkable: turn on airplane mode and dictate.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">It runs on Android 7.0 and up, and OpenWispr chooses its models from your phone's memory and free storage on first run rather than handing every device the same 1GB download — a mid-range phone gets a smaller on-device model instead of an out-of-memory error. There is no usage limit, no account, and no paid tier; it is MIT-licensed, so the on-device claim is one you can verify in the <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.5 0.1 40); text-decoration:underline;">source</a> rather than take on trust.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The honest gaps, because you'll find them anyway: OpenWispr is not a keyboard. It works through a floating bubble and Android's accessibility API, so you keep Gboard for typing and reach for OpenWispr to dictate — some people prefer that, others would rather have one place for everything, and if you're in the second group a keyboard-based tool suits you better. Rambler's conversational editing ("change Saturday to Sunday", "make this shorter") has no equivalent here. And Google has a distribution advantage no independent app can answer: Gboard is already installed on your phone, and OpenWispr is a deliberate download.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The case for it is narrow and specific: dictation that doesn't depend on which phone you bought, doesn't depend on a connection, doesn't meter you, and never sends your voice anywhere to begin with.</p>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Which phones support Gboard Rambler?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Google's Rambler help page lists <b>Pixel 11 series devices</b> under Prerequisites, along with the latest Gboard set as your default keyboard and microphone permission (checked 7 September 2026). At announcement in May 2026, TechCrunch reported an initial rollout to Samsung Galaxy and Pixel phones with wider Android support to follow, so the supported list is likely to grow — check Google's page for the current state rather than trusting this one.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Gboard Rambler work offline?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Partly, and Google documents exactly how much. Offline, "basic cleanup, punctuation, and capitalization remain active," while "advanced stylistic rewrites and complex conversational voice editing resume seamlessly once an active network connection is restored." The Prerequisites section asks for "an active internet connection for full features." If connectivity drops mid-dictation you get a Retry button to process the input after you finish.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Does Rambler send my voice to Google?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes, and Google states the terms: "your text, audio input, and your corrections to voice output will be temporarily processed by Google… They're never saved, stored, or shared, and they're deleted immediately after your text is delivered." The company describes the architecture as a combination of on-device and cloud processing. That is a retention commitment rather than an architectural guarantee — the difference matters only for some people and some content, but it is a real difference.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is there an AI dictation option for a non-Pixel or older Android phone?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — that's the gap OpenWispr is built for. It runs speech recognition and AI cleanup entirely on the device, on Android 7.0 and up, and picks a model sized to your phone's memory rather than assuming a flagship. It is free and MIT-licensed. It is not a keyboard, though: it dictates through a floating bubble alongside whatever keyboard you already use.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Is Rambler free?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes, on a supported device — it's part of Gboard. Google's help page does note that "Rambler is subject to usage limits," without publishing a number.</div>
+</div>
+<div data-faq="5" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Rambler or OpenWispr?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">If you have a Pixel 11 and a normal connection, try Rambler first: it's already installed, it's free, and its conversational editing goes further than OpenWispr's. Choose OpenWispr if your phone isn't supported, if you dictate somewhere with no signal, if you'd rather your voice never left the device at all, or if you want a tool whose privacy claim you can read the source of.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/android/will-on-device-dictation-run-on-my-phone.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also read</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Will on-device dictation actually run on my phone?</div>
+</a>
+<a href="/android/on-device-whisper-dictation-android.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Also read</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">On-device Whisper dictation for Android — genuinely offline</div>
+</a>
+<a href="/compare/wispr-flow-alternative-android.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Compare</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">A Wispr Flow alternative for Android</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>

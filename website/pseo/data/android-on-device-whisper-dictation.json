@@ -12,9 +12,18 @@
   "subhead": "Most \"private\" dictation apps still send your voice to a server. OpenWispr downloads a Whisper-class speech model once, then transcribes on your phone from then on — network or no network.",
   "ctaNote": "Free on Google Play. No sign-up, no in-app account.",
   "breadcrumbs": [
-    { "label": "OpenWispr", "href": "/" },
-    { "label": "Android", "href": "/android/on-device-whisper-dictation-android.html" },
-    { "label": "On-device dictation", "href": "/android/on-device-whisper-dictation-android.html" }
+    {
+      "label": "OpenWispr",
+      "href": "/"
+    },
+    {
+      "label": "Android",
+      "href": "/android/on-device-whisper-dictation-android.html"
+    },
+    {
+      "label": "On-device dictation",
+      "href": "/android/on-device-whisper-dictation-android.html"
+    }
   ],
   "sections": [
     {
@@ -43,16 +52,52 @@
     }
   ],
   "faqs": [
-    { "q": "Does OpenWispr's Android app work with no internet connection?", "a": "Yes. After the one-time model download, transcription and cleanup run entirely on-device. Put your phone in airplane mode and dictation still works — that's demonstrable, not a claim you have to take on faith." },
-    { "q": "Is there really no free Android dictation app that's just as private?", "a": "Among the apps we could verify, few combine free, open-source, and confirmed on-device processing on Android specifically. Typeless, for instance, is closed source and cloud-only despite marketing that reads as local, and costs $12–30/month for its Pro tier. Where another app's Android architecture isn't publicly documented, we don't claim to know it — check the app's own source or documentation." },
-    { "q": "How large is the model I have to download?", "a": "Currently a Whisper-class speech model, about 488 MB, downloaded once on first launch. From then on it runs fully on-device." },
-    { "q": "Do I need a Google account or a separate OpenWispr account?", "a": "Install from Google Play like any app — no separate account or sign-in exists inside OpenWispr itself." },
-    { "q": "Is my voice ever uploaded anywhere, even for improving the model?", "a": "No. OpenWispr has no servers to upload to. The app is MIT-licensed and open source, so this is a claim you can verify by reading the code, not one you have to trust." }
+    {
+      "q": "Does OpenWispr's Android app work with no internet connection?",
+      "a": "Yes. After the one-time model download, transcription and cleanup run entirely on-device. Put your phone in airplane mode and dictation still works — that's demonstrable, not a claim you have to take on faith."
+    },
+    {
+      "q": "Is there really no free Android dictation app that's just as private?",
+      "a": "Among the apps we could verify, few combine free, open-source, and confirmed on-device processing on Android specifically. Typeless, for instance, is closed source and cloud-only despite marketing that reads as local, and costs $12–30/month for its Pro tier. Where another app's Android architecture isn't publicly documented, we don't claim to know it — check the app's own source or documentation."
+    },
+    {
+      "q": "How large is the model I have to download?",
+      "a": "Currently a Whisper-class speech model, about 488 MB, downloaded once on first launch. From then on it runs fully on-device."
+    },
+    {
+      "q": "Do I need a Google account or a separate OpenWispr account?",
+      "a": "Install from Google Play like any app — no separate account or sign-in exists inside OpenWispr itself."
+    },
+    {
+      "q": "Is my voice ever uploaded anywhere, even for improving the model?",
+      "a": "No. OpenWispr has no servers to upload to. The app is MIT-licensed and open source, so this is a claim you can verify by reading the code, not one you have to trust."
+    }
   ],
   "relatedLinks": [
-    { "kicker": "Also read", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" },
-    { "kicker": "Compare", "title": "A Wispr Flow alternative for Android", "href": "/compare/wispr-flow-alternative-android.html" },
-    { "kicker": "Compare", "title": "OpenWispr vs Wispr Flow (cloud-only)", "href": "/compare/wispr-flow.html" },
-    { "kicker": "Compare", "title": "OpenWispr vs superwhisper (no Android app)", "href": "/compare/superwhisper.html" }
+    {
+      "kicker": "Also read",
+      "title": "Free, open-source voice dictation, no subscription",
+      "href": "/android/free-open-source-voice-dictation.html"
+    },
+    {
+      "kicker": "Also read",
+      "title": "Will on-device dictation run on my phone?",
+      "href": "/android/will-on-device-dictation-run-on-my-phone.html"
+    },
+    {
+      "kicker": "Compare",
+      "title": "A Wispr Flow alternative for Android",
+      "href": "/compare/wispr-flow-alternative-android.html"
+    },
+    {
+      "kicker": "Compare",
+      "title": "OpenWispr vs Wispr Flow (cloud-only)",
+      "href": "/compare/wispr-flow.html"
+    },
+    {
+      "kicker": "Compare",
+      "title": "OpenWispr vs superwhisper (no Android app)",
+      "href": "/compare/superwhisper.html"
+    }
   ]
 }
