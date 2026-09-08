@@ -21,6 +21,11 @@ const TYPES = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  // Every generated page ships a .md mirror beside its .html (see pseo/lib/markdown.mjs).
+  // Served as text/markdown so a client that asked for the plain-text version gets told that's
+  // what it is — without this it falls through to application/octet-stream and browsers offer
+  // to download it instead of showing it.
+  '.md': 'text/markdown; charset=utf-8',
 };
 
 // Optional host consolidation. Three hosts serve this site — openwispr.dev,
@@ -112,8 +117,11 @@ function handle(req, res) {
     }
     const ext = path.extname(filePath).toLowerCase();
     const headers = { 'Content-Type': TYPES[ext] || 'application/octet-stream' };
-    // cache static assets; keep HTML fresh
-    headers['Cache-Control'] = ext === '.html' ? 'no-cache' : 'public, max-age=3600';
+    // cache static assets; keep pages fresh. The .md mirrors are pages, not assets — they
+    // change whenever their .html twin does, and a stale mirror is a page that contradicts
+    // itself depending on which representation you fetched.
+    const isPage = ext === '.html' || ext === '.md';
+    headers['Cache-Control'] = isPage ? 'no-cache' : 'public, max-age=3600';
     res.writeHead(200, headers);
     res.end(data);
   });

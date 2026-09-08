@@ -379,6 +379,66 @@ additive, placed after the existing "Guides:" row so it doesn't disturb prior li
 other via `relatedLinks`, and from `llms.txt`'s new "Journal" section — so neither is an orphan
 page, consistent with the internal-linking rule in the quality bar below.
 
+### Batch 5 — the platform question, and device fit
+
+Two new long-tail pages, both under `/android/`, plus the Markdown-mirror infrastructure below.
+The source for this batch is `research/11-yaps.md` (2026-09-03), but note *what* was taken from
+it: not the competitor, the market fact the competitor surfaced. Every claim on the Gboard page
+was then re-verified against Google's own help pages and the original TechCrunch report on
+2026-09-07, because the research doc found those facts *quoted on a competitor's blog*, and
+`00-method.md`'s source hierarchy puts competitor marketing at the bottom and excludes it as
+evidence. A competitor's page is a lead, never a citation.
+
+- **`/android/gboard-rambler-voice-typing.html`** — Google shipped Gemini-powered dictation into
+  Gboard (Rambler, announced 2026-05-12 at Android Show: I/O Edition). This is the single biggest
+  competitive fact on Android and it is not a startup. The page exists because Google's own
+  documentation contains the qualifier the launch coverage didn't: as of 2026-09-07 the
+  [Rambler help page](https://support.google.com/gboard/answer/17468539) lists **"Pixel 11 series
+  devices"** under Prerequisites, plus "an active internet connection for full features of
+  Rambler. Offline is supported but with limited features." TechCrunch reported in May that the
+  rollout would cover "Samsung Galaxy and Google Pixel phones" initially and widen; four months
+  later Google's docs name one family. The page also uses Google's documented offline behaviour
+  (basic cleanup/punctuation/capitalisation only), its privacy wording ("temporarily processed by
+  Google… deleted immediately after your text is delivered"), its stated usage limits, and the
+  separate [advanced voice typing](https://support.google.com/gboard/answer/11197787) tier
+  (Pixel 6+, on-device except "Fix it", which is itself Pixel 8+/English/US/online).
+  Clears the bar: real query demand (people search whether Rambler works on their phone), a
+  materially different argument from every existing page, and it is genuinely useful to a Pixel
+  owner — it opens by telling them to use Rambler instead.
+- **`/android/will-on-device-dictation-run-on-my-phone.html`** — the requirements question no
+  on-device dictation app answers honestly, written from OpenWispr's own shipped behaviour rather
+  than from research: `DeviceFit.kt` reads total RAM, Android's low-RAM flag, and free storage on
+  first run and picks one of three real model pairs (~1GB / ~383MB / ~316MB). Every number on the
+  page traces to `WhisperModelManager.MODELS`, `ParakeetModelManager.SIZE_LABEL`,
+  `LlmModelManager.MODELS`, and `DeviceFitTest`. The page states the accuracy cost of the smaller
+  tiers plainly, per quality-bar rule #3.
+
+**Declined this batch: `/compare/yaps.html`.** Yaps is the most directly comparable competitor
+found so far — an on-device Android *keyboard*, five platforms, the same model architecture — and
+`research/11-yaps.md` is well sourced enough to write the page. It was still declined, on the
+pipeline's own demand rule: 1,878 Android installs and zero organic press means there is no
+meaningful search volume behind "yaps alternative" to land on. Publishing it would be a page
+built for a query nobody types, and its most quotable facts (a 2.2★ average, a public paywall
+reversal) would make it read as a hit piece rather than a comparison. Revisit only if they grow.
+The genuinely useful thing in that research — the Android keyboard-vs-overlay argument — needs a
+page of its own written around the tradeoff honestly, not a competitor scoreboard; not built yet.
+
+### Markdown mirrors (batch 5 infrastructure)
+
+Every generated page now also writes a `.md` twin at the same path (`/compare/handy.html` →
+`/compare/handy.md`), plus one for the hand-written `privacy.html`. `lib/markdown.mjs` renders
+them from the same `data/*.json` the HTML comes from, so they cannot drift; `server.js` serves
+`.md` as `text/markdown` with the same `no-cache` policy as HTML, since a mirror is a page rather
+than an asset.
+
+They are deliberately **not** in `sitemap.xml` — an alternate representation of a URL, not a
+second URL competing for the same query — and each carries a `canonical` front-matter field
+pointing at its `.html` twin. `llms.txt` documents the convention, since that is where an
+assistant looks. The home page is not mirrored: it is a visual landing page whose text is mostly
+widget labels, and `llms.txt` already serves as its plain-text form. `staticPageMarkdown()`
+throws rather than writing an empty file if `privacy.html`'s markup ever stops matching its
+assumptions, so a redesign fails the build instead of silently publishing a blank privacy policy.
+
 ### What's explicitly NOT built (spam-policy discipline)
 
 Google's Scaled Content Abuse policy (cited directly in the AutoMata handover,
@@ -427,7 +487,10 @@ website/pseo/
 │   └── compare-wispr-flow-alternative-android.json  # batch 4 (new page; compare-wispr-flow.json
 │                                                      # itself was edited in place, not forked —
 │                                                      # see "Batch 4" below)
+│   ├── android-gboard-rambler-voice-typing.json          # batch 5
+│   └── android-will-on-device-dictation-run-on-my-phone.json  # batch 5
 ├── lib/
+│   ├── markdown.mjs        # batch 5: .md mirror of every page, from the same data files
 │   └── render.mjs          # shared design-system components (nav, footer, FAQ, table, CTA,
 │                            # journalNoteHtml — batch 3's disclosure strip)
 │                            # — copy-pasted/adapted from index.html's inline styles so
@@ -440,9 +503,10 @@ website/pseo/
                               # in build.mjs (renderJournalPage) but no changes to existing renderers
 ```
 
-19 data files → 19 generated pages as of Batch 4 (4 from Batch 1, 12 from Batch 2, 2 from Batch 3,
-1 new from Batch 4 — `compare-wispr-flow.json` was edited in place, not added), plus the 2
-hand-written pages (`index.html`, `privacy.html`) = **21 pages live on the site.**
+21 data files → 21 generated pages as of Batch 5 (4 from Batch 1, 12 from Batch 2, 2 from Batch 3,
+1 from Batch 4 — `compare-wispr-flow.json` was edited in place, not added — and 2 from Batch 5),
+plus the 2 hand-written pages (`index.html`, `privacy.html`) = **23 pages live on the site**, each
+generated page also served as a `.md` mirror.
 
 Run it with:
 

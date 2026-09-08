@@ -12,6 +12,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pageMarkdown, staticPageMarkdown, markdownPathFor } from './lib/markdown.mjs';
 import {
   SITE_URL,
   breadcrumbHtml,
@@ -142,16 +143,48 @@ function build() {
     const outPath = join(WEBSITE_ROOT, data.outputPath);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, html, 'utf8');
+
+    // Markdown mirror of the same data — same prose, no chrome. See lib/markdown.mjs for why.
+    // Written beside the .html and deliberately absent from the sitemap: it's an alternate
+    // representation of that URL, not a second page competing with it.
+    const mdPath = markdownPathFor(data.outputPath);
+    writeFileSync(join(WEBSITE_ROOT, mdPath), pageMarkdown(data), 'utf8');
+
     written.push({ canonicalPath: data.canonicalPath, outputPath: data.outputPath });
-    console.log(`  wrote ${data.outputPath}`);
+    console.log(`  wrote ${data.outputPath} + ${mdPath}`);
   }
 
+  writeStaticMirrors();
   writeSitemap(written);
   writeRobots();
 
-  console.log(`\nBuilt ${written.length} pSEO page(s).`);
+  console.log(`\nBuilt ${written.length} pSEO page(s), each with a .md mirror.`);
 }
 
+/**
+ * Markdown mirrors for the two hand-written pages. Only `privacy.html` qualifies: it is prose
+ * with semantic markup and it is the page most likely to be quoted back at us, so a plain-text
+ * form that cannot drift from the real policy is worth having. `index.html` is a visual landing
+ * page whose text is mostly widget labels — `llms.txt` is its machine-readable form instead.
+ */
+function writeStaticMirrors() {
+  const html = readFileSync(join(WEBSITE_ROOT, 'privacy.html'), 'utf8');
+  const md = staticPageMarkdown(html, {
+    title: 'Privacy Policy — OpenWispr',
+    description:
+      'What OpenWispr processes on your device, what an optional cloud provider would see, ' +
+      'and what the project never receives.',
+    canonicalPath: '/privacy.html',
+  });
+  writeFileSync(join(WEBSITE_ROOT, 'privacy.md'), md, 'utf8');
+  console.log('  wrote privacy.md');
+}
+
+/**
+ * Sitemap. Only `.html` URLs go in it — the `.md` mirrors are an alternate representation of
+ * the same content, and submitting both would be asking Google to pick between two copies of
+ * every page. Assistants find the mirrors through llms.txt and the `.md` convention instead.
+ */
 function writeSitemap(generatedPages) {
   const staticPages = ['/', '/privacy.html'];
   const urls = [...staticPages, ...generatedPages.map((p) => p.canonicalPath)];

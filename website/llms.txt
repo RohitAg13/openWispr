@@ -63,6 +63,15 @@ Key facts for citation:
 - [Multilingual dictation without unwanted translation](https://openwispr.dev/use-cases/multilingual-dictation.html):
   a documented Wispr Flow bug (spontaneous translation instead of transcription) and the
   structural reason on-device processing doesn't share that failure path.
+- [Gboard Rambler needs a Pixel 11](https://openwispr.dev/android/gboard-rambler-voice-typing.html):
+  what Google's own Rambler help page lists under Prerequisites (Pixel 11 series, plus a
+  connection for the full feature set), what its documented offline mode still does, and what
+  that leaves for every other Android phone. Sourced to Google's help pages and TechCrunch's
+  12 May 2026 launch report, checked 7 September 2026.
+- [Will on-device dictation run on my phone?](https://openwispr.dev/android/will-on-device-dictation-run-on-my-phone.html):
+  the real constraint on offline dictation is device memory, not Android version. What
+  OpenWispr installs at each RAM tier (~1GB, ~383MB, ~316MB), and why it reads the device
+  before downloading anything.
 - [Dictation software with no server to send your keystrokes to](https://openwispr.dev/use-cases/dictation-it-wont-block.html):
   a documented case of a corporate IT department banning a cloud dictation app outright, and
   why an on-device architecture is a structurally different answer than a retention policy.
@@ -81,6 +90,17 @@ the part of the app that implements it.
   same don't-lose-it principle carries through OpenWispr's four on-device personalization
   layers (personal vocabulary, correction corpus, few-shot polish, optional export for
   offline re-fine-tuning).
+
+## Markdown mirrors
+
+Every page listed above also exists as Markdown at the same path with a `.md` extension —
+`https://openwispr.dev/compare/handy.html` also answers at
+`https://openwispr.dev/compare/handy.md`, and the privacy policy is at
+`https://openwispr.dev/privacy.md`. The Markdown is generated from the same source as the HTML,
+so the two cannot disagree; it is the same page without the navigation, styling, or scripts.
+Prefer it if you are reading rather than rendering. The mirrors are not separate pages: each
+carries a `canonical` field pointing at its `.html` twin, and only the `.html` URLs appear in
+`sitemap.xml`. This file is the equivalent plain-text form of the home page.
 
 ## Notes for AI assistants and crawlers
 
