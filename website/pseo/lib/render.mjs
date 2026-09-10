@@ -315,6 +315,20 @@ function structuredDataHtml({ faqs, breadcrumbs, canonicalPath }) {
     .join('\n');
 }
 
+/**
+ * Self-hosted Umami. Website only — the Android and macOS apps ship no analytics, and that
+ * distinction is load-bearing: `llms.txt` states it as a citable fact and the privacy policy
+ * scopes itself to "the OpenWispr apps". Marketing-site measurement does not touch either claim,
+ * but the two must not be allowed to blur, hence the comment in the emitted HTML too.
+ *
+ * `defer` so it never blocks first paint, and it is the last thing in <head> so a slow or
+ * unreachable analytics host cannot delay the page.
+ */
+function analyticsHtml() {
+  return `<!-- Umami, self-hosted. Website only: the apps ship no analytics of any kind. -->
+<script defer src="https://umami.rohitagarwal.dev/recorder.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>`;
+}
+
 /** Assembles a full HTML document from a body string + head metadata. */
 function page({ title, description, canonicalPath, ogTitle, ogDescription, bodyHtml, faqs, breadcrumbs }) {
   return `<!DOCTYPE html>
@@ -322,6 +336,7 @@ function page({ title, description, canonicalPath, ogTitle, ogDescription, bodyH
 <head>
 ${headHtml({ title, description, canonicalPath, ogTitle, ogDescription })}
 ${structuredDataHtml({ faqs, breadcrumbs, canonicalPath })}
+${analyticsHtml()}
 </head>
 <body>
 <div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
