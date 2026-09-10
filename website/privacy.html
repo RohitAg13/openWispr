@@ -42,6 +42,8 @@
   footer { border-top: 1px solid oklch(0.9 0.014 72); margin-top: 56px; padding-top: 22px; font-size: 14px; color: oklch(0.55 0.025 55); display: flex; gap: 22px; flex-wrap: wrap; }
 </style>
 <script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<!-- Umami, self-hosted. Website only: the apps ship no analytics of any kind. -->
+<script defer src="https://umami.rohitagarwal.dev/recorder.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>
 </head>
 <body>
   <div class="wrap">
@@ -60,8 +62,9 @@
     <div class="callout">
       <p><strong>The short version:</strong> OpenWispr runs entirely on your device by default. Your
       voice recordings and the text you dictate stay on your device and are not sent to us or anyone
-      else — unless <em>you</em> explicitly turn on a cloud provider. We have no servers, no accounts,
-      no analytics, and no ads. We never see your data.</p>
+      else — unless <em>you</em> explicitly turn on a cloud provider. We have no servers, no accounts, and
+      no ads, and the apps contain no analytics or tracking code. We never see your data. (This
+      website does use self-hosted analytics — see <a href="#this-website">section 5</a>.)</p>
     </div>
 
     <p>OpenWispr ("the app") is open-source voice-dictation software for Android and macOS. This
@@ -127,21 +130,36 @@
       data stays on your device.</li>
     </ul>
 
-    <h2>5. Data retention and deletion</h2>
+    <h2 id="this-website">5. This website</h2>
+    <p>The sections above describe <strong>the apps</strong>. This website, openwispr.dev, is
+    separate and does use analytics: a self-hosted <a href="https://umami.is">Umami</a> instance
+    on our own server, with no third party involved and no advertising network.</p>
+    <p>The script we run is Umami's <strong>session recorder</strong>, not just page counting. As
+    well as which pages were visited, it records how the page was used — pointer movement,
+    scrolling, clicks, and changes to the page — so a visit can be replayed as a session. It does
+    not record anything you type into a form, and this site has no login, no account, and no
+    payment form.</p>
+    <p>None of this touches the apps. <strong>The Android and macOS apps contain no analytics,
+    tracking, or advertising code of any kind</strong>, and nothing you dictate is ever visible to
+    this website. If you would rather not be recorded here, any tracker blocker will stop it, and
+    every page on this site is also published as plain Markdown at the same address with a
+    <code>.md</code> extension, which runs no scripts at all.</p>
+
+    <h2>6. Data retention and deletion</h2>
     <p>Because your data lives on your device, you are in control of it. You can clear your dictation
     history, personal dictionary, and learned style at any time from within the app's Settings.
     Uninstalling the app removes all of its locally stored data from your device.</p>
 
-    <h2>6. Children</h2>
+    <h2>7. Children</h2>
     <p>OpenWispr is a general-purpose productivity tool and is not directed to children under 13. We
     do not knowingly collect personal information from children.</p>
 
-    <h2>7. Changes to this policy</h2>
+    <h2>8. Changes to this policy</h2>
     <p>If we make material changes to this policy, we will update the "Last updated" date above and
     publish the revised policy at this URL. Because OpenWispr is open source, the full history of this
     document is also available in the project's public repository.</p>
 
-    <h2>8. Contact</h2>
+    <h2>9. Contact</h2>
     <p>OpenWispr is developed in the open. If you have any questions about this policy or the app's
     privacy practices, please open an issue on our
     <a href="https://github.com/RohitAg13/openWispr">GitHub repository</a>.</p>
