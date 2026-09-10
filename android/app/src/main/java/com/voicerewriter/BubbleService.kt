@@ -127,7 +127,7 @@ class BubbleService : Service() {
             try {
                 val s = SettingsRepository(applicationContext).get()
                 if (s.sttProvider == "local") {
-                    OnDeviceStt.warm(applicationContext, s.sttModel)
+                    OnDeviceStt.warm(applicationContext, s.sttModel, language = s.sttLanguage)
                 }
                 if (s.provider == "local") {
                     AiChat.getInferenceEngine(applicationContext)
