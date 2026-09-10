@@ -1,0 +1,147 @@
+{
+  "type": "docs",
+  "navOrder": 8,
+  "navLabel": "What leaves your device",
+  "slug": "privacy-and-data",
+  "outputPath": "docs/privacy-and-data.html",
+  "canonicalPath": "/docs/privacy-and-data.html",
+  "title": "What leaves your device when you use OpenWispr",
+  "description": "Every host the OpenWispr apps can contact and the exact condition that makes them do it, what is stored locally and for how long, and a source-level confirmation that neither app bundles an analytics, telemetry, or crash-reporting SDK.",
+  "ogTitle": "What leaves your device",
+  "ogDescription": "Every network host the app can contact, under exactly what condition — and what is kept on the device instead.",
+  "eyebrow": "Docs · Privacy",
+  "h1": "What leaves your device",
+  "subhead": "On a default install, nothing but the one-time model download. This page names every host the app can reach and the exact condition under which it does — because \"private\" is a claim, and a list is checkable.",
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Docs", "href": "/docs/index.html" },
+    { "label": "What leaves your device", "href": "/docs/privacy-and-data.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "The short version",
+      "heading": "Three pieces of code can open a socket",
+      "paragraphs": [
+        "In the entire Android app there are exactly three components that can make a network request: the model downloader, the rewrite engine, and the speech engine. There is no fourth. The last two are inert on a default install, because both the speech provider and the polish provider default to on-device, and both refuse to run without an API key you supplied yourself.",
+        "So on a fresh install, after the models have downloaded, dictating opens no connection at all. Not a heartbeat, not a check-in, not a usage ping. That is a structural property of the code rather than a policy that could be quietly changed.",
+        "This page is a technical description of the apps. The <a href=\"/privacy.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">privacy policy</a> is the legal document, and it also covers this website, which is a separate matter — see the last section."
+      ]
+    },
+    {
+      "eyebrow": "Downloads",
+      "heading": "The one thing that always needs the network",
+      "paragraphs": [
+        "Models are large and are not shipped inside the app, so they are fetched once, from Hugging Face, when you install them. Nothing about your speech, your text, or your device is sent in the process; these are ordinary file downloads.",
+        "The complete list of what can be fetched, on Android:"
+      ],
+      "table": {
+        "headers": ["Repository on huggingface.co", "What"],
+        "rows": [
+          ["<code>csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8</code>", "The Parakeet speech model, four files"],
+          ["<code>ggerganov/whisper.cpp</code>", "Whisper tiny, base or small"],
+          ["<code>rohitag13/openwispr-cleanup-qwen3-0.6b-GGUF</code>", "The project's own cleanup fine-tune"],
+          ["<code>ggml-org/gemma-3-270m-qat-GGUF</code>", "Gemma 3 270M, the small-device cleanup model"],
+          ["<code>Qwen/Qwen3-0.6B-GGUF</code>", "Qwen3 0.6B, if you choose it"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Opt-in",
+      "heading": "The cloud providers, and the two gates in front of them",
+      "paragraphs": [
+        "Android — and only Android; the Mac app has no cloud path at all — can be pointed at a cloud provider for speech, for polish, or for both. Nothing about this is a default and nothing about it is silent.",
+        "There are two independent gates. The provider must be changed from \"local\" to something else, <i>and</i> a key must be present. Without a key, the request throws before a socket is opened, so selecting a provider and not finishing the setup sends nothing. When a cloud speech provider is selected, the settings screen states plainly that audio is sent to that provider, and offers a one-tap line to switch back to on-device.",
+        "When you do enable one, the traffic goes from your device straight to the provider you configured, using your own API key. It does not pass through anything belonging to this project, and the project has no account, no server, and no way to see it."
+      ],
+      "table": {
+        "headers": ["Stage", "Providers", "What is sent"],
+        "rows": [
+          ["<b>Speech</b>", "Groq · OpenAI · any OpenAI-compatible endpoint you name", "The recorded audio file, plus your vocabulary bias prompt"],
+          ["<b>Polish</b>", "Anthropic · Vercel AI Gateway · OpenRouter · any OpenAI-compatible endpoint you name", "The cleaned-up text"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Telemetry",
+      "heading": "There is no analytics SDK, and here is what that is based on",
+      "paragraphs": [
+        "The Android app's declared dependencies are: AndroidX core, activity-compose and lifecycle; Jetpack Compose with Material 3; Google's Material components; DataStore; OkHttp; Kotlin coroutines; ONNX Runtime; a local sherpa-onnx package; and the project's own whisper.cpp and llama.cpp modules. The macOS app declares four local Swift packages and nothing else.",
+        "No Firebase, no Crashlytics, no Sentry, no Amplitude, no Mixpanel, no PostHog, no Bugsnag, no App Center, no Google Analytics, no Datadog. Not disabled — not present.",
+        "The honest scope of that statement: it is a reading of the source and the dependency declarations in the public repository, not a teardown of the published binary. It is checkable by anyone, which is rather the point of the app being MIT-licensed."
+      ]
+    },
+    {
+      "eyebrow": "Feedback",
+      "heading": "The feedback buttons do not send anything",
+      "paragraphs": [
+        "Settings → Feedback has three rows, and none of them transmits anything by itself. Each hands off to another app: your mail client, your browser on a GitHub issue, or Google Play. You see the message and you send it, or you do not.",
+        "The diagnostics block the app prepares to save you typing contains exactly four things: the app version, your device manufacturer and model, and your Android version and SDK level. No identifier, no history, no transcript."
+      ]
+    },
+    {
+      "eyebrow": "On the device",
+      "heading": "What is stored locally, and for how long",
+      "paragraphs": [
+        "The privacy story is not only about what is sent — it is also about what accumulates. All of the following is in the app's private storage, none of it is uploaded, and all of it can be deleted from Settings → Privacy → Clear all data."
+      ],
+      "table": {
+        "headers": ["What", "Retention", "Why it exists"],
+        "rows": [
+          ["<b>Dictation history</b>", "The most recent 100 entries. Off in one tap.", "Powers the personalisation features."],
+          ["<b>Pending audio</b>", "30 days by default; 7, 90 or unlimited also available. Capped at 200 recordings regardless.", "So a dictation that failed can be run again rather than lost. Turning history off purges it immediately."],
+          ["<b>Correction corpus</b>", "The most recent 500 edits. Not written at all when history is off.", "The two style examples shown to the polish model."],
+          ["<b>Personal dictionary and learned aliases</b>", "Until you delete them", "Biasing the speech engine towards your names and terms."],
+          ["<b>Per-app tone overrides</b>", "Until you delete them", "Your own tone instructions per category."],
+          ["<b>API keys</b>", "Until you clear them", "Only exist if you configured a cloud provider."]
+        ]
+      }
+    },
+    {
+      "eyebrow": "On the device",
+      "heading": "One thing worth knowing about the keys",
+      "paragraphs": [
+        "If you configure a cloud provider, your API key is stored in the app's private DataStore preferences as plain text. It is not wrapped in the Android Keystore and it is not encrypted at rest. On a normal, unrooted device with no backup extraction it is private to the app — but \"private to the app\" is not the same as \"encrypted\", and this page would rather name the difference than let you infer the stronger claim.",
+        "The macOS app stores no API keys at all, because it has no cloud provider option."
+      ]
+    },
+    {
+      "eyebrow": "The website",
+      "heading": "The apps and this site are not the same thing",
+      "paragraphs": [
+        "This distinction is load-bearing and blurring it would be exactly the kind of thing this page exists to avoid. <b>The apps ship no analytics of any kind.</b> This website does: it runs a self-hosted Umami session recorder, which is more than page counting — it replays pointer movement, scrolling, clicks and page changes.",
+        "Section 5 of the <a href=\"/privacy.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">privacy policy</a> says so in those terms rather than softening it into \"anonymous usage data\". If you would rather read the site without any of that, every page here is also served as Markdown at the same address with a <code>.md</code> extension — this one is at <code>/docs/privacy-and-data.md</code> — and those run no scripts at all."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Does OpenWispr send my voice anywhere?",
+      "a": "Not on a default install. Speech recognition runs on your device, and the app opens no connection during a dictation. Audio is only sent if you deliberately switch the speech engine to Groq, OpenAI, or a custom endpoint and supply your own API key — and the settings screen says so on the same screen where you switch."
+    },
+    {
+      "q": "Can I use OpenWispr fully offline?",
+      "a": "Yes, once the models are downloaded. The download is the only thing the default configuration ever needs the network for."
+    },
+    {
+      "q": "Does the app contain any analytics or crash reporting?",
+      "a": "No. Neither the Android nor the macOS app declares any analytics, telemetry or crash-reporting dependency. This is a source-level statement about the public repository rather than a binary teardown — and the source is MIT-licensed, so it is checkable."
+    },
+    {
+      "q": "What can the OpenWispr developers see?",
+      "a": "Nothing about your usage. There is no account, no server belonging to the project, and no path by which a transcript or a recording could reach it. If you enable a cloud provider, that traffic goes directly from your device to that provider with your key; it does not pass through anything the project runs."
+    },
+    {
+      "q": "Are my recordings kept?",
+      "a": "Recordings are kept on the device for 30 days by default so a failed dictation can be retried, capped at the 200 most recent. You can set that to 7, 90, or unlimited, and turning off history purges them all immediately."
+    },
+    {
+      "q": "Is the website tracked?",
+      "a": "Yes, and it is worth separating from the apps. This site runs a self-hosted Umami session recorder, which replays pointer movement and clicks rather than only counting page views. The apps carry no analytics at all. Every page is also available as a Markdown mirror that runs no scripts."
+    }
+  ],
+  "relatedLinks": [
+    { "kicker": "Read next", "title": "Settings reference", "href": "/docs/settings.html" },
+    { "kicker": "Also read", "title": "Privacy policy", "href": "/privacy.html" },
+    { "kicker": "Also read", "title": "Dictation with no server to send your keystrokes to", "href": "/use-cases/dictation-it-wont-block.html" }
+  ]
+}

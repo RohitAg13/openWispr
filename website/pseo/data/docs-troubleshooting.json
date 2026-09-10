@@ -1,0 +1,147 @@
+{
+  "type": "docs",
+  "navOrder": 9,
+  "navLabel": "Troubleshooting",
+  "slug": "troubleshooting",
+  "outputPath": "docs/troubleshooting.html",
+  "canonicalPath": "/docs/troubleshooting.html",
+  "title": "OpenWispr troubleshooting",
+  "description": "The bubble disappearing, dictated text landing on the clipboard, recordings cut short, model downloads that fail, and Gatekeeper blocking the Mac app — what causes each and what to do about it.",
+  "ogTitle": "OpenWispr troubleshooting",
+  "ogDescription": "The bubble vanishing, text on the clipboard, downloads failing, dictation cut short — causes and fixes.",
+  "eyebrow": "Docs · Troubleshooting",
+  "h1": "Troubleshooting",
+  "subhead": "Most of these have a specific cause in the app's behaviour rather than a vague one, so each entry says what is actually happening before saying what to do.",
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Docs", "href": "/docs/index.html" },
+    { "label": "Troubleshooting", "href": "/docs/troubleshooting.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "The bubble",
+      "heading": "The bubble has disappeared",
+      "paragraphs": [
+        "Three different causes look identical from the outside, so work through them in this order.",
+        "<b>Field gating is doing its job.</b> With <b>Only on text fields</b> on — the default — the bubble is only visible while a text field has focus. Tap into any text field and it should fade in. If you would rather have it always visible, turn that setting off.",
+        "<b>The overlay permission was revoked.</b> Without \"Display over other apps\", the bubble cannot be drawn at all. Settings shows this on the setup card at the top as <b>Floating bubble</b>, with an Enable button.",
+        "<b>Your phone killed the service.</b> This is the common one on Samsung, Xiaomi, OnePlus and Oppo devices, whose battery managers stop background services aggressively. The app restores the bubble whenever you open it or return to Settings, and brings it back after a reboot or an app update — but the durable fix is Settings → Reliability → <b>Auto-start helper</b>, which opens your manufacturer's own auto-start screen where the app can find one."
+      ]
+    },
+    {
+      "eyebrow": "The bubble",
+      "heading": "The bubble is always visible even though \"Only on text fields\" is on",
+      "paragraphs": [
+        "This is not the setting being ignored. Gating depends entirely on the accessibility service — that is the only way the app can know whether a text field has focus. When that service is off, the app cannot hide the bubble, because it would then have no way to bring it back. So it reverts to always-visible on purpose.",
+        "The setting's own subtitle changes to say so: <i>\"Needs auto-insert. The bubble stays visible until you turn it back on.\"</i> Re-enabling <b>Auto-insert</b> from the setup card restores gating.",
+        "The most common reason for the service being off without you touching it: Android's restricted-settings protection on sideloaded builds, or an OEM battery manager. Both silently disable accessibility services."
+      ]
+    },
+    {
+      "eyebrow": "Insertion",
+      "heading": "The text lands on my clipboard instead of the field",
+      "paragraphs": [
+        "Three possible reasons, in descending order of likelihood.",
+        "<b>Auto-insert is not enabled.</b> Without the accessibility service the app cannot type into another app's field, so it copies instead. This path is deliberately silent — no toast — because being told on every single dictation would be nagging.",
+        "<b>The field would not report a cursor position.</b> Some fields, particularly ones drawn in a WebView, do not expose where your cursor is. Rather than guess and overwrite the wrong text, the app pastes instead, which necessarily involves the clipboard. Nothing is broken; this is the middle rung of the fallback chain.",
+        "<b>No field was found in time.</b> The app retries for about 2.3 seconds and then gives up and copies. This happens when the target app takes a long time to restore focus. On the normal path the clipboard is never touched, so if you are seeing your clipboard change on every dictation, one of the above is the reason. Full details on <a href=\"/docs/text-insertion.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Text insertion and permissions</a>."
+      ]
+    },
+    {
+      "eyebrow": "Recording",
+      "heading": "It stops recording before I've finished speaking",
+      "paragraphs": [
+        "The <b>Auto-stop on pause</b> setting ends a tapped recording when the voice-activity model has heard about 1.6 seconds of silence. That figure was deliberately raised from a shorter one because the shorter one cut people off mid-thought — but 1.6 seconds is still less than some people pause for.",
+        "Two fixes. Turn <b>Auto-stop on pause</b> off, and end recordings yourself by tapping the bubble again or pressing Done. Or use hold-to-talk instead: auto-stop is disabled entirely while you are holding, because your finger is already saying when you are done."
+      ]
+    },
+    {
+      "eyebrow": "Recording",
+      "heading": "Nothing was transcribed at all",
+      "paragraphs": [
+        "If the recording was shorter than a quarter of a second, it is discarded rather than sent to the speech engine — there is nothing usable in it. This is most often a mis-fired tap.",
+        "If you were using hold-to-talk and released almost immediately, there is a related case: a very quick press-and-release can finish before the recording screen has even come up. The app detects this and cancels cleanly rather than leaving a session running. Hold for a moment longer — the hold does not register at all until 450&nbsp;ms, and you get a double haptic tick when it does.",
+        "If you have the <b>Vocab-biased decoding (experimental)</b> toggle on with Parakeet, turn it off. The app's own description says it uses a decode mode with a known upstream bug that occasionally returns blank or wrong text, and it is off by default for exactly this reason."
+      ]
+    },
+    {
+      "eyebrow": "Models",
+      "heading": "A model download failed, or will not finish",
+      "paragraphs": [
+        "There is no retry loop — that is a design decision, not a gap. A failed download leaves its partial file on disk on purpose and stops, and starting the download again resumes from where it stopped rather than from zero. So the fix for a flaky connection is simply to tap Get again.",
+        "Two failures are not connection problems and behave differently:"
+      ],
+      "bullets": [
+        "<b>\"Not enough space\"</b>, naming a number of megabytes. The download refuses to start unless there is room for what remains plus a 64&nbsp;MB margin. Free that much and retry. On first run, the setup screen checks earlier still and tells you how far short you are before offering a download at all.",
+        "<b>\"failed its checksum; discarded\"</b>. The completed file did not match the SHA-256 the host published for it. The partial and everything recorded about it are deleted, deliberately, because resuming from bytes that are not this file would splice garbage forever. Retry from scratch; if it recurs, that is worth <a href=\"https://github.com/RohitAg13/openWispr/issues\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">reporting</a>."
+      ]
+    },
+    {
+      "eyebrow": "Models",
+      "heading": "Dictation hangs, then errors, right after install",
+      "paragraphs": [
+        "If you dictate while a model is still downloading, the app waits for it — but only for 25 seconds, after which it reports an error rather than hanging indefinitely. On a slow connection with a 631&nbsp;MB model that is easy to hit.",
+        "Let the download finish first. Settings shows each model's state, and the download resumes if you leave and come back."
+      ]
+    },
+    {
+      "eyebrow": "Text",
+      "heading": "The cleanup did something I didn't want",
+      "paragraphs": [
+        "<b>It rewrote more than I expected.</b> Lower the polish level, or set it to Off — the deterministic cleanup alone handles fillers, punctuation, capitalisation, spoken corrections and numbers with no model involved at all.",
+        "<b>It capitalised or expanded punctuation in a terminal.</b> On Android, a terminal utterance is only treated as code if it looks like a command: ten words or fewer, starting with a known command verb or a path, or containing a CLI flag. A longer, sentence-shaped utterance is treated as prose on purpose, because most long dictation into a terminal turns out to be a prompt rather than a command. On macOS this does not apply at all — the Mac app does not pass code context into the cleanup chain, so it always runs in prose mode.",
+        "<b>It keeps mis-hearing a name.</b> Add it to Settings → Personalization → <b>Personal dictionary</b>. Terms there are fed to the speech engine before it decodes, not just corrected afterwards, which works considerably better. The <i>\"Dictated ✓ — Got a name wrong?\"</i> notification after a dictation is a shortcut to the same thing.",
+        "<b>It nearly always produces the same wrong shape.</b> Edit the result in the review sheet before inserting it. Those edits are stored on the device and two of them are shown to the polish model as examples of how you like your dictation cleaned, at Medium and Full."
+      ]
+    },
+    {
+      "eyebrow": "macOS",
+      "heading": "The Mac app will not open",
+      "paragraphs": [
+        "macOS saying the app is damaged, or from an unidentified developer, is a signing message rather than a corruption message: the build is self-signed and not notarized. Right-click the app and choose <b>Open</b>, then confirm once — macOS remembers thereafter. Or clear the quarantine flag directly with <code>xattr -dr com.apple.quarantine /Applications/OpenWispr.app</code>.",
+        "If it opens but nothing appears, that is expected — it is a menu-bar agent with no Dock icon and no main window. Look in the menu bar.",
+        "If dictation records but never inserts, grant Accessibility in System Settings → Privacy &amp; Security → Accessibility. It is the one hard requirement on macOS. If you chose the Apple Speech engine and it will not run, that engine additionally needs the Speech Recognition permission; the two on-device engines do not."
+      ]
+    },
+    {
+      "eyebrow": "Still stuck",
+      "heading": "Where to report something",
+      "paragraphs": [
+        "Settings → Feedback has three routes: <b>Send feedback</b> opens your mail app, <b>Report a problem</b> opens a GitHub issue in your browser, and <b>Rate OpenWispr</b> opens Google Play. None of them sends anything on its own — each hands the message to another app for you to send.",
+        "If you are filing an issue, the app prepares a small diagnostics block for you containing the app version, your device manufacturer and model, and your Android version. That is all of it: no identifier, no history, no transcript.",
+        "Issues can also be filed directly at <a href=\"https://github.com/RohitAg13/openWispr/issues\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">github.com/RohitAg13/openWispr</a>."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Why does the bubble keep vanishing on my Samsung or Xiaomi phone?",
+      "a": "Its battery manager is stopping the foreground service. Settings → Reliability → Auto-start helper opens the manufacturer's own auto-start screen where the app can find one. The app also restores the bubble whenever you open it, and after a reboot or app update."
+    },
+    {
+      "q": "Why is my clipboard being overwritten every time I dictate?",
+      "a": "It should not be. The normal insertion path does not touch the clipboard. If yours is changing every time, either auto-insert is off, or the fields you are dictating into do not report a cursor position and the app is pasting instead of splicing."
+    },
+    {
+      "q": "Can I stop the recording ending on a pause?",
+      "a": "Yes — turn off \"Auto-stop on pause\" in Settings, or use hold-to-talk, where auto-stop is disabled while your finger is down."
+    },
+    {
+      "q": "A download failed. Will I have to start over?",
+      "a": "No. The partial file is kept deliberately and the next attempt resumes from it. The exception is a checksum failure, which discards the file on purpose because the bytes on disk are not the file you asked for."
+    },
+    {
+      "q": "Why does the app say it needs more space when I have plenty?",
+      "a": "It requires headroom beyond the model files themselves — 64&nbsp;MB before a single download, and 350&nbsp;MB when choosing which model pair to install on first run — so that a download cannot fill the last of your storage."
+    },
+    {
+      "q": "Nothing happens when I quickly tap and release the bubble while holding.",
+      "a": "A hold does not register until 450&nbsp;ms, and you get a double haptic tick when it does. A release before that is treated as a tap, which starts a long-form recording instead. If the release lands before the recording screen exists, the app cancels the session cleanly rather than leaving a recording running."
+    }
+  ],
+  "relatedLinks": [
+    { "kicker": "Read next", "title": "Text insertion and permissions", "href": "/docs/text-insertion.html" },
+    { "kicker": "Read next", "title": "Settings reference", "href": "/docs/settings.html" },
+    { "kicker": "Read next", "title": "Models and device fit", "href": "/docs/models.html" }
+  ]
+}

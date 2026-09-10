@@ -1,0 +1,177 @@
+{
+  "type": "docs",
+  "navOrder": 5,
+  "navLabel": "Settings reference",
+  "slug": "settings",
+  "outputPath": "docs/settings.html",
+  "canonicalPath": "/docs/settings.html",
+  "title": "OpenWispr settings reference (Android)",
+  "description": "Every setting on OpenWispr's Android settings screen, section by section, with its default, its options, and what it actually changes. Includes the settings that only appear under certain conditions, and where each one is stored.",
+  "ogTitle": "OpenWispr settings reference",
+  "ogDescription": "Every switch on the Android settings screen, its default, and what it changes.",
+  "eyebrow": "Docs · Reference",
+  "h1": "Settings reference",
+  "subhead": "Eight sections, in the order the app shows them. Every default here is the value the app ships with, and every option is one the screen actually offers.",
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Docs", "href": "/docs/index.html" },
+    { "label": "Settings reference", "href": "/docs/settings.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "How it behaves",
+      "heading": "There is no Save button",
+      "paragraphs": [
+        "Every change persists the moment you make it. That is a deliberate design choice, not an omission — nothing on this screen needs confirming, and nothing is lost by backing out of it.",
+        "The screen also has no content until settings have loaded, so a fraction of a second of blank on a cold open is expected rather than a stall. This page covers the Android app; the macOS settings are a smaller set and are described under <a href=\"/docs/getting-started-macos.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Getting started on macOS</a>."
+      ]
+    },
+    {
+      "eyebrow": "Top of the screen",
+      "heading": "The setup card",
+      "paragraphs": [
+        "Above the first section is a status card. While anything is missing it reads <b>Finish setup</b> — <i>\"A couple of quick permissions\"</i> — and lists whichever of <b>Microphone</b>, <b>Floating bubble</b> and <b>Auto-insert</b> is not yet on, each with an <b>Enable</b> or <b>Manage</b> button. Once all three are on it collapses to <b>You're all set</b> — <i>\"Microphone · Bubble · Auto-insert all active\"</i> — and the rows disappear entirely.",
+        "These are operating-system permission states, not stored settings. See <a href=\"/docs/text-insertion.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Text insertion and permissions</a> for what each one unlocks."
+      ]
+    },
+    {
+      "eyebrow": "Section 1",
+      "heading": "Voice · transcription",
+      "paragraphs": [
+        "<b>Engine</b> chooses where speech recognition happens: <b>On-device</b>, <b>Groq</b>, <b>OpenAI</b> or <b>Custom</b>. The default is On-device, and the other three are opt-in cloud services that need an API key you supply. Selecting Groq or OpenAI immediately fills in that provider's model name for you; selecting Custom leaves the endpoint and model for you to enter.",
+        "Choosing a cloud engine replaces the model list with an API key field and a plain note that audio is sent to that provider for transcription, alongside a one-tap line reading <i>\"Switch to on-device to keep everything private.\"</i>",
+        "With On-device selected, you get the model list instead, headed by the line <i>\"Models download once, then run fully offline\"</i> and a hint naming your device's memory and the model recommended for it."
+      ],
+      "table": {
+        "headers": ["Setting", "Default", "Options / effect"],
+        "rows": [
+          ["<b>Engine</b>", "On-device", "On-device · Groq · OpenAI · Custom"],
+          ["<b>Speech model</b> <i>(on-device)</i>", "Chosen for your device during onboarding", "Parakeet ~631&nbsp;MB · Tiny ~75&nbsp;MB · Base ~142&nbsp;MB · Small ~488&nbsp;MB. The one recommended for your device carries a badge."],
+          ["<b>API key</b> / <b>Endpoint</b> / <b>Model id</b>", "empty", "Only shown for a cloud engine. Endpoint and model id appear only for Custom."],
+          ["<b>Auto-stop on pause</b>", "On", "\"End recording when you stop talking.\" Applies to a tapped recording; a held one ends when you let go."],
+          ["<b>Vocab-biased decoding (experimental)</b>", "Off", "Only shown with Parakeet selected. Uses a decode mode with a known upstream bug that occasionally returns blank or wrong text — the app's own wording. Leave it off unless you are testing it."]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Section 2",
+      "heading": "Cleanup & polish",
+      "paragraphs": [
+        "<b>Smart cleanup</b> is the deterministic stage: <i>\"Fillers, punctuation, numbers, backtracking · on-device, instant.\"</i> It is on by default and it involves no model at all.",
+        "<b>AI polish</b> is the optional model pass on top, at one of four strengths. Under the selector sits a fixed line that describes a real guarantee rather than a reassurance: <i>\"Polish always keeps your words and meaning. It falls back to the clean text if it strays.\"</i> The app measures how much of your wording survived and discards the model's answer if too little did. The mechanics are on <a href=\"/docs/cleanup-and-polish.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Cleanup and polish</a>."
+      ],
+      "table": {
+        "headers": ["Setting", "Default", "Options / effect"],
+        "rows": [
+          ["<b>Smart cleanup</b>", "On", "The deterministic chain. No model, no latency worth measuring."],
+          ["<b>AI polish</b>", "Full", "<b>Off</b> — deterministic only. <b>Light</b> — capitalisation, spacing and punctuation only. <b>Medium</b> — also splits run-on sentences and fixes small grammar. <b>Full</b> — fuller cleanup with one small rewrite for clarity if needed."],
+          ["<b>Advanced polish model</b>", "collapsed", "A disclosure holding everything below. Hidden entirely when AI polish is Off."],
+          ["<b>Polish model</b>", "OpenWispr Cleanup (Qwen3 0.6B)", "Also Gemma 3 270M ~241&nbsp;MB and Qwen3 0.6B ~639&nbsp;MB."],
+          ["<b>Creativity</b>", "0.7", "A 0 to 1 slider — the sampling temperature. <b>Cloud only:</b> it is sent to an OpenAI-compatible provider, omitted for Anthropic (whose recent models reject it), and not used at all by the on-device models."],
+          ["<b>Anti-AI phrasing</b>", "On", "A long list of guardrails against stock model phrasing, appended to the polish prompt. <b>Cloud only</b> — the on-device models get a deliberately short prompt instead, because sub-1B models loop on long guardrails."],
+          ["<b>Use a cloud model instead</b>", "collapsed, and off", "Anthropic (Claude) · Vercel AI Gateway · OpenRouter · Custom (OpenAI-compatible). Each needs your own API key; Custom also needs an endpoint URL."]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Section 3",
+      "heading": "Bubble",
+      "paragraphs": [
+        "Two settings, and the second one changes its own description when it cannot do what it says.",
+        "<b>Show bubble</b> — <i>\"The floating tap-to-talk button\"</i> — is off until you turn it on, which is also what the setup card's Enable button does. Turning it on asks for the notification permission on Android 13 and up, then the overlay permission if it is missing.",
+        "<b>Only on text fields</b> — <i>\"Appear only when you can type\"</i> — is on by default and makes the bubble behave like a contextual keyboard key, appearing when a text field takes focus and fading out when it loses it. It depends entirely on the accessibility service, so if that service is off the subtitle changes to <i>\"Needs auto-insert. The bubble stays visible until you turn it back on\"</i> and the bubble reverts to being always visible. That is the app explaining itself rather than silently ignoring your setting."
+      ]
+    },
+    {
+      "eyebrow": "Section 4",
+      "heading": "Privacy",
+      "paragraphs": [
+        "<b>Keep history</b> — <i>\"Stored on this device · powers personalization\"</i> — is on by default. Turning it off also immediately purges any retained audio, because keeping recordings for a history that no longer exists would be indefensible.",
+        "<b>Keep audio</b> appears only while history is on. Its description is the reason it exists: <i>\"Recordings stay on this device so a dictation that fails can be run again. Never uploaded.\"</i> The options are 7 days, 30 days, 90 days, or Forever, defaulting to 30 days. \"Forever\" is time-unbounded but still capped at the most recent 200 recordings.",
+        "<b>Clear all data</b> is the last row, in red. It deletes every history entry and purges all retained audio, and confirms with <i>\"On-device history cleared\"</i>. What is stored, and what none of it is used for, is on <a href=\"/docs/privacy-and-data.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">What leaves your device</a>."
+      ]
+    },
+    {
+      "eyebrow": "Section 5",
+      "heading": "Personalization",
+      "paragraphs": [
+        "Five rows, each opening a screen of its own rather than holding a value. All five operate on data that stays on the device."
+      ],
+      "bullets": [
+        "<b>Personal dictionary</b> — <i>\"Names &amp; terms you taught it\"</i>. Terms fed to the speech engine as a bias prompt before it decodes, not just corrected afterwards.",
+        "<b>Learned from edits</b> — <i>\"Corrections it remembered\"</i>. Aliases the app worked out from the edits you made to its output.",
+        "<b>Style memory</b> — <i>\"On-device examples · never uploaded\"</i>. The examples that feed the polish stage.",
+        "<b>Tone by app</b> — <i>\"Email, chat, code, notes\"</i>. Per-category tone overrides for the polish model.",
+        "<b>Import from contacts</b> — <i>\"Matched on-device · never uploaded\"</i>. The one feature that uses the contacts permission, and the only thing that permission is for."
+      ]
+    },
+    {
+      "eyebrow": "Sections 6–8",
+      "heading": "Reliability, Feedback and General",
+      "paragraphs": [
+        "<b>Reliability</b> holds one row: <b>Auto-start helper</b> — <i>\"For Samsung, Xiaomi, OnePlus, Oppo\"</i> — which opens your manufacturer's auto-start screen where the app can find one and the app-info screen otherwise. Aggressive battery management is the single most common reason the bubble goes missing.",
+        "<b>Feedback</b> holds three: <b>Send feedback</b> (opens your mail app), <b>Report a problem</b> (opens a GitHub issue in a browser) and <b>Rate OpenWispr</b> (opens Google Play). None of them sends anything by itself; each hands off to another app with the message for you to send.",
+        "<b>General</b> holds <b>Replay onboarding</b>, which walks the setup flow again, and a <b>Version</b> row reading the installed version followed by <i>\"open source\"</i> — read from the package manager, so it is the version you actually have rather than a number typed into the screen."
+      ]
+    },
+    {
+      "eyebrow": "Conditional",
+      "heading": "Settings that only appear sometimes",
+      "paragraphs": [
+        "Several rows are hidden until something else makes them relevant. If you are looking for one of these and cannot find it, this is why:"
+      ],
+      "table": {
+        "headers": ["Hidden setting", "Appears when"],
+        "rows": [
+          ["The on-device model list, and the device hint", "Engine is On-device"],
+          ["API key, endpoint URL, model id, and the cloud privacy note", "Engine is a cloud provider. Endpoint and model id are Custom-only."],
+          ["Vocab-biased decoding (experimental)", "Engine is On-device <i>and</i> the resolved model is Parakeet"],
+          ["Advanced polish model, and everything under it", "AI polish is not Off, and you expand the disclosure"],
+          ["Cloud polish provider fields", "You expand \"Use a cloud model instead\" and pick a non-local provider"],
+          ["Keep audio", "Keep history is on"],
+          ["A model's delete button", "That model is downloaded and is not the one currently in use"],
+          ["The setup card's permission rows", "At least one of microphone, bubble or auto-insert is missing"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Storage",
+      "heading": "Where these settings live",
+      "paragraphs": [
+        "Not everything on this screen is stored in the same place, which matters if you are clearing app data selectively or reasoning about backups. Most settings are in the app's DataStore preferences. The bubble's on/off state and its position on screen are separate, as are the history switch and the audio retention period, each in its own small preferences file.",
+        "One consequence worth knowing: API keys for cloud providers are stored as plain text in the app's private preferences. They are not wrapped in the Android Keystore. On an unrooted device with no backup extraction that is private to the app, but it is not encrypted at rest and this page would rather say so than let you assume otherwise. The macOS app stores no API keys at all, because it has no cloud provider option."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "What is the default AI polish level?",
+      "a": "Full. If the stored value is missing or unrecognised, it also resolves to Full."
+    },
+    {
+      "q": "What does 'Anti-AI phrasing' do?",
+      "a": "It appends a long block of guardrails to the polish prompt — avoid inflated vocabulary, drop the \"not X, but Y\" pattern, no signposting, no chatbot sycophancy, and so on. It applies to the cloud polish path only. The on-device models get a much shorter prompt regardless of this setting, because sub-1B models loop when given guardrails that long. The app gives the toggle no subtitle, which is why it is easy to assume it does more than it does."
+    },
+    {
+      "q": "Why can't I find the polish model picker?",
+      "a": "It is inside the collapsed \"Advanced polish model\" disclosure, which is itself hidden entirely when AI polish is set to Off. Set a polish level, then expand the disclosure."
+    },
+    {
+      "q": "Why can't I delete a model?",
+      "a": "The delete button only appears on downloaded models that are not the one currently in use. Switch to a different model first, and the button appears on the old one. Deleting tells you how much space it freed, and the model can be downloaded again at any time from the same screen."
+    },
+    {
+      "q": "Are my API keys encrypted?",
+      "a": "No. They are stored in the app's private DataStore preferences as plain text, not wrapped in the Android Keystore. They are private to the app on a normal device but they are not encrypted at rest."
+    },
+    {
+      "q": "Do cloud providers work without a key?",
+      "a": "No, and the app does not try. Both the cloud speech and cloud polish paths check for a key and fail before opening any connection, so selecting a provider without entering a key never sends anything anywhere."
+    }
+  ],
+  "relatedLinks": [
+    { "kicker": "Read next", "title": "Cleanup and polish", "href": "/docs/cleanup-and-polish.html" },
+    { "kicker": "Read next", "title": "What leaves your device", "href": "/docs/privacy-and-data.html" },
+    { "kicker": "Read next", "title": "Models and device fit", "href": "/docs/models.html" }
+  ]
+}

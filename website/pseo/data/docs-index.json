@@ -1,0 +1,100 @@
+{
+  "type": "docs",
+  "navOrder": 1,
+  "navLabel": "Overview",
+  "slug": "index",
+  "outputPath": "docs/index.html",
+  "canonicalPath": "/docs/index.html",
+  "title": "OpenWispr documentation — how the app actually works",
+  "description": "Reference documentation for OpenWispr: what happens between pressing the button and the text appearing, which models run on which device, every setting, and what leaves your device. Written from the source, not from the marketing page.",
+  "ogTitle": "OpenWispr documentation",
+  "ogDescription": "How OpenWispr works, end to end: recording, on-device transcription, cleanup, polish, and insertion. Plus a full settings reference.",
+  "eyebrow": "Documentation",
+  "h1": "OpenWispr documentation",
+  "subhead": "What the app does between the moment you press the button and the moment the words appear in the field you were typing in — described from the code that does it.",
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Docs", "href": "/docs/index.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "Start here",
+      "heading": "What OpenWispr is",
+      "paragraphs": [
+        "OpenWispr is a dictation app for Android and macOS. You trigger it, speak, and the text is written into whatever field you were already in. Speech recognition and text cleanup both run on your device by default: on a fresh install there is no account, no server, and nothing to sign in to, and after the one-time model download the app does not need a network connection to transcribe anything.",
+        "It is MIT-licensed, and the whole of it is on <a href=\"https://github.com/RohitAg13/openWispr\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">GitHub</a>. Everything on these pages was written by reading that source. Where the app's behaviour is surprising, these pages say so rather than smoothing it over, and where the code does not settle a question — model language coverage is the clearest example — they say that too instead of guessing."
+      ]
+    },
+    {
+      "eyebrow": "End to end",
+      "heading": "What happens when you dictate",
+      "paragraphs": [
+        "The same pipeline runs on both platforms. Each stage is documented in more detail on the page linked beside it."
+      ],
+      "bullets": [
+        "<b>Trigger.</b> On Android, the floating bubble: tap it for a long-form take, or hold it and speak and release to send. On macOS, hold the fn/globe key, or use a global shortcut you record yourself. See <a href=\"/docs/getting-started-android.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Android setup</a> and <a href=\"/docs/getting-started-macos.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">macOS setup</a>.",
+        "<b>Record.</b> 16 kHz mono PCM, with a Silero voice-activity model watching the stream so a tap-to-start recording can end itself when you stop talking.",
+        "<b>Transcribe, on the device.</b> Parakeet by default, or one of three Whisper sizes. Your personal dictionary is fed to the recognizer as a bias prompt before it decodes, not only applied afterwards. See <a href=\"/docs/models.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Models and device fit</a>.",
+        "<b>Clean up, deterministically.</b> Seven ordered stages of plain code — no model — that remove hesitations, resolve spoken self-corrections, expand spoken punctuation, digitise numbers, build lists, and capitalise. See <a href=\"/docs/cleanup-and-polish.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Cleanup and polish</a>.",
+        "<b>Polish, optionally.</b> A small on-device language model refines the cleaned text, at one of four strengths, with guards that throw its answer away and keep the deterministic text if it strays too far from what you said.",
+        "<b>Insert.</b> The accessibility service splices the text in at your cursor. If it cannot reach the field, it falls back to the clipboard and tells you nothing was lost. See <a href=\"/docs/text-insertion.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Text insertion and permissions</a>."
+      ]
+    },
+    {
+      "eyebrow": "The pages",
+      "heading": "Where to go next",
+      "paragraphs": [
+        "Nine pages, each answering a different question. The sidebar carries the same list on every docs page."
+      ],
+      "table": {
+        "headers": ["Page", "Answers"],
+        "rows": [
+          ["<a href=\"/docs/getting-started-android.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Getting started on Android</a>", "Install, the four permissions, and how the bubble's tap and hold gestures differ"],
+          ["<a href=\"/docs/getting-started-macos.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Getting started on macOS</a>", "The unsigned-DMG first launch, the fn-key trigger, and which system permissions macOS asks for"],
+          ["<a href=\"/docs/models.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Models and device fit</a>", "Every model the app can download, its real size, and which pair your phone gets and why"],
+          ["<a href=\"/docs/settings.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Settings reference</a>", "Every switch on the Android settings screen, its default, and what it changes"],
+          ["<a href=\"/docs/text-insertion.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Text insertion and permissions</a>", "How text reaches the field, the fallback chain, and what each permission is for"],
+          ["<a href=\"/docs/cleanup-and-polish.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Cleanup and polish</a>", "The seven deterministic stages, the four polish levels, and when the model is skipped"],
+          ["<a href=\"/docs/privacy-and-data.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">What leaves your device</a>", "Every host the app can contact, under what condition, and what is stored locally"],
+          ["<a href=\"/docs/troubleshooting.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Troubleshooting</a>", "The bubble disappearing, text landing on the clipboard, downloads failing, dictation cut short"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "About these docs",
+      "heading": "How to read them, and how they can be wrong",
+      "paragraphs": [
+        "Every number on these pages — a threshold in milliseconds, a model size, a default — was taken from the source rather than from memory or from the app's own marketing copy. That makes them accurate about the code in the repository at the time they were written, which is not the same as accurate about the build on your phone. If a figure here disagrees with what the app tells you, believe the app, and please <a href=\"https://github.com/RohitAg13/openWispr/issues\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">open an issue</a> so the page gets fixed.",
+        "There is no separate FAQ page. Questions live at the bottom of whichever page owns the subject, which is where you are already looking when you have them.",
+        "Every page here is also served as Markdown at the same address with a <code>.md</code> extension — this one is at <code>/docs/index.md</code>. Both are generated from the same source, so they cannot disagree with each other."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Does OpenWispr need an internet connection?",
+      "a": "Not to dictate. The speech and cleanup models are downloaded once, over the network, and after that the default configuration transcribes and cleans up entirely on the device. A connection is needed only to download or change models, or if you deliberately switch to a cloud provider. See <a href=\"/docs/privacy-and-data.html\">What leaves your device</a>."
+    },
+    {
+      "q": "Is it really free?",
+      "a": "Yes. MIT-licensed, no subscription, no account, no usage limit, and no paid tier. The Android app is on Google Play and the macOS app is a download from GitHub Releases."
+    },
+    {
+      "q": "Which platforms are supported?",
+      "a": "Android 7.0 and newer, and macOS 13.3 (Ventura) and newer on both Apple Silicon and Intel. There is no Windows, iOS, or Linux build."
+    },
+    {
+      "q": "Is OpenWispr a keyboard?",
+      "a": "No. On Android it is a floating bubble plus an accessibility service, not an input method — you keep your own keyboard and OpenWispr writes into the field alongside it. It also appears in the text-selection toolbar for rewriting text you have already selected."
+    },
+    {
+      "q": "Where does the documentation come from?",
+      "a": "From reading the Android and macOS source in the public repository. Where the code does not state something — for example, which languages the Parakeet model covers — these pages say it is not documented rather than repeating a plausible answer."
+    }
+  ],
+  "relatedLinks": [
+    { "kicker": "Start here", "title": "Getting started on Android", "href": "/docs/getting-started-android.html" },
+    { "kicker": "Start here", "title": "Getting started on macOS", "href": "/docs/getting-started-macos.html" },
+    { "kicker": "Reference", "title": "Models and device fit", "href": "/docs/models.html" }
+  ]
+}

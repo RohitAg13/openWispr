@@ -68,10 +68,20 @@ function table(headers, rows) {
   return `${head}\n${rule}\n${body}`;
 }
 
-function sectionMd({ heading, eyebrow, paragraphs }) {
+/**
+ * `bullets` and `table` are optional and only the docs pages use them today. They are rendered
+ * here rather than flattened into prose for the same reason render.mjs draws them: a settings
+ * reference read as one long paragraph is worse than the table it came from, and the mirror is
+ * meant to be the same page without the chrome, not the same page with its structure removed.
+ */
+function sectionMd({ heading, eyebrow, paragraphs, bullets, table: tbl }) {
   const head = heading ? `## ${inlineToMarkdown(heading)}\n\n` : '';
   const kicker = eyebrow && heading ? `*${inlineToMarkdown(eyebrow)}*\n\n` : '';
-  return `${kicker}${head}${paragraphs.map(inlineToMarkdown).join('\n\n')}`;
+  const blocks = [];
+  if (paragraphs && paragraphs.length) blocks.push(paragraphs.map(inlineToMarkdown).join('\n\n'));
+  if (bullets && bullets.length) blocks.push(bullets.map((b) => `- ${inlineToMarkdown(b)}`).join('\n'));
+  if (tbl) blocks.push(table(tbl.headers, tbl.rows));
+  return `${kicker}${head}${blocks.join('\n\n')}`;
 }
 
 /**

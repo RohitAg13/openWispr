@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr troubleshooting</title>
+<meta name="description" content="The bubble disappearing, dictated text landing on the clipboard, recordings cut short, model downloads that fail, and Gatekeeper blocking the Mac app — what causes each and what to do about it.">
+<meta property="og:title" content="OpenWispr troubleshooting">
+<meta property="og:description" content="The bubble vanishing, text on the clipboard, downloads failing, dictation cut short — causes and fixes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/docs/troubleshooting.html">
+<link rel="canonical" href="https://openwispr.dev/docs/troubleshooting.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does the bubble keep vanishing on my Samsung or Xiaomi phone?","acceptedAnswer":{"@type":"Answer","text":"Its battery manager is stopping the foreground service. Settings → Reliability → Auto-start helper opens the manufacturer's own auto-start screen where the app can find one. The app also restores the bubble whenever you open it, and after a reboot or app update."}},{"@type":"Question","name":"Why is my clipboard being overwritten every time I dictate?","acceptedAnswer":{"@type":"Answer","text":"It should not be. The normal insertion path does not touch the clipboard. If yours is changing every time, either auto-insert is off, or the fields you are dictating into do not report a cursor position and the app is pasting instead of splicing."}},{"@type":"Question","name":"Can I stop the recording ending on a pause?","acceptedAnswer":{"@type":"Answer","text":"Yes — turn off \"Auto-stop on pause\" in Settings, or use hold-to-talk, where auto-stop is disabled while your finger is down."}},{"@type":"Question","name":"A download failed. Will I have to start over?","acceptedAnswer":{"@type":"Answer","text":"No. The partial file is kept deliberately and the next attempt resumes from it. The exception is a checksum failure, which discards the file on purpose because the bytes on disk are not the file you asked for."}},{"@type":"Question","name":"Why does the app say it needs more space when I have plenty?","acceptedAnswer":{"@type":"Answer","text":"It requires headroom beyond the model files themselves — 64&nbsp;MB before a single download, and 350&nbsp;MB when choosing which model pair to install on first run — so that a download cannot fill the last of your storage."}},{"@type":"Question","name":"Nothing happens when I quickly tap and release the bubble while holding.","acceptedAnswer":{"@type":"Answer","text":"A hold does not register until 450&nbsp;ms, and you get a double haptic tick when it does. A release before that is treated as a tap, which starts a long-form recording instead. If the release lands before the recording screen exists, the app cancels the session cleanly rather than leaving a recording running."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://openwispr.dev/docs/index.html"},{"@type":"ListItem","position":3,"name":"Troubleshooting","item":"https://openwispr.dev/docs/troubleshooting.html"}]}</script>
+<!-- Umami, self-hosted. Website only: the apps ship no analytics of any kind. -->
+<script defer src="https://umami.rohitagarwal.dev/recorder.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/docs/index.html" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Docs</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden; border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="position:absolute; top:-220px; left:20%; width:900px; height:520px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.42), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:1080px; margin:0 auto; padding:34px 32px 44px;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:20px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">Docs · Troubleshooting</span>
+    </div>
+    <h1 style="font-size:40px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 16px; max-width:760px;">Troubleshooting</h1>
+    <p style="font-size:17.5px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0; max-width:680px;">Most of these have a specific cause in the app's behaviour rather than a vague one, so each entry says what is actually happening before saying what to do.</p>
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/docs/index.html" style="color:oklch(0.55 0.03 50);">Docs</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">Troubleshooting</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div class="ow-stack" style="max-width:1080px; margin:0 auto; padding:16px 32px 64px; display:grid; grid-template-columns:236px 1fr; gap:44px; align-items:start;">
+    <div><nav aria-label="Documentation" style="position:sticky; top:96px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:16px 10px;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:oklch(0.6 0.03 52); text-transform:uppercase; padding:0 12px 10px;">Docs</div>
+  <a href="/docs/index.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Overview</a>
+<a href="/docs/getting-started-android.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Getting started · Android</a>
+<a href="/docs/getting-started-macos.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Getting started · macOS</a>
+<a href="/docs/models.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Models &amp; device fit</a>
+<a href="/docs/settings.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Settings reference</a>
+<a href="/docs/text-insertion.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Text insertion &amp; permissions</a>
+<a href="/docs/cleanup-and-polish.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Cleanup &amp; polish</a>
+<a href="/docs/privacy-and-data.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">What leaves your device</a>
+<a href="/docs/troubleshooting.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:700; color:oklch(0.4 0.1 40); background:oklch(0.955 0.022 68);" aria-current="page">Troubleshooting</a>
+</nav></div>
+    <div>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">The bubble</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The bubble has disappeared</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Three different causes look identical from the outside, so work through them in this order.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Field gating is doing its job.</b> With <b>Only on text fields</b> on — the default — the bubble is only visible while a text field has focus. Tap into any text field and it should fade in. If you would rather have it always visible, turn that setting off.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>The overlay permission was revoked.</b> Without "Display over other apps", the bubble cannot be drawn at all. Settings shows this on the setup card at the top as <b>Floating bubble</b>, with an Enable button.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Your phone killed the service.</b> This is the common one on Samsung, Xiaomi, OnePlus and Oppo devices, whose battery managers stop background services aggressively. The app restores the bubble whenever you open it or return to Settings, and brings it back after a reboot or an app update — but the durable fix is Settings → Reliability → <b>Auto-start helper</b>, which opens your manufacturer's own auto-start screen where the app can find one.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">The bubble</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The bubble is always visible even though "Only on text fields" is on</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">This is not the setting being ignored. Gating depends entirely on the accessibility service — that is the only way the app can know whether a text field has focus. When that service is off, the app cannot hide the bubble, because it would then have no way to bring it back. So it reverts to always-visible on purpose.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The setting's own subtitle changes to say so: <i>"Needs auto-insert. The bubble stays visible until you turn it back on."</i> Re-enabling <b>Auto-insert</b> from the setup card restores gating.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The most common reason for the service being off without you touching it: Android's restricted-settings protection on sideloaded builds, or an OEM battery manager. Both silently disable accessibility services.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Insertion</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The text lands on my clipboard instead of the field</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Three possible reasons, in descending order of likelihood.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Auto-insert is not enabled.</b> Without the accessibility service the app cannot type into another app's field, so it copies instead. This path is deliberately silent — no toast — because being told on every single dictation would be nagging.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>The field would not report a cursor position.</b> Some fields, particularly ones drawn in a WebView, do not expose where your cursor is. Rather than guess and overwrite the wrong text, the app pastes instead, which necessarily involves the clipboard. Nothing is broken; this is the middle rung of the fallback chain.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>No field was found in time.</b> The app retries for about 2.3 seconds and then gives up and copies. This happens when the target app takes a long time to restore focus. On the normal path the clipboard is never touched, so if you are seeing your clipboard change on every dictation, one of the above is the reason. Full details on <a href="/docs/text-insertion.html" style="color:oklch(0.55 0.1 40); font-weight:600;">Text insertion and permissions</a>.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Recording</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">It stops recording before I've finished speaking</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The <b>Auto-stop on pause</b> setting ends a tapped recording when the voice-activity model has heard about 1.6 seconds of silence. That figure was deliberately raised from a shorter one because the shorter one cut people off mid-thought — but 1.6 seconds is still less than some people pause for.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Two fixes. Turn <b>Auto-stop on pause</b> off, and end recordings yourself by tapping the bubble again or pressing Done. Or use hold-to-talk instead: auto-stop is disabled entirely while you are holding, because your finger is already saying when you are done.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Recording</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Nothing was transcribed at all</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If the recording was shorter than a quarter of a second, it is discarded rather than sent to the speech engine — there is nothing usable in it. This is most often a mis-fired tap.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If you were using hold-to-talk and released almost immediately, there is a related case: a very quick press-and-release can finish before the recording screen has even come up. The app detects this and cancels cleanly rather than leaving a session running. Hold for a moment longer — the hold does not register at all until 450&nbsp;ms, and you get a double haptic tick when it does.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If you have the <b>Vocab-biased decoding (experimental)</b> toggle on with Parakeet, turn it off. The app's own description says it uses a decode mode with a known upstream bug that occasionally returns blank or wrong text, and it is off by default for exactly this reason.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Models</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">A model download failed, or will not finish</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">There is no retry loop — that is a design decision, not a gap. A failed download leaves its partial file on disk on purpose and stops, and starting the download again resumes from where it stopped rather than from zero. So the fix for a flaky connection is simply to tap Get again.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Two failures are not connection problems and behave differently:</p>
+    <ul style="margin:0 0 20px; padding-left:22px;">
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>"Not enough space"</b>, naming a number of megabytes. The download refuses to start unless there is room for what remains plus a 64&nbsp;MB margin. Free that much and retry. On first run, the setup screen checks earlier still and tells you how far short you are before offering a download at all.</li>
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>"failed its checksum; discarded"</b>. The completed file did not match the SHA-256 the host published for it. The partial and everything recorded about it are deleted, deliberately, because resuming from bytes that are not this file would splice garbage forever. Retry from scratch; if it recurs, that is worth <a href="https://github.com/RohitAg13/openWispr/issues" style="color:oklch(0.55 0.1 40); font-weight:600;">reporting</a>.</li>
+    </ul>
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Models</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Dictation hangs, then errors, right after install</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If you dictate while a model is still downloading, the app waits for it — but only for 25 seconds, after which it reports an error rather than hanging indefinitely. On a slow connection with a 631&nbsp;MB model that is easy to hit.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Let the download finish first. Settings shows each model's state, and the download resumes if you leave and come back.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Text</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The cleanup did something I didn't want</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>It rewrote more than I expected.</b> Lower the polish level, or set it to Off — the deterministic cleanup alone handles fillers, punctuation, capitalisation, spoken corrections and numbers with no model involved at all.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>It capitalised or expanded punctuation in a terminal.</b> On Android, a terminal utterance is only treated as code if it looks like a command: ten words or fewer, starting with a known command verb or a path, or containing a CLI flag. A longer, sentence-shaped utterance is treated as prose on purpose, because most long dictation into a terminal turns out to be a prompt rather than a command. On macOS this does not apply at all — the Mac app does not pass code context into the cleanup chain, so it always runs in prose mode.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>It keeps mis-hearing a name.</b> Add it to Settings → Personalization → <b>Personal dictionary</b>. Terms there are fed to the speech engine before it decodes, not just corrected afterwards, which works considerably better. The <i>"Dictated ✓ — Got a name wrong?"</i> notification after a dictation is a shortcut to the same thing.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>It nearly always produces the same wrong shape.</b> Edit the result in the review sheet before inserting it. Those edits are stored on the device and two of them are shown to the polish model as examples of how you like your dictation cleaned, at Medium and Full.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">macOS</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The Mac app will not open</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">macOS saying the app is damaged, or from an unidentified developer, is a signing message rather than a corruption message: the build is self-signed and not notarized. Right-click the app and choose <b>Open</b>, then confirm once — macOS remembers thereafter. Or clear the quarantine flag directly with <code>xattr -dr com.apple.quarantine /Applications/OpenWispr.app</code>.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If it opens but nothing appears, that is expected — it is a menu-bar agent with no Dock icon and no main window. Look in the menu bar.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If dictation records but never inserts, grant Accessibility in System Settings → Privacy &amp; Security → Accessibility. It is the one hard requirement on macOS. If you chose the Apple Speech engine and it will not run, that engine additionally needs the Speech Recognition permission; the two on-device engines do not.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Still stuck</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Where to report something</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Settings → Feedback has three routes: <b>Send feedback</b> opens your mail app, <b>Report a problem</b> opens a GitHub issue in your browser, and <b>Rate OpenWispr</b> opens Google Play. None of them sends anything on its own — each hands the message to another app for you to send.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">If you are filing an issue, the app prepares a small diagnostics block for you containing the app version, your device manufacturer and model, and your Android version. That is all of it: no identifier, no history, no transcript.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Issues can also be filed directly at <a href="https://github.com/RohitAg13/openWispr/issues" style="color:oklch(0.55 0.1 40); font-weight:600;">github.com/RohitAg13/openWispr</a>.</p>
+    
+    
+  </section>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why does the bubble keep vanishing on my Samsung or Xiaomi phone?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Its battery manager is stopping the foreground service. Settings → Reliability → Auto-start helper opens the manufacturer's own auto-start screen where the app can find one. The app also restores the bubble whenever you open it, and after a reboot or app update.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why is my clipboard being overwritten every time I dictate?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">It should not be. The normal insertion path does not touch the clipboard. If yours is changing every time, either auto-insert is off, or the fields you are dictating into do not report a cursor position and the app is pasting instead of splicing.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Can I stop the recording ending on a pause?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Yes — turn off "Auto-stop on pause" in Settings, or use hold-to-talk, where auto-stop is disabled while your finger is down.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">A download failed. Will I have to start over?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No. The partial file is kept deliberately and the next attempt resumes from it. The exception is a checksum failure, which discards the file on purpose because the bytes on disk are not the file you asked for.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why does the app say it needs more space when I have plenty?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">It requires headroom beyond the model files themselves — 64&nbsp;MB before a single download, and 350&nbsp;MB when choosing which model pair to install on first run — so that a download cannot fill the last of your storage.</div>
+</div>
+<div data-faq="5" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Nothing happens when I quickly tap and release the bubble while holding.</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">A hold does not register until 450&nbsp;ms, and you get a double haptic tick when it does. A release before that is treated as a tap, which starts a long-form recording instead. If the release lands before the recording screen exists, the app cancels the session cleanly rather than leaving a recording running.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/docs/text-insertion.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Text insertion and permissions</div>
+</a>
+<a href="/docs/settings.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Settings reference</div>
+</a>
+<a href="/docs/models.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Models and device fit</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/docs/index.html" style="color:oklch(0.72 0.02 65);">Docs</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>

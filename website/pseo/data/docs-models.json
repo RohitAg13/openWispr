@@ -1,0 +1,151 @@
+{
+  "type": "docs",
+  "navOrder": 4,
+  "navLabel": "Models & device fit",
+  "slug": "models",
+  "outputPath": "docs/models.html",
+  "canonicalPath": "/docs/models.html",
+  "title": "OpenWispr models: every model, its real size, and which one your device gets",
+  "description": "The complete OpenWispr model catalogue — Parakeet, three Whisper sizes, and three cleanup models — with real download sizes, and the exact RAM and storage thresholds that decide which pair your phone downloads on first run.",
+  "ogTitle": "OpenWispr models and device fit",
+  "ogDescription": "Every downloadable model with its real size, and the exact RAM thresholds that decide which pair your phone gets.",
+  "eyebrow": "Docs · Models",
+  "h1": "Models, and which ones your device gets",
+  "subhead": "Two speech engines, three cleanup models, and a device check that runs before the first download so a phone never ends up with weights it cannot hold in memory.",
+  "breadcrumbs": [
+    { "label": "OpenWispr", "href": "/" },
+    { "label": "Docs", "href": "/docs/index.html" },
+    { "label": "Models & device fit", "href": "/docs/models.html" }
+  ],
+  "sections": [
+    {
+      "eyebrow": "Speech",
+      "heading": "Two on-device speech engines",
+      "paragraphs": [
+        "OpenWispr for Android ships two independent speech backends. Parakeet is the default: NVIDIA's Parakeet-TDT 0.6B v2, quantised to int8 and run through sherpa-onnx. Whisper is the alternative, run through whisper.cpp, in three sizes.",
+        "The project's own note on why Parakeet is the default, from the code that loads it: on a Galaxy S25 it measures a median on-device transcription of about 238&nbsp;ms and a 95th percentile of about 491&nbsp;ms, with a word error rate on prose below that of Whisper small, which is the largest Whisper the app offers. That is the project's own measurement on one device, not an independent benchmark, and it is quoted here as such.",
+        "Parakeet arrives as four files rather than one: an encoder, a decoder, a joiner and a token list. The int8 encoder is roughly 98% of the bytes, which is why the download progress you see is essentially the encoder's."
+      ],
+      "table": {
+        "headers": ["Model", "Engine", "Download", "Source"],
+        "rows": [
+          ["<b>Parakeet</b> — the default", "sherpa-onnx, Parakeet-TDT 0.6B v2, int8", "~631&nbsp;MB across 4 files", "Hugging Face: <code>csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8</code>"],
+          ["<b>Whisper tiny</b> — fastest", "whisper.cpp, ggml", "~75&nbsp;MB", "Hugging Face: <code>ggerganov/whisper.cpp</code>"],
+          ["<b>Whisper base</b> — balanced", "whisper.cpp, ggml", "~142&nbsp;MB", "Hugging Face: <code>ggerganov/whisper.cpp</code>"],
+          ["<b>Whisper small</b> — most accurate", "whisper.cpp, ggml", "~488&nbsp;MB", "Hugging Face: <code>ggerganov/whisper.cpp</code>"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Cleanup",
+      "heading": "Three polish models",
+      "paragraphs": [
+        "The polish stage — the optional model pass that runs after the deterministic cleanup — has its own small catalogue of GGUF models run through llama.cpp. The default and recommended one is the project's own fine-tune: Qwen3 0.6B, trained specifically on dictation cleanup with the exact prompt the app feeds it at runtime, which is why it ignores the polish-level instructions and simply runs its trained behaviour.",
+        "The other two are stock instruct models, offered because a fine-tune is an opinion and some people would rather bring their own."
+      ],
+      "table": {
+        "headers": ["Model", "Quantisation", "Download"],
+        "rows": [
+          ["<b>OpenWispr Cleanup (Qwen3 0.6B)</b> — default", "Q4_K_M", "~397&nbsp;MB"],
+          ["<b>Gemma 3 270M</b>", "Q4_0, quantisation-aware trained", "~241&nbsp;MB"],
+          ["<b>Qwen3 0.6B</b>", "Q8_0", "~639&nbsp;MB"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Device fit",
+      "heading": "Why your phone gets a particular pair",
+      "paragraphs": [
+        "The failure mode this exists to prevent is specific and nasty: the download succeeds, the progress bar fills, everything looks fine — and then the first dictation fails on a phone that never had the memory to hold the weights. So before the first download, OpenWispr reads the device's total memory, Android's own low-RAM-device flag, and the free space in the app's own directory, and picks a pair from that.",
+        "The thresholds are set just under each nominal tier, because a phone sold as \"4&nbsp;GB\" reports roughly 3.6&nbsp;GiB to Android once the kernel and hardware carve-outs are taken out, and one sold as \"6&nbsp;GB\" reports roughly 5.5&nbsp;GiB."
+      ],
+      "table": {
+        "headers": ["Tier", "Chosen when", "Speech", "Cleanup", "Total"],
+        "rows": [
+          ["<b>Full</b>", "Total RAM at or above 5.4&nbsp;GiB — roughly a 6&nbsp;GB-class phone and up", "Parakeet", "OpenWispr Cleanup fine-tune", "~1,028&nbsp;MB"],
+          ["<b>Compact</b>", "Total RAM at or above 3.4&nbsp;GiB — roughly a 4&nbsp;GB-class phone", "Whisper base", "Gemma 3 270M", "~383&nbsp;MB"],
+          ["<b>Minimal</b>", "Below that, or any device Android itself flags as low-RAM", "Whisper tiny", "Gemma 3 270M", "~316&nbsp;MB"]
+        ]
+      }
+    },
+    {
+      "eyebrow": "Device fit",
+      "heading": "The four rules the check follows",
+      "paragraphs": [
+        "The ordering matters as much as the numbers, and each of these is a deliberate decision rather than an accident of the code:"
+      ],
+      "bullets": [
+        "<b>RAM decides the tier; storage can only push it down, never up.</b> A phone with 8&nbsp;GB of memory and 400&nbsp;MB free gets the compact pair, because the full pair cannot land. It does not get the full pair on the strength of its memory alone.",
+        "<b>Android's low-RAM flag overrides the number.</b> Manufacturers set it on Go-edition and budget builds, and it means the platform is already trimming background processes hard — so a 600&nbsp;MB native allocation is far more likely to be the one that gets killed, whatever the total says. Any device with that flag gets the minimal pair.",
+        "<b>An unreadable memory figure is treated as capable, not as small.</b> If Android's activity manager cannot be read at all, the check assumes the full tier rather than punishing a phone for an unresponsive system service.",
+        "<b>A 350&nbsp;MB storage margin is required on top of the model files</b>, so a download does not fill the last of the device's free space. If even the minimal pair plus that margin will not fit, the setup screen tells you how many megabytes short you are, before starting anything."
+      ]
+    },
+    {
+      "eyebrow": "Device fit",
+      "heading": "Every tier is a real, complete, offline setup",
+      "paragraphs": [
+        "A smaller tier is a smaller model, not a cloud fallback and not a cut-down mode. The minimal configuration still transcribes and still cleans up, entirely on the phone, with no account and no network. What you give up is accuracy on long, fast, accented or noisy speech, which is a genuine cost and one worth stating rather than hiding.",
+        "None of it is a lock, either. Settings lists every speech model with its size, marks the one recommended for your device with a badge, and lets you move in either direction — a larger model on a modest phone if you want to try it, or a smaller one on a flagship to save the space. Models you are not currently using can be deleted from the same screen; the active one cannot."
+      ]
+    },
+    {
+      "eyebrow": "Downloads",
+      "heading": "How a model download actually behaves",
+      "paragraphs": [
+        "Model files are large and phone connections are not reliable, so the download path is built around being interrupted. Everything here is specific and checkable:"
+      ],
+      "bullets": [
+        "<b>Resumable.</b> A partial download is kept beside the target with the server's validator recorded next to it, and a resume sends an HTTP <code>Range</code> request with an <code>If-Range</code> condition. If the server answers <code>200</code> rather than <code>206</code> — meaning the range was ignored or the file changed underneath — the partial is thrown away and the download starts over rather than splicing two different files together. A partial with no recorded validator is also discarded, because there is no way to prove it belongs to this file.",
+        "<b>Verified, when the server offers a hash.</b> Hugging Face publishes each file's SHA-256, but on its own redirect rather than on the CDN response that serves the bytes, so the downloader follows the redirect chain to find it. When a hash is available, the finished file is hashed and compared; a mismatch deletes the partial and everything recorded about it and fails loudly, rather than resuming from bytes that are not this file. When no hash is offered, the file is size-checked only, and the log says so.",
+        "<b>Length-checked either way.</b> A connection that closes cleanly halfway through a body is indistinguishable from success at the stream level, so the bytes written are compared against the declared total and a short file is an error, not a finished download.",
+        "<b>Space-checked first.</b> The download refuses to start if free space is less than what remains to fetch plus a 64&nbsp;MB margin, and the error names the number of megabytes needed.",
+        "<b>Not automatically retried.</b> This is worth being precise about: there is no retry loop. A failure leaves the partial file on disk deliberately and stops. Starting the download again — which is what tapping Get does — picks up from where it stopped. The only automatic retrying is the HTTP client's own transport-level reconnection."
+      ]
+    },
+    {
+      "eyebrow": "Languages",
+      "heading": "What the code does not say about languages",
+      "paragraphs": [
+        "This is one of the places where the honest answer is that the source does not settle it, so this page will not pretend otherwise.",
+        "The Whisper models are described in the app's own code as a registry of multilingual sizes, and the app never pins them to a language. Beyond that, nothing in the repository states language coverage for Parakeet or for any of the cleanup models: there is no language setting, no locale parameter passed to any recogniser, and no per-model language metadata used for anything. If language coverage matters to your decision, check the upstream model cards for the model you intend to use, rather than trusting a claim on this page.",
+        "One platform difference that <i>is</i> in the code: the macOS app uses the English-only <code>.en</code> Whisper builds and pins decoding to English, where Android uses the multilingual ones. See <a href=\"/docs/getting-started-macos.html\" style=\"color:oklch(0.55 0.1 40); font-weight:600;\">Getting started on macOS</a>."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Which speech model does OpenWispr use by default?",
+      "a": "Parakeet, on both Android and macOS. If the stored model setting is blank or names something the app does not recognise, it resolves to Parakeet as well. On Android, what onboarding actually downloads depends on your device — a 4&nbsp;GB-class phone is set up with Whisper base instead."
+    },
+    {
+      "q": "How much RAM do I need for offline dictation?",
+      "a": "For the full pair, roughly 6&nbsp;GB. OpenWispr does not require that: below about 5.4&nbsp;GiB of reported memory it installs Whisper base with Gemma 3 270M, and below about 3.4&nbsp;GiB — or on any device Android flags as low-RAM — Whisper tiny with the same cleanup model. All three configurations are fully on-device."
+    },
+    {
+      "q": "How much storage do the models take?",
+      "a": "Between about 316&nbsp;MB and about 1,028&nbsp;MB depending on the tier, plus the app itself. The app also requires 350&nbsp;MB of headroom beyond the files before it will choose a tier."
+    },
+    {
+      "q": "Can I choose a different model than the recommended one?",
+      "a": "Yes, in either direction. The settings screen lists every on-device speech model with its download size and marks the recommended one; picking another downloads it and switches to it. The polish model can be changed the same way."
+    },
+    {
+      "q": "What happens if a model download is interrupted?",
+      "a": "The partial file is kept and the next attempt resumes from it with an HTTP range request, provided the server's validator still matches. If it does not, the partial is discarded and the download restarts cleanly rather than mixing two versions of the file."
+    },
+    {
+      "q": "Are the downloads verified?",
+      "a": "Yes, when the host publishes a hash. Hugging Face does, on its redirect rather than on the file response, and OpenWispr follows the chain to read it and compares SHA-256 before using the file. A mismatch discards the file and fails rather than retrying from it."
+    },
+    {
+      "q": "Which languages do the models support?",
+      "a": "The app's code describes the Whisper models as multilingual and makes no language claim at all for Parakeet or the cleanup models, and it passes no language parameter to any engine. Rather than guess, check the upstream model card for whichever model you plan to use."
+    }
+  ],
+  "relatedLinks": [
+    { "kicker": "Read next", "title": "Settings reference", "href": "/docs/settings.html" },
+    { "kicker": "Read next", "title": "Cleanup and polish", "href": "/docs/cleanup-and-polish.html" },
+    { "kicker": "Also read", "title": "Will on-device dictation run on my phone?", "href": "/android/will-on-device-dictation-run-on-my-phone.html" }
+  ]
+}

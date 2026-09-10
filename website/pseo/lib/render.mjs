@@ -80,6 +80,7 @@ function navHtml() {
       <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
       <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
       <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/docs/index.html" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Docs</a>
       <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
     </div>
     <div style="display:flex; align-items:center; gap:9px;">
@@ -137,6 +138,110 @@ function proseSectionHtml({ id, eyebrow, heading, paragraphs, bg }) {
     ${eyebrow ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">${escapeHtml(eyebrow)}</div>` : ''}
     ${heading ? `<h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:oklch(0.3 0.03 45);">${heading}</h2>` : ''}
     ${paras}
+  </div>
+</div>`;
+}
+
+/**
+ * Docs page header. Deliberately not `heroHtml()`: that hero centres the page around two
+ * download buttons, which is right for a marketing or comparison page and wrong on top of a
+ * settings reference — someone reading `/docs/troubleshooting.html` already installed the app.
+ * Same type scale and palette, left-aligned, no CTA. `page()`'s footer CTA still gives every
+ * docs page a download path at the bottom.
+ */
+function docsHeaderHtml({ eyebrow, h1, subhead }) {
+  return `<div style="position:relative; overflow:hidden; border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="position:absolute; top:-220px; left:20%; width:900px; height:520px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.42), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:1080px; margin:0 auto; padding:34px 32px 44px;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:20px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">${escapeHtml(eyebrow)}</span>
+    </div>
+    <h1 style="font-size:40px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 16px; max-width:760px;">${h1}</h1>
+    <p style="font-size:17.5px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0; max-width:680px;">${subhead}</p>
+  </div>
+</div>`;
+}
+
+/**
+ * Docs sidebar. `items` is [{label, href, current}] and is built in build.mjs from the docs data
+ * files themselves, not hand-listed — so a new docs page joins the nav on every other docs page
+ * the moment its data file exists, and cannot become an orphan by omission.
+ */
+function docsNavHtml(items) {
+  const links = items
+    .map((i) => {
+      const style = i.current
+        ? 'display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:700; color:oklch(0.4 0.1 40); background:oklch(0.955 0.022 68);'
+        : 'display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);';
+      return `<a href="${i.href}" style="${style}"${i.current ? ' aria-current="page"' : ''}>${escapeHtml(i.label)}</a>`;
+    })
+    .join('\n');
+  return `<nav aria-label="Documentation" style="position:sticky; top:96px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:16px 10px;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:oklch(0.6 0.03 52); text-transform:uppercase; padding:0 12px 10px;">Docs</div>
+  ${links}
+</nav>`;
+}
+
+/**
+ * One docs section: heading, paragraphs, and optionally a bullet list and a table. Unlike
+ * `proseSectionHtml()` this renders *inside* the content column rather than as a full-bleed
+ * band, because a docs page is one continuous column beside a sidebar, not a stack of
+ * alternating strips.
+ *
+ * `bullets` and `table` exist because the two pages that carry the most load — the settings
+ * reference and the model catalogue — are genuinely tabular. Flattening a settings table into
+ * prose would make it both longer and harder to check against the app. `lib/markdown.mjs`
+ * renders the same two fields, so the `.md` mirror keeps the structure instead of losing it.
+ */
+function docsSectionHtml({ id, eyebrow, heading, paragraphs, bullets, table }) {
+  const paras = (paragraphs || [])
+    .map((p) => `<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">${p}</p>`)
+    .join('\n');
+  const list = bullets && bullets.length
+    ? `<ul style="margin:0 0 20px; padding-left:22px;">
+${bullets.map((b) => `      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;">${b}</li>`).join('\n')}
+    </ul>`
+    : '';
+  return `<section${id ? ` id="${id}"` : ''} style="margin:0 0 46px; scroll-margin-top:96px;">
+    ${eyebrow ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">${escapeHtml(eyebrow)}</div>` : ''}
+    ${heading ? `<h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">${heading}</h2>` : ''}
+    ${paras}
+    ${list}
+    ${table ? docsTableHtml(table) : ''}
+  </section>`;
+}
+
+/** A plain data table, horizontally scrollable so a wide row never widens the page body. */
+function docsTableHtml({ headers, rows }) {
+  const head = headers
+    .map((h) => `<th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">${escapeHtml(h)}</th>`)
+    .join('');
+  const body = rows
+    .map(
+      (r) => `<tr>${r
+        .map((c) => `<td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">${c}</td>`)
+        .join('')}</tr>`
+    )
+    .join('\n');
+  return `<div style="overflow-x:auto; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; margin:0 0 22px;">
+  <table style="border-collapse:collapse; width:100%; min-width:420px;">
+    <thead><tr>${head}</tr></thead>
+    <tbody>
+${body}
+    </tbody>
+  </table>
+</div>`;
+}
+
+/** Sidebar + content column. `.ow-stack` collapses it to one column at 860px (see headHtml). */
+function docsLayoutHtml({ navItems, sectionsHtml }) {
+  return `<div style="background:oklch(0.972 0.014 78);">
+  <div class="ow-stack" style="max-width:1080px; margin:0 auto; padding:16px 32px 64px; display:grid; grid-template-columns:236px 1fr; gap:44px; align-items:start;">
+    <div>${docsNavHtml(navItems)}</div>
+    <div>
+${sectionsHtml}
+    </div>
   </div>
 </div>`;
 }
@@ -258,6 +363,7 @@ function footerHtml() {
     </div>
     <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
       <a href="${GITHUB_URL}" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/docs/index.html" style="color:oklch(0.72 0.02 65);">Docs</a>
       <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
       <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
       <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
@@ -364,5 +470,10 @@ export {
   faqSectionHtml,
   journalNoteHtml,
   relatedLinksHtml,
+  docsHeaderHtml,
+  docsNavHtml,
+  docsSectionHtml,
+  docsTableHtml,
+  docsLayoutHtml,
   page,
 };

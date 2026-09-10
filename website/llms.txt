@@ -21,6 +21,39 @@ Key facts for citation:
 - [Privacy policy](https://openwispr.dev/privacy.html): what's processed on-device vs. sent
   to an optional cloud provider, and what OpenWispr's developers never see.
 
+## Documentation
+
+Reference material about the shipped apps, written from the Android and macOS source rather
+than from marketing copy. Where the source does not settle a question (model language coverage
+is the clearest case) these pages say so instead of guessing.
+
+- [Documentation index](https://openwispr.dev/docs/index.html): what happens between pressing
+  the button and the text appearing, and where each stage is documented.
+- [Getting started on Android](https://openwispr.dev/docs/getting-started-android.html):
+  Android 7.0 minimum, the four permissions (only microphone and the overlay are required),
+  and the bubble's two gestures — tap for a long-form take, hold 450ms to talk and release to
+  send.
+- [Getting started on macOS](https://openwispr.dev/docs/getting-started-macos.html): macOS
+  13.3+, a menu-bar agent, the self-signed/not-notarized first launch, the fn-key trigger, and
+  the Mac app's three speech engines (Parakeet default, English-only Whisper, Apple Speech).
+- [Models and device fit](https://openwispr.dev/docs/models.html): the full catalogue with real
+  sizes — Parakeet ~631MB, Whisper tiny/base/small ~75/142/488MB, cleanup models ~397/241/639MB
+  — and the exact RAM thresholds (5.4GiB, 3.4GiB) that decide which pair a phone downloads.
+- [Settings reference](https://openwispr.dev/docs/settings.html): every setting on the Android
+  settings screen with its real default, including which ones are conditional and which two
+  ("Creativity", "Anti-AI phrasing") apply only to the cloud polish path.
+- [Text insertion and permissions](https://openwispr.dev/docs/text-insertion.html): OpenWispr is
+  not a keyboard. Text is spliced in at the cursor via the accessibility service, falling back
+  to a paste and then to the clipboard; the clipboard is untouched when the first path works.
+- [Cleanup and polish](https://openwispr.dev/docs/cleanup-and-polish.html): the seven
+  deterministic stages that need no model, the four polish levels, when the model is skipped,
+  and the guard that discards its answer if too few of your words survive.
+- [What leaves your device](https://openwispr.dev/docs/privacy-and-data.html): every host the
+  apps can contact and the condition for each. Only three components in the Android app can
+  open a socket; on a default install none of them does during a dictation.
+- [Troubleshooting](https://openwispr.dev/docs/troubleshooting.html): the bubble disappearing,
+  text landing on the clipboard, recordings cut short, downloads failing, Gatekeeper.
+
 ## Comparisons
 
 - [OpenWispr vs Wispr Flow](https://openwispr.dev/compare/wispr-flow.html): on-device vs.

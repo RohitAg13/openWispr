@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenWispr settings reference (Android)</title>
+<meta name="description" content="Every setting on OpenWispr's Android settings screen, section by section, with its default, its options, and what it actually changes. Includes the settings that only appear under certain conditions, and where each one is stored.">
+<meta property="og:title" content="OpenWispr settings reference">
+<meta property="og:description" content="Every switch on the Android settings screen, its default, and what it changes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://openwispr.dev/docs/settings.html">
+<link rel="canonical" href="https://openwispr.dev/docs/settings.html">
+<meta name="theme-color" content="#f5f1e6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d98a4a'/%3E%3Cpath d='M67,29 A25,25 0 1 0 67,71' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M69,50 C75,44 79,56 86,49' fill='none' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  a { text-decoration: none; color: inherit; }
+  @keyframes ow-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @media (max-width: 900px) { .ow-nav-links { display: none !important; } }
+  @media (max-width: 860px) {
+    .ow-stack { grid-template-columns: 1fr !important; }
+    .ow-hero { padding: 44px 22px 56px !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 28px !important; }
+    .ow-cmp-row { grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+  @media (max-width: 560px) {
+    .ow-star { display: none !important; }
+    h1 { font-size: 30px !important; }
+  }
+</style>
+<script defer data-domain="openwispr.dev" src="https://plausible.rohitagarwal.dev/js/script.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the default AI polish level?","acceptedAnswer":{"@type":"Answer","text":"Full. If the stored value is missing or unrecognised, it also resolves to Full."}},{"@type":"Question","name":"What does 'Anti-AI phrasing' do?","acceptedAnswer":{"@type":"Answer","text":"It appends a long block of guardrails to the polish prompt — avoid inflated vocabulary, drop the \"not X, but Y\" pattern, no signposting, no chatbot sycophancy, and so on. It applies to the cloud polish path only. The on-device models get a much shorter prompt regardless of this setting, because sub-1B models loop when given guardrails that long. The app gives the toggle no subtitle, which is why it is easy to assume it does more than it does."}},{"@type":"Question","name":"Why can't I find the polish model picker?","acceptedAnswer":{"@type":"Answer","text":"It is inside the collapsed \"Advanced polish model\" disclosure, which is itself hidden entirely when AI polish is set to Off. Set a polish level, then expand the disclosure."}},{"@type":"Question","name":"Why can't I delete a model?","acceptedAnswer":{"@type":"Answer","text":"The delete button only appears on downloaded models that are not the one currently in use. Switch to a different model first, and the button appears on the old one. Deleting tells you how much space it freed, and the model can be downloaded again at any time from the same screen."}},{"@type":"Question","name":"Are my API keys encrypted?","acceptedAnswer":{"@type":"Answer","text":"No. They are stored in the app's private DataStore preferences as plain text, not wrapped in the Android Keystore. They are private to the app on a normal device but they are not encrypted at rest."}},{"@type":"Question","name":"Do cloud providers work without a key?","acceptedAnswer":{"@type":"Answer","text":"No, and the app does not try. Both the cloud speech and cloud polish paths check for a key and fail before opening any connection, so selecting a provider without entering a key never sends anything anywhere."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenWispr","item":"https://openwispr.dev/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://openwispr.dev/docs/index.html"},{"@type":"ListItem","position":3,"name":"Settings reference","item":"https://openwispr.dev/docs/settings.html"}]}</script>
+<!-- Umami, self-hosted. Website only: the apps ship no analytics of any kind. -->
+<script defer src="https://umami.rohitagarwal.dev/recorder.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>
+</head>
+<body>
+<div style="background:oklch(0.972 0.014 78); font-family:'Mulish',sans-serif; color:oklch(0.32 0.03 47); overflow-x:hidden;">
+<div style="position:sticky; top:0; z-index:50; padding:18px 24px 0; pointer-events:none;">
+  <div style="max-width:1080px; margin:0 auto; pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:9px 9px 9px 16px; border-radius:999px; background:oklch(0.99 0.008 84 / 0.7); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); border:1px solid oklch(1 0 0 / 0.55); box-shadow:0 1px 0 oklch(1 0 0 / 0.6) inset, 0 14px 36px -16px oklch(0.45 0.08 35 / 0.45), 0 0 0 1px oklch(0.88 0.014 70 / 0.5);">
+    <a href="/" style="display:flex; align-items:center; gap:11px; padding-right:6px;">
+      <span style="position:relative; width:34px; height:34px; border-radius:50%; background:linear-gradient(140deg, oklch(0.84 0.11 76), oklch(0.7 0.13 42) 52%, oklch(0.6 0.12 18)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); box-shadow:0 4px 12px -4px oklch(0.55 0.13 38 / 0.6); animation:ow-breathe 4.8s ease-in-out infinite;">
+        <svg viewBox="0 0 100 100" style="width:56%; height:56%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      </span>
+      <span style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:oklch(0.3 0.03 46);">OpenWispr</span>
+    </a>
+    <div class="ow-nav-links" style="display:flex; align-items:center; gap:2px;">
+      <a href="/#privacy" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Privacy</a>
+      <a href="/#features" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Features</a>
+      <a href="/#compare" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Compare</a>
+      <a href="/docs/index.html" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Docs</a>
+      <a href="/#opensource" style="font-size:14px; font-weight:600; color:oklch(0.46 0.03 50); padding:8px 12px; border-radius:11px;">Open source</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:9px;">
+      <a href="https://github.com/RohitAg13/openWispr" class="ow-star" style="display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border-radius:999px; background:oklch(0.97 0.01 76); border:1px solid oklch(0.9 0.014 70);">
+        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:oklch(0.4 0.03 48);"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 .1.8 1.7 2.6 1.2.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.03 48);">Star</span>
+      </a>
+      <a href="/#download" style="display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:oklch(0.99 0.01 85); background:linear-gradient(135deg, oklch(0.76 0.12 58), oklch(0.66 0.13 40)); padding:10px 18px; border-radius:999px; box-shadow:0 8px 20px -8px oklch(0.58 0.13 38 / 0.6);">Download</a>
+    </div>
+  </div>
+</div>
+<div style="position:relative; overflow:hidden; border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="position:absolute; top:-220px; left:20%; width:900px; height:520px; border-radius:50%; background:radial-gradient(closest-side, oklch(0.88 0.09 72 / 0.42), transparent); pointer-events:none;"></div>
+  <div class="ow-hero" style="position:relative; max-width:1080px; margin:0 auto; padding:34px 32px 44px;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.9 0.014 72); border-radius:30px; margin-bottom:20px;">
+      <span style="width:8px; height:8px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.66 0.13 42));"></span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:oklch(0.5 0.04 45); text-transform:uppercase;">Docs · Reference</span>
+    </div>
+    <h1 style="font-size:40px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; color:oklch(0.28 0.035 42); margin:0 0 16px; max-width:760px;">Settings reference</h1>
+    <p style="font-size:17.5px; line-height:1.6; color:oklch(0.46 0.03 50); margin:0; max-width:680px;">Eight sections, in the order the app shows them. Every default here is the value the app ships with, and every option is one the screen actually offers.</p>
+  </div>
+</div>
+<div style="max-width:1080px; margin:0 auto; padding:22px 32px 0; font-size:13px; font-family:'IBM Plex Mono',monospace;"><a href="/" style="color:oklch(0.55 0.03 50);">OpenWispr</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><a href="/docs/index.html" style="color:oklch(0.55 0.03 50);">Docs</a><span style="color:oklch(0.7 0.02 60); margin:0 8px;">/</span><span style="color:oklch(0.4 0.03 48); font-weight:600;">Settings reference</span></div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div class="ow-stack" style="max-width:1080px; margin:0 auto; padding:16px 32px 64px; display:grid; grid-template-columns:236px 1fr; gap:44px; align-items:start;">
+    <div><nav aria-label="Documentation" style="position:sticky; top:96px; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:16px; padding:16px 10px;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:oklch(0.6 0.03 52); text-transform:uppercase; padding:0 12px 10px;">Docs</div>
+  <a href="/docs/index.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Overview</a>
+<a href="/docs/getting-started-android.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Getting started · Android</a>
+<a href="/docs/getting-started-macos.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Getting started · macOS</a>
+<a href="/docs/models.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Models &amp; device fit</a>
+<a href="/docs/settings.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:700; color:oklch(0.4 0.1 40); background:oklch(0.955 0.022 68);" aria-current="page">Settings reference</a>
+<a href="/docs/text-insertion.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Text insertion &amp; permissions</a>
+<a href="/docs/cleanup-and-polish.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Cleanup &amp; polish</a>
+<a href="/docs/privacy-and-data.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">What leaves your device</a>
+<a href="/docs/troubleshooting.html" style="display:block; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:500; color:oklch(0.46 0.03 50);">Troubleshooting</a>
+</nav></div>
+    <div>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">How it behaves</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">There is no Save button</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Every change persists the moment you make it. That is a deliberate design choice, not an omission — nothing on this screen needs confirming, and nothing is lost by backing out of it.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">The screen also has no content until settings have loaded, so a fraction of a second of blank on a cold open is expected rather than a stall. This page covers the Android app; the macOS settings are a smaller set and are described under <a href="/docs/getting-started-macos.html" style="color:oklch(0.55 0.1 40); font-weight:600;">Getting started on macOS</a>.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Top of the screen</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">The setup card</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Above the first section is a status card. While anything is missing it reads <b>Finish setup</b> — <i>"A couple of quick permissions"</i> — and lists whichever of <b>Microphone</b>, <b>Floating bubble</b> and <b>Auto-insert</b> is not yet on, each with an <b>Enable</b> or <b>Manage</b> button. Once all three are on it collapses to <b>You're all set</b> — <i>"Microphone · Bubble · Auto-insert all active"</i> — and the rows disappear entirely.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">These are operating-system permission states, not stored settings. See <a href="/docs/text-insertion.html" style="color:oklch(0.55 0.1 40); font-weight:600;">Text insertion and permissions</a> for what each one unlocks.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Section 1</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Voice · transcription</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Engine</b> chooses where speech recognition happens: <b>On-device</b>, <b>Groq</b>, <b>OpenAI</b> or <b>Custom</b>. The default is On-device, and the other three are opt-in cloud services that need an API key you supply. Selecting Groq or OpenAI immediately fills in that provider's model name for you; selecting Custom leaves the endpoint and model for you to enter.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Choosing a cloud engine replaces the model list with an API key field and a plain note that audio is sent to that provider for transcription, alongside a one-tap line reading <i>"Switch to on-device to keep everything private."</i></p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">With On-device selected, you get the model list instead, headed by the line <i>"Models download once, then run fully offline"</i> and a hint naming your device's memory and the model recommended for it.</p>
+    
+    <div style="overflow-x:auto; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; margin:0 0 22px;">
+  <table style="border-collapse:collapse; width:100%; min-width:420px;">
+    <thead><tr><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Setting</th><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Default</th><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Options / effect</th></tr></thead>
+    <tbody>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Engine</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">On-device</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">On-device · Groq · OpenAI · Custom</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Speech model</b> <i>(on-device)</i></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Chosen for your device during onboarding</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Parakeet ~631&nbsp;MB · Tiny ~75&nbsp;MB · Base ~142&nbsp;MB · Small ~488&nbsp;MB. The one recommended for your device carries a badge.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>API key</b> / <b>Endpoint</b> / <b>Model id</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">empty</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Only shown for a cloud engine. Endpoint and model id appear only for Custom.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Auto-stop on pause</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">On</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">"End recording when you stop talking." Applies to a tapped recording; a held one ends when you let go.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Vocab-biased decoding (experimental)</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Off</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Only shown with Parakeet selected. Uses a decode mode with a known upstream bug that occasionally returns blank or wrong text — the app's own wording. Leave it off unless you are testing it.</td></tr>
+    </tbody>
+  </table>
+</div>
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Section 2</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Cleanup & polish</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Smart cleanup</b> is the deterministic stage: <i>"Fillers, punctuation, numbers, backtracking · on-device, instant."</i> It is on by default and it involves no model at all.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>AI polish</b> is the optional model pass on top, at one of four strengths. Under the selector sits a fixed line that describes a real guarantee rather than a reassurance: <i>"Polish always keeps your words and meaning. It falls back to the clean text if it strays."</i> The app measures how much of your wording survived and discards the model's answer if too little did. The mechanics are on <a href="/docs/cleanup-and-polish.html" style="color:oklch(0.55 0.1 40); font-weight:600;">Cleanup and polish</a>.</p>
+    
+    <div style="overflow-x:auto; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; margin:0 0 22px;">
+  <table style="border-collapse:collapse; width:100%; min-width:420px;">
+    <thead><tr><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Setting</th><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Default</th><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Options / effect</th></tr></thead>
+    <tbody>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Smart cleanup</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">On</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">The deterministic chain. No model, no latency worth measuring.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>AI polish</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Full</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Off</b> — deterministic only. <b>Light</b> — capitalisation, spacing and punctuation only. <b>Medium</b> — also splits run-on sentences and fixes small grammar. <b>Full</b> — fuller cleanup with one small rewrite for clarity if needed.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Advanced polish model</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">collapsed</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">A disclosure holding everything below. Hidden entirely when AI polish is Off.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Polish model</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">OpenWispr Cleanup (Qwen3 0.6B)</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Also Gemma 3 270M ~241&nbsp;MB and Qwen3 0.6B ~639&nbsp;MB.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Creativity</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">0.7</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">A 0 to 1 slider — the sampling temperature. <b>Cloud only:</b> it is sent to an OpenAI-compatible provider, omitted for Anthropic (whose recent models reject it), and not used at all by the on-device models.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Anti-AI phrasing</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">On</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">A long list of guardrails against stock model phrasing, appended to the polish prompt. <b>Cloud only</b> — the on-device models get a deliberately short prompt instead, because sub-1B models loop on long guardrails.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;"><b>Use a cloud model instead</b></td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">collapsed, and off</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Anthropic (Claude) · Vercel AI Gateway · OpenRouter · Custom (OpenAI-compatible). Each needs your own API key; Custom also needs an endpoint URL.</td></tr>
+    </tbody>
+  </table>
+</div>
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Section 3</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Bubble</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Two settings, and the second one changes its own description when it cannot do what it says.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Show bubble</b> — <i>"The floating tap-to-talk button"</i> — is off until you turn it on, which is also what the setup card's Enable button does. Turning it on asks for the notification permission on Android 13 and up, then the overlay permission if it is missing.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Only on text fields</b> — <i>"Appear only when you can type"</i> — is on by default and makes the bubble behave like a contextual keyboard key, appearing when a text field takes focus and fading out when it loses it. It depends entirely on the accessibility service, so if that service is off the subtitle changes to <i>"Needs auto-insert. The bubble stays visible until you turn it back on"</i> and the bubble reverts to being always visible. That is the app explaining itself rather than silently ignoring your setting.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Section 4</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Privacy</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Keep history</b> — <i>"Stored on this device · powers personalization"</i> — is on by default. Turning it off also immediately purges any retained audio, because keeping recordings for a history that no longer exists would be indefensible.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Keep audio</b> appears only while history is on. Its description is the reason it exists: <i>"Recordings stay on this device so a dictation that fails can be run again. Never uploaded."</i> The options are 7 days, 30 days, 90 days, or Forever, defaulting to 30 days. "Forever" is time-unbounded but still capped at the most recent 200 recordings.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Clear all data</b> is the last row, in red. It deletes every history entry and purges all retained audio, and confirms with <i>"On-device history cleared"</i>. What is stored, and what none of it is used for, is on <a href="/docs/privacy-and-data.html" style="color:oklch(0.55 0.1 40); font-weight:600;">What leaves your device</a>.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Section 5</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Personalization</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Five rows, each opening a screen of its own rather than holding a value. All five operate on data that stays on the device.</p>
+    <ul style="margin:0 0 20px; padding-left:22px;">
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>Personal dictionary</b> — <i>"Names &amp; terms you taught it"</i>. Terms fed to the speech engine as a bias prompt before it decodes, not just corrected afterwards.</li>
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>Learned from edits</b> — <i>"Corrections it remembered"</i>. Aliases the app worked out from the edits you made to its output.</li>
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>Style memory</b> — <i>"On-device examples · never uploaded"</i>. The examples that feed the polish stage.</li>
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>Tone by app</b> — <i>"Email, chat, code, notes"</i>. Per-category tone overrides for the polish model.</li>
+      <li style="font-size:16px; line-height:1.65; color:oklch(0.42 0.03 48); margin:0 0 10px;"><b>Import from contacts</b> — <i>"Matched on-device · never uploaded"</i>. The one feature that uses the contacts permission, and the only thing that permission is for.</li>
+    </ul>
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Sections 6–8</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Reliability, Feedback and General</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Reliability</b> holds one row: <b>Auto-start helper</b> — <i>"For Samsung, Xiaomi, OnePlus, Oppo"</i> — which opens your manufacturer's auto-start screen where the app can find one and the app-info screen otherwise. Aggressive battery management is the single most common reason the bubble goes missing.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>Feedback</b> holds three: <b>Send feedback</b> (opens your mail app), <b>Report a problem</b> (opens a GitHub issue in a browser) and <b>Rate OpenWispr</b> (opens Google Play). None of them sends anything by itself; each hands off to another app with the message for you to send.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;"><b>General</b> holds <b>Replay onboarding</b>, which walks the setup flow again, and a <b>Version</b> row reading the installed version followed by <i>"open source"</i> — read from the package manager, so it is the version you actually have rather than a number typed into the screen.</p>
+    
+    
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Conditional</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Settings that only appear sometimes</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Several rows are hidden until something else makes them relevant. If you are looking for one of these and cannot find it, this is why:</p>
+    
+    <div style="overflow-x:auto; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; margin:0 0 22px;">
+  <table style="border-collapse:collapse; width:100%; min-width:420px;">
+    <thead><tr><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Hidden setting</th><th style="text-align:left; padding:11px 14px; font-size:12px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:oklch(0.5 0.04 45); border-bottom:1px solid oklch(0.9 0.014 72); white-space:nowrap;">Appears when</th></tr></thead>
+    <tbody>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">The on-device model list, and the device hint</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Engine is On-device</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">API key, endpoint URL, model id, and the cloud privacy note</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Engine is a cloud provider. Endpoint and model id are Custom-only.</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Vocab-biased decoding (experimental)</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Engine is On-device <i>and</i> the resolved model is Parakeet</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Advanced polish model, and everything under it</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">AI polish is not Off, and you expand the disclosure</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Cloud polish provider fields</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">You expand "Use a cloud model instead" and pick a non-local provider</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Keep audio</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">Keep history is on</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">A model's delete button</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">That model is downloaded and is not the one currently in use</td></tr>
+<tr><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">The setup card's permission rows</td><td style="padding:12px 14px; font-size:14.5px; line-height:1.55; color:oklch(0.4 0.03 48); border-bottom:1px solid oklch(0.95 0.01 72); vertical-align:top;">At least one of microphone, bubble or auto-insert is missing</td></tr>
+    </tbody>
+  </table>
+</div>
+  </section>
+<section style="margin:0 0 46px; scroll-margin-top:96px;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:12px;">Storage</div>
+    <h2 style="font-size:27px; line-height:1.18; font-weight:700; letter-spacing:-0.02em; margin:0 0 16px; color:oklch(0.3 0.03 45);">Where these settings live</h2>
+    <p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">Not everything on this screen is stored in the same place, which matters if you are clearing app data selectively or reasoning about backups. Most settings are in the app's DataStore preferences. The bubble's on/off state and its position on screen are separate, as are the history switch and the audio retention period, each in its own small preferences file.</p>
+<p style="font-size:16.5px; line-height:1.7; color:oklch(0.42 0.03 48); margin:0 0 18px;">One consequence worth knowing: API keys for cloud providers are stored as plain text in the app's private preferences. They are not wrapped in the Android Keystore. On an unrooted device with no backup extraction that is private to the app, but it is not encrypted at rest and this page would rather say so than let you assume otherwise. The macOS app stores no API keys at all, because it has no cloud provider option.</p>
+    
+    
+  </section>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.95 0.016 70); border-top:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:70px 32px;">
+    <div style="text-align:center; margin-bottom:38px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:16px;">Questions</div>
+      <h2 style="font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-0.02em; margin:0; color:oklch(0.3 0.03 45);">Good questions, honest answers.</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div data-faq="0" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What is the default AI polish level?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">Full. If the stored value is missing or unrecognised, it also resolves to Full.</div>
+</div>
+<div data-faq="1" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What does 'Anti-AI phrasing' do?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">It appends a long block of guardrails to the polish prompt — avoid inflated vocabulary, drop the "not X, but Y" pattern, no signposting, no chatbot sycophancy, and so on. It applies to the cloud polish path only. The on-device models get a much shorter prompt regardless of this setting, because sub-1B models loop when given guardrails that long. The app gives the toggle no subtitle, which is why it is easy to assume it does more than it does.</div>
+</div>
+<div data-faq="2" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why can't I find the polish model picker?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">It is inside the collapsed "Advanced polish model" disclosure, which is itself hidden entirely when AI polish is set to Off. Set a polish level, then expand the disclosure.</div>
+</div>
+<div data-faq="3" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Why can't I delete a model?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">The delete button only appears on downloaded models that are not the one currently in use. Switch to a different model first, and the button appears on the old one. Deleting tells you how much space it freed, and the model can be downloaded again at any time from the same screen.</div>
+</div>
+<div data-faq="4" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Are my API keys encrypted?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No. They are stored in the app's private DataStore preferences as plain text, not wrapped in the Android Keystore. They are private to the app on a normal device but they are not encrypted at rest.</div>
+</div>
+<div data-faq="5" style="background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 24px; cursor:pointer;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+    <span style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Do cloud providers work without a key?</span>
+    <span data-faq-icon style="font-size:22px; color:oklch(0.66 0.13 40); line-height:1; flex:none; transform:rotate(0deg); transition:transform .18s;">+</span>
+  </div>
+  <div data-faq-answer style="font-size:15px; line-height:1.65; color:oklch(0.5 0.03 50); margin-top:14px; display:none;">No, and the app does not try. Both the cloud speech and cloud polish paths check for a key and fail before opening any connection, so selecting a provider without entering a key never sends anything anywhere.</div>
+</div>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.972 0.014 78);">
+  <div style="max-width:1000px; margin:0 auto; padding:20px 32px 70px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+    <a href="/docs/cleanup-and-polish.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Cleanup and polish</div>
+</a>
+<a href="/docs/privacy-and-data.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">What leaves your device</div>
+</a>
+<a href="/docs/models.html" style="display:block; background:oklch(0.995 0.006 85); border:1px solid oklch(0.91 0.012 72); border-radius:14px; padding:20px 22px;">
+  <div style="font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:0.1em; color:oklch(0.66 0.13 40); text-transform:uppercase; margin-bottom:8px;">Read next</div>
+  <div style="font-size:16px; font-weight:600; color:oklch(0.3 0.03 45);">Models and device fit</div>
+</a>
+  </div>
+</div>
+<div id="download" style="background:linear-gradient(160deg, oklch(0.34 0.06 30), oklch(0.24 0.045 24)); color:oklch(0.96 0.012 82);">
+  <div style="max-width:820px; margin:0 auto; padding:80px 32px; text-align:center;">
+    <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg, oklch(0.82 0.11 74), oklch(0.71 0.13 42) 52%, oklch(0.59 0.12 17)); display:flex; align-items:center; justify-content:center; color:oklch(0.99 0.01 85); margin:0 auto 24px; box-shadow:0 16px 40px -12px oklch(0.5 0.13 38 / 0.8); animation:ow-breathe 4.6s ease-in-out infinite;">
+      <svg viewBox="0 0 100 100" style="width:54%; height:54%; display:block; color:inherit;"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+    </div>
+    <h2 style="font-size:36px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin:0 0 16px; color:oklch(0.98 0.012 82);">Start dictating privately.</h2>
+    <p style="font-size:17px; line-height:1.6; color:oklch(0.84 0.03 70); margin:0 auto 30px; max-width:480px;">Open source and entirely on your device. Android from Google Play, macOS from GitHub — no account, no sign-up, just a download.</p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr/releases" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.3 0.04 35); background:oklch(0.98 0.012 82); padding:15px 26px; border-radius:13px;">Download for macOS</a>
+      <a href="https://play.google.com/store/apps/details?id=com.voicerewriter" style="display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:600; color:oklch(0.96 0.012 82); background:oklch(0.4 0.04 35 / 0.45); border:1px solid oklch(0.54 0.05 40); padding:15px 26px; border-radius:13px;">Get it on Google Play</a>
+    </div>
+  </div>
+</div>
+<div style="background:oklch(0.18 0.025 28); color:oklch(0.7 0.02 65);">
+  <div style="max-width:1180px; margin:0 auto; padding:40px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:11px;">
+      <svg viewBox="0 0 100 100" style="width:24px; height:24px; display:block; color:oklch(0.78 0.1 55);"><path d="M67,29 A25,25 0 1 0 67,71" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path><path d="M69,50 C75,44 79,56 86,49" style="fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <span style="font-size:16px; font-weight:600; color:oklch(0.92 0.012 80);">OpenWispr</span>
+      <span style="font-size:13px; color:oklch(0.55 0.02 60); margin-left:8px;">Voice to text, on your device.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:26px; font-size:13.5px; flex-wrap:wrap;">
+      <a href="https://github.com/RohitAg13/openWispr" style="color:oklch(0.72 0.02 65);">GitHub</a>
+      <a href="/docs/index.html" style="color:oklch(0.72 0.02 65);">Docs</a>
+      <a href="/privacy.html" style="color:oklch(0.72 0.02 65);">Privacy Policy</a>
+      <a href="/#features" style="color:oklch(0.72 0.02 65);">Features</a>
+      <a href="/compare/wispr-flow.html" style="color:oklch(0.72 0.02 65);">vs Wispr Flow</a>
+      <a href="/compare/superwhisper.html" style="color:oklch(0.72 0.02 65);">vs superwhisper</a>
+      <a href="/android/on-device-whisper-dictation-android.html" style="color:oklch(0.72 0.02 65);">On-device Android dictation</a>
+      <span style="color:oklch(0.5 0.02 58);">MIT © 2026</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+  qa('[data-faq]').forEach(function(item){
+    item.addEventListener('click', function(){
+      var ans=item.querySelector('[data-faq-answer]'), icon=item.querySelector('[data-faq-icon]');
+      var open = ans.style.display!=='none';
+      ans.style.display = open?'none':'block';
+      icon.style.transform = open?'rotate(0deg)':'rotate(45deg)';
+    });
+  });
+})();
+</script>
+</body>
+</html>
