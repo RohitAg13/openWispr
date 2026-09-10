@@ -37,3 +37,40 @@ jobs:
       - name: Assemble debug + run unit tests
         working-directory: android
         run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+
+  # macOS was not built here until #52 sat for eleven days with a one-line compile error and a
+  # green PR, because the only job in this file was the Android one. Half the codebase had no
+  # signal at all: the app target was never compiled, and OpenWisprCore's 119 unit tests never
+  # ran. They pass, and always did. Nobody was watching.
+  macos:
+    name: macOS build & unit tests
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      # First, because it is the cheap half. OpenWisprCore has no external dependencies, so
+      # these run in seconds without fetching a single xcframework. A logic regression fails
+      # here before the runner spends minutes downloading binaries to find out.
+      - name: OpenWisprCore unit tests
+        working-directory: macos/OpenWisprCore
+        run: swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Fetch vendored sherpa-onnx xcframeworks (on-device Parakeet STT; gitignored binaries)
+        run: bash macos/SherpaOnnxFramework/fetch-binaries.sh
+
+      - name: Generate Xcode project
+        working-directory: macos/App
+        run: ./generate.sh
+
+      # Debug, not the DMG. release.yml already packages and signs on a tag; the question a PR
+      # needs answered is only "does it still compile", and Debug answers it faster. Signing is
+      # off because CI has no keychain identity and a compile check does not need one.
+      - name: Build the app (Debug)
+        working-directory: macos/App
+        run: |
+          xcodebuild -project OpenWispr.xcodeproj -scheme OpenWispr \
+            -configuration Debug -destination 'platform=macOS' \
+            build CODE_SIGNING_ALLOWED=NO
