@@ -1,0 +1,164 @@
+---
+title: "How OpenWispr cleans up what you said"
+description: "Seven ordered stages of deterministic cleanup that need no model at all, then an optional polish model at one of four strengths — with guards that discard the model's answer if it strays too far from your words. What each stage does, and when the model is skipped."
+canonical: "https://openwispr.dev/docs/cleanup-and-polish.html"
+language: "en"
+---
+
+
+# Cleanup and polish
+
+Most of what makes dictation readable is plain code, not a model. The model runs afterwards, at a strength you choose, and its output is checked against your words before it is allowed through.
+
+*Before the chain*
+
+## Your dictionary reaches the recogniser first
+
+Two things happen before any cleanup stage runs, and both concern your personal vocabulary.
+
+First, your dictionary is turned into a bias prompt — up to 200 characters of your terms, ranked so that words the app has already learned you get wrong come first — and handed to the speech engine *before* it decodes. This is the difference between correcting a mis-heard name afterwards and helping the recogniser hear it right in the first place.
+
+Second, the raw transcript is passed through a fuzzy snap-back against the same dictionary. Matching is deliberately conservative: a fuzzy match needs a similarity of 0.84 and a word of at least four characters, phonetically-equal words are scored more generously than merely similar-looking ones, and a list of common English words is excluded from matching entirely — so teaching the app a term never turns ordinary words into it.
+
+*The chain*
+
+## Seven stages, in this order
+
+This is the whole of "Smart cleanup". It runs on both platforms, stage for stage, with the same constants. No model is involved and the cost is effectively nothing.
+
+The ordering is load-bearing. List formatting runs after number normalisation so the digits are settled before a list is built from them, and capitalisation runs last because it is aware of the line breaks the earlier stages may have introduced.
+
+| # | Stage | What it does |
+| --- | --- | --- |
+| 0 | **Spelled entities** | "spelled A B C" becomes `Abc`, or `AB` for a run of two letters. Always on. |
+| 1 | **Self-correction** | Resolves spoken backtracking. "Send it Tuesday, no, make that Wednesday" keeps only Wednesday. Handles value swaps, whole restarts, and inline repairs within a sentence. |
+| 2 | **Filler removal** | Hesitations (*um, uh, erm, mm*) and configured phrases (*you know, basically, literally*). Phrases are only removed when comma-bounded, and "you know" is guarded against twenty words that make it part of a real sentence. |
+| 3 | **Spoken forms** | URLs, file paths, email addresses, spoken punctuation, `--flags`, and label colons. In code or terminal context, only the unambiguous ones are expanded. |
+| 4 | **Numbers** | Spoken numbers become digits — but only when they should. See below. |
+| 5 | **List formatting** | "new line" and "new paragraph" become real breaks; a spoken run of "first… second… third" becomes a numbered list. |
+| 6 | **Capitalisation** | Sentence starts, after a line break, and after terminal punctuation. It never lowercases anything, and it is skipped entirely in code or terminal context. |
+
+*The chain*
+
+## The judgement calls inside two stages
+
+Two stages have to decide whether to act at all, and both err towards leaving your words alone.
+
+**Numbers.** "Twenty five" becomes 25, but "one of the things" does not become "1 of the things". The rule: decimals always convert; a number built from two or more spoken words always converts; a number next to a unit, a label, or a currency or percent sign always converts; a lone "one" preceded by a determiner or followed by "of" never converts; and otherwise a number only converts if it is ten or greater.
+
+**Lists.** A run has to actually look like a list before it is turned into one. Explicit markers like "one dot" need at least two consecutive items, bare digits need three, and spoken ordinals or cardinals need three. The run must start at one and increase consecutively, and an empty item aborts the whole thing. Saying "new line" anywhere short-circuits list detection, on the grounds that you have told it what you wanted.
+
+*Context*
+
+## Code and terminals are treated differently
+
+Dictating into a code editor and dictating into a chat app want opposite things from a cleanup stage, so the app detects which it is in.
+
+Seven known code editors are always code context. Terminals are the interesting case: they are judged per utterance rather than per app, because in practice a large share of what people dictate into a terminal is a natural-language prompt to an AI agent rather than a shell command. So an utterance in a terminal is treated as code only if it looks like a command — ten words or fewer, and either starting with one of forty-nine known command verbs, or starting with a path, or containing a CLI flag.
+
+In code context the app stops capitalising, stops expanding ambiguous spoken punctuation, and — unless polish is set to Full — skips the model entirely. Double-dash flags are still expanded, because `--verbose` is unambiguous wherever it appears.
+
+*Polish*
+
+## Four levels, and what each one permits
+
+The polish stage is a small model run over the already-cleaned text. Full is the default. The level is an instruction appended to the prompt, and there is one important exception: OpenWispr's own cleanup fine-tune ignores the level entirely and runs the behaviour it was trained on, because it was trained on one exact prompt shape and steering it off that shape makes it worse rather than gentler.
+
+| Level | What the model is told it may do |
+| --- | --- |
+| **Off** | Nothing — the model is not run at all. Deterministic cleanup only. |
+| **Light** | Fix capitalisation, spacing and punctuation only. Keep all words the same. |
+| **Medium** | Also split run-on sentences and fix small grammar mistakes. If you corrected a word or number while speaking, keep only the corrected version. |
+| **Full** | Also fix grammar, and use one small rewrite if — and only if — clarity needs it. |
+
+*Polish*
+
+## When the model is skipped even though it is on
+
+Four conditions cause the polish stage to be bypassed on Android, each for a reason worth knowing:
+
+- **Under four words.** There is nothing for a model to improve in "yes", and running one costs latency you would feel.
+- **Code or terminal context, at any level below Full.** A model editing a shell command is a liability, not a feature.
+- **The deterministic stage already produced line breaks.** If you asked for a list or a new paragraph, you meant it, and a rewrite would flatten it.
+- **Polish is Off.** Obviously — but note this also hides the whole advanced section in settings.
+
+*Polish*
+
+## The guard that keeps your words
+
+The settings screen promises that polish *"always keeps your words and meaning. It falls back to the clean text if it strays."* That is a mechanism, not a reassurance, and it is worth spelling out because it is the thing that makes running a small model on your speech safe.
+
+After the model answers, its output is compared against its input. If the output has more than twice as many words as the input plus twelve, it is rejected. If fewer than 60% of the input's words survive, it is rejected. That second threshold is relaxed to 40% when the raw transcript contained a spoken self-correction — because if you said "Tuesday, no, Wednesday", dropping half the words is the correct answer rather than a hallucination.
+
+When a rejection happens, you get the deterministically cleaned text. You never get the model's stray answer, and you are never left with nothing.
+
+*Personalisation*
+
+## How the polish stage learns your style
+
+When you edit the app's output before inserting it, that edit is kept — the raw text, the cleaned text, and what you actually kept — in an on-device store capped at the most recent 500 entries. Nothing is written to it at all if you have turned history off, and it is never uploaded.
+
+At Medium and Full, two of those examples are retrieved and shown to the model as examples of how you like your dictation cleaned. Light gets none. Retrieval is deliberately simple rather than a dense-vector search: word overlap between your current text and each stored example, requiring at least 0.2 similarity, with a small boost for examples from the same kind of app and another for ones you actually edited. Each example is clipped to 240 characters.
+
+You can also export this store as a JSONL file, which keeps only the rows where your edit actually changed something — the useful training signal. That export is an explicit action you take. Nothing is uploaded automatically, and any fine-tuning from it happens in a separate repository, by you.
+
+*Personalisation*
+
+## Tone by app
+
+The app classifies whatever you are dictating into as one of six categories, and each category contributes a tone line to the polish prompt. Three of the six contribute nothing at all, which is a deliberate choice rather than an oversight — code and notes are places where a tone instruction would do damage.
+
+You can override any category's tone yourself from Settings → Personalization → Tone by app; your override replaces the default rather than adding to it.
+
+| Category | Default tone contribution |
+| --- | --- |
+| **Email & docs** | "Write this for a professional, work context: clear and polite, complete sentences, no slang or emoji." |
+| **Chat & messaging** | "Keep it casual and conversational, like a chat message: relaxed phrasing and contractions, concise." |
+| **Social** | "Keep it casual, natural and a little punchy." |
+| **Code & terminals** | None. Code context is handled by the deterministic path and the skip rules above, not by a tone instruction. |
+| **Notes** | None. |
+| **Other apps** | None. |
+
+*macOS*
+
+## Where the Mac differs
+
+The deterministic chain is a stage-for-stage port with identical constants — the same filler list, the same 0.84 fuzzy threshold, the same 0.2 retrieval floor, the same rejection guards, and a byte-identical fine-tune prompt. Two differences are real and are stated here rather than left to be discovered:
+
+The Mac app does not pass code context into the cleanup chain. It detects the app you are in for tone purposes, but the chain itself always runs in prose mode, so dictating into a terminal on macOS still capitalises and still expands a spoken "dot" or "slash" where Android would not. And the Mac app has none of the four skip conditions above: its polish stage gates only on the level not being Off and the model being present.
+
+## Questions
+
+**Do I need the AI polish at all?**
+
+No. Set it to Off and you still get all seven deterministic stages, which is most of what makes dictated text readable — fillers gone, punctuation and capitalisation right, spoken corrections resolved, numbers as digits. It is instant and involves no model.
+
+**Can the polish model change what I said?**
+
+Its output is checked before you see it. If more than 40% of your words have disappeared — or 60% when you did not audibly correct yourself mid-sentence — or if the output has ballooned to more than twice the length, the answer is discarded and you get the deterministically cleaned text instead.
+
+**Which polish level should I use?**
+
+Full is the default and is what the bundled fine-tune was trained for; that model ignores the level anyway. Levels matter if you switch to a stock on-device model or a cloud one — Light for a model you want to touch nothing but punctuation, Medium as a middle ground.
+
+**Why did my dictation not get polished?**
+
+Most likely one of four reasons: it was under four words; you were in a code editor or dictating a command into a terminal and polish is not set to Full; the cleanup stage produced line breaks because you asked for a list or a new paragraph; or polish is Off.
+
+**Does the app send my corrections anywhere to learn from them?**
+
+No. Edits are stored in a 500-entry file on the device and used to show the local model two examples of your style. Nothing is uploaded. There is an export you can trigger yourself if you want to fine-tune a model from them, and that is an explicit action, not a background one.
+
+**Why does dictating into a terminal behave differently from dictating into a chat app?**
+
+Because the app decides per utterance whether what you said in a terminal is a command or a natural-language prompt — ten words or fewer that start with a known command verb or a path, or that contain a CLI flag, count as a command. Commands skip capitalisation and ambiguous punctuation expansion, and skip the polish model unless it is set to Full.
+
+## Read next
+
+- [Settings reference](/docs/settings.html)
+- [What leaves your device](/docs/privacy-and-data.html)
+- [How we dictate commit messages and PR descriptions](/journal/dictating-code-and-commits.html)
+
+---
+
+OpenWispr is free and MIT-licensed: [source on GitHub](https://github.com/RohitAg13/openWispr), [Android on Google Play](https://play.google.com/store/apps/details?id=com.voicerewriter), [macOS from Releases](https://github.com/RohitAg13/openWispr/releases). This page is the Markdown mirror of https://openwispr.dev/docs/cleanup-and-polish.html.

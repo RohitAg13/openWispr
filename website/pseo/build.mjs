@@ -22,6 +22,9 @@ import {
   faqSectionHtml,
   journalNoteHtml,
   relatedLinksHtml,
+  docsHeaderHtml,
+  docsSectionHtml,
+  docsLayoutHtml,
   page,
 } from './lib/render.mjs';
 
@@ -121,15 +124,70 @@ ${relatedLinksHtml(data.relatedLinks)}`;
   });
 }
 
+/**
+ * Documentation pages (`/docs/{slug}.html`) — reference material about the shipped app, as
+ * opposed to the comparison/long-tail pages, which argue a position for a search query.
+ *
+ * Two structural differences from every other type, both deliberate:
+ *
+ * 1. **Sidebar instead of a download hero.** Someone reading the settings reference has already
+ *    installed the app; putting two download buttons above the fold is the wrong furniture. The
+ *    sidebar is what a docs reader actually wants, and it comes from `docsNav()` below rather
+ *    than from the data files, so every docs page links to every other one automatically.
+ * 2. **Sections may carry `bullets` and a `table`.** The settings reference and the model
+ *    catalogue are tabular facts; rendering them as prose would make them longer and harder to
+ *    check against the app. `lib/markdown.mjs` mirrors both, so the `.md` twin keeps the shape.
+ *
+ * No standalone FAQ page: `faqSectionHtml` already puts a FAQ block (and `FAQPage` structured
+ * data) on the bottom of whichever docs page owns the question, which is where someone reading
+ * about, say, permissions actually wants the permissions questions answered.
+ */
+function renderDocsPage(data, { docsNav }) {
+  const navItems = docsNav.map((n) => ({ ...n, current: n.href === data.canonicalPath }));
+  const body = `${docsHeaderHtml({ eyebrow: data.eyebrow, h1: data.h1, subhead: data.subhead })}
+${breadcrumbHtml(data.breadcrumbs)}
+${docsLayoutHtml({ navItems, sectionsHtml: data.sections.map((s) => docsSectionHtml(s)).join('\n') })}
+${faqSectionHtml(data.faqs)}
+${relatedLinksHtml(data.relatedLinks)}`;
+  return page({
+    title: data.title,
+    description: data.description,
+    canonicalPath: data.canonicalPath,
+    ogTitle: data.ogTitle,
+    ogDescription: data.ogDescription,
+    bodyHtml: body,
+    faqs: data.faqs,
+    breadcrumbs: data.breadcrumbs,
+  });
+}
+
 const RENDERERS = {
   comparison: renderComparisonPage,
   longtail: renderLongtailPage,
   journal: renderJournalPage,
+  docs: renderDocsPage,
 };
+
+/**
+ * The docs sidebar, derived from the docs data files rather than hand-listed here. A new docs
+ * page appears in the nav of every other docs page as soon as its data file lands — which is
+ * the mechanical version of the internal-linking rule in the quality bar, instead of a list
+ * someone has to remember to update.
+ */
+function docsNav(entries) {
+  return entries
+    .filter(({ data }) => data.type === 'docs')
+    .sort((a, b) => (a.data.navOrder ?? 999) - (b.data.navOrder ?? 999) || a.file.localeCompare(b.file))
+    .map(({ file, data }) => {
+      if (!data.navLabel) throw new Error(`${file}: docs pages need a navLabel for the sidebar`);
+      return { label: data.navLabel, href: data.canonicalPath };
+    });
+}
 
 function build() {
   const entries = loadDataFiles();
   const written = [];
+  const ctx = { docsNav: docsNav(entries) };
 
   for (const { file, data } of entries) {
     const renderer = RENDERERS[data.type];
@@ -139,7 +197,7 @@ function build() {
     if (!data.outputPath || !data.canonicalPath) {
       throw new Error(`${file}: missing outputPath or canonicalPath`);
     }
-    const html = renderer(data);
+    const html = renderer(data, ctx);
     const outPath = join(WEBSITE_ROOT, data.outputPath);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, html, 'utf8');

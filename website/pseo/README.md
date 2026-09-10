@@ -128,6 +128,80 @@ the sourced comparison for people who already want to leave/avoid Wispr Flow," i
 OpenWispr's own gaps (younger Android app, no review history, retry-on-failure still in progress)
 — not a page built to capture or confuse Wispr Flow's own branded search traffic.
 
+## Batch 6 — the `/docs/` section (a different job from every other page here)
+
+Nine documentation pages under `/docs/`, plus a `docs` page type in `build.mjs` and four
+components in `render.mjs`. This batch is structurally unlike Batches 1-5 and the difference is
+worth stating, because the quality bar below was written for pages that argue a position at a
+search query, and these do not.
+
+**The evidence standard is different, and stricter.** Every other page type on this site sources
+its claims to `research/*.md` — competitor docs, changelogs, organic discussion. A docs page has
+no such source: its subject is our own app, so the only admissible evidence is the code that
+implements it. Every number on these nine pages (a threshold in milliseconds, a model size, a
+default, a retry schedule) was read out of `android/app/src/main/java/com/voicerewriter/` or
+`macos/App/Sources/` before it was written down. Nothing was taken from the app's own marketing
+copy, from `README.md`, or from the existing pages on this site — several of which turned out to
+be approximations once the source was checked.
+
+**Structure taken from an information architecture, not from prose.** The starting point was
+Handy's docs (12 pages: about, advanced, cli, debug, faq, general, history, models,
+paste-methods, post-processing, troubleshooting). Deliberately not copied page-for-page:
+
+- **No CLI page** — we do not have one.
+- **No standalone FAQ page** — `faqSectionHtml()` already puts a FAQ block plus `FAQPage`
+  structured data at the bottom of every generated page, so the questions live on the page that
+  owns the subject. A separate FAQ page would duplicate them and compete with those pages.
+- **No `history` page** — a changelog belongs in the repo, where it is already maintained, and a
+  hand-copied one on the site would drift by the second release.
+- **Two getting-started pages, not one.** Android and macOS diverge on almost everything a new
+  user touches: trigger, permissions, install path, even the speech engine list. One merged page
+  would be two pages with a toggle.
+- **"Paste methods" became "Text insertion and permissions."** Their framing is a desktop one
+  (which paste mechanism to use); ours is Android's — an accessibility service, an insertion
+  chain with two fallbacks, and the permission that gates it.
+- **"Models" became "Models and device fit."** `DeviceFit.kt` is a genuinely differentiating
+  story with exact thresholds behind it, and it is the page's centre of gravity rather than a
+  footnote to a model table.
+
+**Two new fields on a section (`bullets`, `table`), mirrored in `markdown.mjs`.** The settings
+reference and the model catalogue are tabular facts. Flattening them into `paragraphs` would
+make them longer, harder to check against the app, and worse in the `.md` mirror than in the
+HTML — so both renderers grew the same two optional fields rather than the docs pages growing a
+prose workaround.
+
+**The sidebar is derived from the data files, not hand-listed.** `docsNav()` in `build.mjs`
+filters `type === "docs"` and sorts on `navOrder`, so a new docs page joins the nav of every
+other docs page the moment its data file exists. This is the internal-linking rule in the
+quality bar made mechanical instead of remembered.
+
+**Declined for lack of evidence in the source — named so nothing is silently assumed:**
+- **Language coverage per model.** The only language statement anywhere in the Android source is
+  a code comment calling the Whisper registry "multilingual"; there is no language claim for
+  Parakeet or the cleanup models, no locale parameter passed to any engine, and no per-model
+  language metadata consumed anywhere. The models page says exactly that and points readers at
+  the upstream model cards. Asserting "Parakeet is English-only" — true upstream — would have
+  been sourcing a claim about our app to someone else's model card.
+- **A latency or accuracy claim beyond the one the code states.** `ParakeetModelManager`'s KDoc
+  records ~238ms p50 / ~491ms p95 on an S25 and prose WER below whisper-small. That is quoted as
+  the project's own single-device measurement, explicitly labelled as such, and nothing further
+  is extrapolated from it.
+- **What "Anti-AI phrasing" does on-device.** It does nothing on-device: `buildSystemPrompt` (the
+  only consumer of `settings.antiAI`) is the cloud path, and `LocalLlmEngine` uses
+  `buildLocalSystemPrompt` or the fine-tune prompt instead. Same for `Creativity`/`temperature`.
+  Both are documented as cloud-only, which is the opposite of the obvious assumption — a good
+  illustration of why this batch read the call sites rather than the settings screen.
+- **A macOS settings reference.** The Mac app's settings were spot-checked, not exhaustively
+  read, so its settings live as a section inside the macOS getting-started page rather than as a
+  reference page making a completeness claim this pass cannot back.
+
+**Honest divergences documented rather than smoothed over**, because a docs page that hides them
+is worse than no page: macOS never passes code context into the cleanup chain (so it capitalises
+in a terminal where Android does not); macOS lacks Android's four polish-skip conditions; macOS
+uses the English-only `.en` Whisper builds where Android uses the multilingual ones; API keys are
+stored in plaintext DataStore on Android; and `ModelDownloader` has no application-level retry
+loop at all, only resume-on-next-attempt.
+
 ## Page types chosen, and why
 
 ### 1. Comparison pages (`/compare/{slug}.html`)

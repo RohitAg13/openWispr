@@ -80,7 +80,11 @@ function handle(req, res) {
     return;
   }
 
-  if (urlPath === '/') urlPath = '/index.html';
+  // A trailing slash means a directory, and there are no directory listings here — resolve it
+  // to that directory's index.html. Without this, `/docs/` 404s while `/docs/index.html` works,
+  // which is the URL a reader is most likely to type by hand. The canonical URL stays the
+  // explicit `.html` one, matching every other page on this site.
+  if (urlPath.endsWith('/')) urlPath += 'index.html';
   const filePath = path.normalize(path.join(ROOT, urlPath));
 
   // `startsWith(ROOT)` alone is a prefix test, not a containment test: with ROOT="/app" it
