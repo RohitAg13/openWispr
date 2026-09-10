@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -126,6 +128,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var sttEndpoint by remember { mutableStateOf("") }
     var sttKey by remember { mutableStateOf("") }
     var sttModel by remember { mutableStateOf("") }
+    var sttLanguage by remember { mutableStateOf(DictationLanguage.DEFAULT) }
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
     var deterministicCleanup by remember { mutableStateOf(true) }
     var polishLevel by remember { mutableStateOf(PolishLevel.OFF) }
@@ -166,6 +169,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         provider = s.provider; model = s.model; customEndpoint = s.customEndpoint; apiKey = s.apiKey
         voice = s.voice; antiAI = s.antiAI; temperature = s.temperature.toFloat()
         sttProvider = s.sttProvider; sttEndpoint = s.sttEndpoint; sttKey = s.sttKey; sttModel = s.sttModel
+        sttLanguage = DictationLanguage.normalize(s.sttLanguage)
         defaultMode = s.defaultMode
         deterministicCleanup = s.deterministicCleanup; polishLevel = s.polishLevel
         vadAutoStop = s.vadAutoStop; bubbleOnlyOnFields = s.bubbleOnlyOnFields
@@ -213,11 +217,14 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     // confirmation is up; null when nothing is.
     var pendingDelete by remember { mutableStateOf<DeletableModel?>(null) }
 
+    // Language picker (issue: params.language was hardcoded to "en" in the JNI).
+    var pickingLanguage by remember { mutableStateOf(false) }
+
     fun snapshot() = Settings(
         provider = provider, model = model.trim(), customEndpoint = customEndpoint.trim(),
         apiKey = apiKey.trim(), voice = voice, antiAI = antiAI, temperature = temperature.toDouble(),
         sttProvider = sttProvider, sttEndpoint = sttEndpoint.trim(), sttKey = sttKey.trim(),
-        sttModel = sttModel.trim(), defaultMode = defaultMode,
+        sttModel = sttModel.trim(), sttLanguage = sttLanguage, defaultMode = defaultMode,
         deterministicCleanup = deterministicCleanup, polishLevel = polishLevel,
         vadAutoStop = vadAutoStop, bubbleOnlyOnFields = bubbleOnlyOnFields,
         hasCompletedOnboarding = true,
@@ -233,7 +240,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     fun sttModelState(id: String): String = when {
         sttModel == id -> "active"
         dlId == id -> "downloading"
-        OnDeviceStt.isReady(context, id) -> "downloaded"
+        OnDeviceStt.isReady(context, id, sttLanguage) -> "downloaded"
         else -> "idle"
     }
     fun llmModelState(id: String): String = when {
@@ -315,6 +322,24 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         }
                     }
                 }
+            }
+
+            if (pickingLanguage) {
+                LanguageDialog(
+                    current = sttLanguage,
+                    onPick = { code ->
+                        sttLanguage = code
+                        // Parakeet cannot do anything but English, so a non-English pick moves the
+                        // selected model too. Doing it here keeps Settings showing the model that
+                        // will actually run, rather than one the router would quietly override.
+                        if (!DictationLanguage.isEnglish(code) && OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel))) {
+                            sttModel = OnDeviceStt.resolveModel(context, sttModel, code)
+                        }
+                        pickingLanguage = false
+                        persist()
+                    },
+                    onDismiss = { pickingLanguage = false },
+                )
             }
 
             pendingDelete?.let { target ->
@@ -402,8 +427,14 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         }
                     }
                     Divider()
+                    LanguageRow(
+                        current = sttLanguage,
+                        forcesWhisper = !DictationLanguage.isEnglish(sttLanguage) &&
+                            OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel)),
+                    ) { pickingLanguage = true }
+                    Divider()
                     ToggleRow("Auto-stop on pause", "End recording when you stop talking", vadAutoStop) { vadAutoStop = it; persist() }
-                    if (sttProvider == "local" && OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel))) {
+                    if (sttProvider == "local" && OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel, sttLanguage))) {
                         Divider()
                         ToggleRow(
                             "Vocab-biased decoding (experimental)",
@@ -610,6 +641,82 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             Spacer(Modifier.height(8.dp))
         }
     }
+}
+
+
+/* --------------------------- dictation language --------------------------- */
+
+/**
+ * The dictation language row. [forcesWhisper] is true when the user has picked a non-English
+ * language while Parakeet is their selected model: we route them to Whisper automatically, and
+ * saying so is better than letting them wonder why the engine changed under them.
+ */
+@Composable
+private fun LanguageRow(current: String, forcesWhisper: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("Dictation language", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                if (forcesWhisper) "Uses Whisper — Parakeet is English-only"
+                else "The language you speak while dictating",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            DictationLanguage.label(current),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Picker over whisper.cpp's own language table. Long (100 entries), so it scrolls in a
+ * LazyColumn rather than pretending to be a short menu. English sits first because it is the
+ * default; the rest are alphabetical.
+ */
+@Composable
+private fun LanguageDialog(current: String, onPick: (String) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Dictation language") },
+        text = {
+            Column {
+                Text(
+                    "Speech is transcribed in this language, never translated. Cleanup rules " +
+                        "(capitalization, filler words, number formatting) are English-only and " +
+                        "are skipped for other languages.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                LazyColumn(Modifier.fillMaxWidth().height(320.dp)) {
+                    items(DictationLanguage.ALL) { lang ->
+                        val selected = lang.code == current
+                        Row(
+                            Modifier.fillMaxWidth().clickable { onPick(lang.code) }.padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                lang.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (selected) Badge("Selected", Color(0xFF2E6F4E), Color(0xFFDCEFE2))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+    )
 }
 
 /* ------------------------ deleting a downloaded model (issue #53) ------------------------ */

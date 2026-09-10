@@ -407,7 +407,7 @@ class RewriteActivity : ComponentActivity() {
      */
     private fun altOnDeviceEngine(s: Settings): Pair<String, String>? {
         if (s.sttProvider != "local") return null
-        val current = OnDeviceStt.resolveModel(s.sttModel)
+        val current = OnDeviceStt.resolveModel(this, s.sttModel, s.sttLanguage)
         if (!OnDeviceStt.isParakeet(current)) {
             return if (ParakeetModelManager.isReady(this)) ParakeetModelManager.MODEL_ID to "Parakeet" else null
         }
@@ -464,11 +464,17 @@ class RewriteActivity : ComponentActivity() {
             val category = AppContext.categoryFor(host, spoken)
             dictationCategory = category
             val isCode = category == AppContext.Category.CODE
-            val cleaned0 = if (s.deterministicCleanup)
+            // The deterministic stage is English-shaped, not language-neutral: Capitalizer applies
+            // sentence case (Devanagari has no case at all), FillerWordRemover hunts "um"/"uh",
+            // NumberNormalizer and SpokenFormNormalizer encode English spoken conventions. Run on
+            // Hindi it degrades correct output rather than improving it, so non-English dictation
+            // takes the raw transcript. Per-language rules would be their own project.
+            val englishOnlyCleanup = s.deterministicCleanup && DictationLanguage.isEnglish(s.sttLanguage)
+            val cleaned0 = if (englishOnlyCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
             // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a
             // period on a single casual message reads as terse/formal, which people don't want.
-            val cleaned = dropChatTerminalPeriod(cleaned0, category)
+            val cleaned = if (englishOnlyCleanup) dropChatTerminalPeriod(cleaned0, category) else cleaned0
             // Guards: skip the LLM where it tends to
             // harm rather than help — polish off, very short input, or code/terminal context
             // (the deterministic stage already handles those; code only goes to the LLM at FULL).
@@ -648,7 +654,7 @@ class RewriteActivity : ComponentActivity() {
 
         fun ensurePermissionThenRecord(s: Settings) {
             if (s.sttProvider == "local") {
-                if (!OnDeviceStt.isReady(this, s.sttModel)) {
+                if (!OnDeviceStt.isReady(this, s.sttModel, s.sttLanguage)) {
                     // Onboarding starts the model download and deliberately doesn't wait for
                     // it, so a first dictation legitimately lands mid-download. Sit on a
                     // spinner and start the moment it lands; only a genuinely stalled or
@@ -661,7 +667,7 @@ class RewriteActivity : ComponentActivity() {
                         val deadline = System.currentTimeMillis() + MODEL_WAIT_TIMEOUT_MS
                         while (System.currentTimeMillis() < deadline) {
                             delay(500)
-                            if (OnDeviceStt.isReady(this@RewriteActivity, s.sttModel)) {
+                            if (OnDeviceStt.isReady(this@RewriteActivity, s.sttModel, s.sttLanguage)) {
                                 requestMicThenRecord(s)
                                 return@launch
                             }

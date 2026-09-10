@@ -45,7 +45,13 @@ object LocalWhisperStt {
         }
         val tLoaded = System.nanoTime()
         // transcribeData runs on whisper's own single-thread dispatcher internally.
-        val raw = whisper.transcribeData(samples, printTimestamp = false, prompt = biasPrompt?.ifBlank { null })
+        val lang = DictationLanguage.normalize(settings.sttLanguage)
+        val raw = whisper.transcribeData(
+            samples,
+            printTimestamp = false,
+            prompt = biasPrompt?.ifBlank { null },
+            language = lang,
+        )
         val tDone = System.nanoTime()
         Log.i(
             "LocalWhisperStt",
