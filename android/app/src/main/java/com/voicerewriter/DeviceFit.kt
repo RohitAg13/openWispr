@@ -192,6 +192,9 @@ object DeviceFit {
         return "This device: $ram — recommended: $stt"
     }
 
+    /** Visible for test: the tier -> speech model mapping is an invariant worth pinning. */
+    internal fun sttForTier(tier: Tier) = sttFor(tier)
+
     private fun sttFor(tier: Tier) = when (tier) {
         Tier.FULL -> ParakeetModelManager.MODEL_ID
         Tier.COMPACT -> "base"
@@ -210,9 +213,11 @@ object DeviceFit {
     // being a few MB out is harmless — being wrong by a tier is not.
     private fun sttBytes(id: String): Long = when {
         OnDeviceStt.isParakeet(id) -> 631L * 1024 * 1024
-        id == "small" -> 488L * 1024 * 1024
-        id == "base" -> 142L * 1024 * 1024
-        else -> 75L * 1024 * 1024
+        // Read from the registry rather than restated here: the q5 switch moved every one of
+        // these, and a hardcoded copy that drifts silently makes the tier maths wrong by a
+        // tier, which is the one error this function must not make.
+        else -> WhisperModelManager.MODELS.firstOrNull { it.id == id }?.sizeBytes
+            ?: WhisperModelManager.model(WhisperModelManager.DEFAULT_MODEL).sizeBytes
     }
 
     private fun llmBytes(id: String): Long = when (id) {

@@ -60,8 +60,8 @@ class DeviceFitTest {
 
     @Test
     fun `free space can only push the tier down, never up`() {
-        // 900MB: enough for the compact pair (383MB of weights plus headroom), not for the
-        // full one (~1GB of weights).
+        // 900MB: enough for the compact pair (~298MB of weights plus headroom), not for the
+        // full one (~1GB of weights). The compact figure fell when Whisper moved to q5 builds.
         val p = plan(7.4, freeBytes = 900L * 1024 * 1024)
         assertEquals(DeviceFit.Tier.COMPACT, p.tier)
         // RAM was never the problem here, and the copy has to be able to say so.

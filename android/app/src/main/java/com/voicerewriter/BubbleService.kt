@@ -128,6 +128,9 @@ class BubbleService : Service() {
                 val s = SettingsRepository(applicationContext).get()
                 if (s.sttProvider == "local") {
                     OnDeviceStt.warm(applicationContext, s.sttModel, language = s.sttLanguage)
+                    // Upgraders still hold the f16 weights the q5 builds replaced. Reclaim them
+                    // once, opportunistically, after the model we actually need is warm.
+                    runCatching { WhisperModelManager.reclaimSuperseded(applicationContext) }
                 }
                 if (s.provider == "local") {
                     AiChat.getInferenceEngine(applicationContext)
