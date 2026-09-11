@@ -71,7 +71,11 @@ final class DictationIndicator {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.rebuildForScreens() }
+            // Unwrap before the Task rather than inside it: `self?` in a concurrently-executing
+            // closure is a reference to the captured var itself, which the compiler rejects.
+            // Matches the `guard let self` the sink below already uses.
+            guard let self else { return }
+            Task { @MainActor in self.rebuildForScreens() }
         }
         settingsCancellable = AppSettings.shared.$showDictationIndicator
             .receive(on: RunLoop.main)
