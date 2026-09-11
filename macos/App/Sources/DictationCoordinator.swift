@@ -426,11 +426,21 @@ final class DictationCoordinator {
         }
 
         switch TextInserter.isTrusted ? TextInserter.insert(cleaned, into: targetApp) : .failed {
-        case .inserted, .unverified:
-            // Unverified means ⌘V was posted but AX couldn't confirm (common in Electron /
-            // browsers) — treat as success and get the indicator out of the way immediately.
+        case .inserted:
             indicator.presentInserted()
             autoHide(after: 0.45)
+        case .unverified:
+            // ⌘V was posted but AX couldn't confirm it landed (common in Electron and browsers,
+            // which often never expose a field length at all). The text is still on the
+            // clipboard — insertViaPaste returns before restoring the previous contents — so the
+            // only thing needed here is to say so. Folding this into .inserted would show
+            // "Inserted" for 450ms and leave someone whose paste silently failed with no idea
+            // their words are one ⌘V away. The doc comment on this method states that rule.
+            //
+            // This is the case the shorter verification poll makes *more* frequent, not less,
+            // which is exactly why it needs its own copy rather than sharing one.
+            indicator.presentMessage("Couldn't confirm the insert. It's on your clipboard.")
+            autoHide(after: 3.0)
         case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
