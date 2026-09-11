@@ -71,7 +71,11 @@ final class DictationIndicator {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.rebuildForScreens() }
+            // Bind strongly out here: a `weak` capture is a mutable binding, and referencing
+            // it from inside the Task is a data race the compiler rejects. `DictationIndicator`
+            // is @MainActor, so the strong `let` crosses into the Task safely.
+            guard let self else { return }
+            Task { @MainActor in self.rebuildForScreens() }
         }
         settingsCancellable = AppSettings.shared.$showDictationIndicator
             .receive(on: RunLoop.main)

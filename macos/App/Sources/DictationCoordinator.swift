@@ -413,7 +413,9 @@ final class DictationCoordinator {
     /// History is written *before* the insert is attempted and regardless of how it goes: the
     /// transcript's survival must not depend on a synthetic keystroke landing in someone else's
     /// app. When the paste can't be confirmed the text is left on the clipboard and the HUD
-    /// says so — a clipboard the user can clear beats words they can never get back.
+    /// says so — a clipboard the user can clear beats words they can never get back. That
+    /// promise only holds if the three outcomes stay three: folding `.unverified` into
+    /// `.inserted` keeps the safety net but stops telling anyone it's there.
     private func deliver(_ cleaned: String) {
         guard state == .transcribing else { return }
         if cleaned.isEmpty {
@@ -426,11 +428,18 @@ final class DictationCoordinator {
         }
 
         switch TextInserter.isTrusted ? TextInserter.insert(cleaned, into: targetApp) : .failed {
-        case .inserted, .unverified:
-            // Unverified means ⌘V was posted but AX couldn't confirm (common in Electron /
-            // browsers) — treat as success and get the indicator out of the way immediately.
+        case .inserted:
             indicator.presentInserted()
             autoHide(after: 0.45)
+        case .unverified:
+            // ⌘V was posted but AX couldn't confirm it landed — common in Electron and
+            // browsers, which never report a focused-field length, and the reason the poll
+            // in `didFieldChange` is deliberately short. The paste almost certainly worked,
+            // so this isn't a failure and shouldn't read as one. But `insertViaPaste` chose
+            // not to restore the previous pasteboard here, and that safety net is only worth
+            // having if the user knows it's there.
+            indicator.presentMessage("Pasted. Also on your clipboard, in case it didn't land.")
+            autoHide(after: 1.2)
         case .failed:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cleaned, forType: .string)
