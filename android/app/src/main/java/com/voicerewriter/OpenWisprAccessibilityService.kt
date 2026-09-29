@@ -99,8 +99,17 @@ class OpenWisprAccessibilityService : AccessibilityService() {
     private val fieldCheck = Runnable { evaluateFieldFocus() }
 
     /**
-     * Tell the bubble whether the foreground app currently has a focused editable
-     * field. Skips our own windows so the recording sheet doesn't flap the bubble.
+     * Tell the bubble whether the user can currently type somewhere. Skips our own
+     * windows so the recording sheet doesn't flap the bubble.
+     *
+     * Two independent signals, OR'd: an open keyboard, and a focused editable node.
+     * The node scan alone is what left the bubble missing in Samsung Notes, Claude and
+     * ChatGPT (#69, #70) — plenty of apps never surface their composer as a focused
+     * editable we can see, whether because it's a Compose/WebView field, a custom
+     * editor, or a node the app marked sensitive (Android 14+ hides those from
+     * services that aren't declared accessibility tools). The keyboard is the more
+     * reliable of the two: if an IME has a window up, something editable has focus,
+     * however the app chose to draw it.
      */
     private fun evaluateFieldFocus() {
         // Scan all interactive windows, not just rootInActiveWindow — across an app
@@ -118,8 +127,11 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             return
         }
         var editable = false
+        var imeOpen = false
         var ourModalActive = false
         for (w in wins) {
+            // Checked before w.root, which an IME window need not give us at all.
+            if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) { imeOpen = true; continue }
             val root = w.root ?: continue
             if (root.packageName == packageName) {
                 // Our recording/transform sheet (an activity) — don't flap the bubble.
@@ -135,8 +147,8 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             if (editable) break
         }
         if (ourModalActive) return // leave the bubble as-is while our sheet is up
-        Log.d(TAG, "fieldFocus editable=$editable host=$lastHostPackage")
-        BubbleService.instance?.setFieldFocused(editable)
+        Log.d(TAG, "fieldFocus editable=$editable ime=$imeOpen host=$lastHostPackage")
+        BubbleService.instance?.setFieldFocused(editable || imeOpen)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -148,11 +160,15 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             if (pkg != null && isHostPackage(pkg, packageName)) lastHostPackage = pkg
         }
         // Drive the field-gated bubble: re-check focus on any event that can change it
-        // (coalesced — content-changed can fire in bursts).
+        // (coalesced — content-changed and windows-changed both fire in bursts).
+        // TYPE_WINDOWS_CHANGED is what tells us the keyboard came or went: dismissing
+        // an IME needn't touch focus or window state, so without it the bubble would
+        // stay up after the keyboard slid away.
         when (event.eventType) {
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 main.removeCallbacks(fieldCheck)
                 main.postDelayed(fieldCheck, 120)
