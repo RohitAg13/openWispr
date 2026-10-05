@@ -47,6 +47,9 @@ import kotlin.math.abs
 class BubbleService : Service() {
 
     companion object {
+        /** How long the clipboard mark holds before the bubble goes back to idle. */
+        private const val FALLBACK_HOLD_MS = 2600L
+
         @Volatile
         var isRunning = false
 
@@ -79,11 +82,11 @@ class BubbleService : Service() {
     private var waveView: WaveformView? = null
     private lateinit var params: WindowManager.LayoutParams
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var pulse: ValueAnimator? = null
 
     private var dismissView: View? = null
     private var overlayType = 0
     private var bubbleSize = 0
+    private var work: ValueAnimator? = null
     private var dismissSize = 0
     private var overDismiss = false
 
@@ -415,20 +418,70 @@ class BubbleService : Service() {
     fun showRecording() {
         recording = true
         ensureVisible()
+        stopWorkWave() // or it and push() would fight over the same bars
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
         iconView?.visibility = View.GONE
         waveView?.visibility = View.VISIBLE
-        startPulse()
     }
 
     fun showAmplitude(amp: Int) {
         waveView?.push(amp)
     }
 
+    /**
+     * Transcribing and polishing. With no sheet on the voice path, this is the only thing
+     * telling the user we're still working.
+     *
+     * Keeps the same five bars as [showRecording] rather than swapping in a spinner: the
+     * bubble changes rhythm, never shape. The bars run a slow shallow ripple of their own,
+     * which reads as working rather than hearing, since nothing is driving them from the
+     * microphone any more.
+     *
+     * Keeps [recording] set so the bubble stays on screen for the duration — our own
+     * activity holds focus while this runs, so the host field it was gating on isn't
+     * focused and the gate would otherwise hide the bubble mid-dictation.
+     */
+    fun showWorking() {
+        recording = true
+        ensureVisible()
+        container?.background =
+            ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
+        waveView?.visibility = View.VISIBLE
+        iconView?.visibility = View.GONE
+        startWorkWave()
+    }
+
+    /**
+     * We transcribed fine but couldn't type it anywhere, so it went to the clipboard (#78).
+     * Android raises its own "Copied" confirmation for that write, which reports a success and
+     * names no failure — the dictation reads as having worked while the field stays empty.
+     *
+     * A toast of our own is not an option: the accessibility service runs in the background,
+     * and Android suppresses background toasts, so it never reaches the screen. The bubble is
+     * already on screen and is ours, so it carries the message: the clipboard mark holds for
+     * [FALLBACK_HOLD_MS], then the bubble returns to idle on its own.
+     */
+    fun showClipboardFallback() {
+        mainHandler.post {
+            // Held like the working state: by now the dictation is over, so without this the
+            // gate could hide the bubble before the user has seen where their text went.
+            recording = true
+            ensureVisible()
+            stopWorkWave()
+            container?.background =
+                ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
+            waveView?.visibility = View.GONE
+            iconView?.setImageResource(R.drawable.ic_clipboard)
+            iconView?.visibility = View.VISIBLE
+            mainHandler.postDelayed({ showIdle() }, FALLBACK_HOLD_MS)
+        }
+    }
+
     fun showIdle() {
+        iconView?.setImageResource(R.drawable.ic_aperture)
         recording = false
-        stopPulse()
+        stopWorkWave()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background)
         waveView?.visibility = View.GONE
@@ -502,26 +555,21 @@ class BubbleService : Service() {
     }
 
     /** Gentle breathing animation while recording. */
-    private fun startPulse() {
-        stopPulse()
-        val c = container ?: return
-        pulse = ValueAnimator.ofFloat(1f, 1.12f).apply {
-            duration = 650
-            repeatMode = ValueAnimator.REVERSE
+    private fun startWorkWave() {
+        stopWorkWave()
+        val v = waveView ?: return
+        work = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1400
             repeatCount = ValueAnimator.INFINITE
-            addUpdateListener { a ->
-                val v = a.animatedValue as Float
-                c.scaleX = v; c.scaleY = v
-            }
+            interpolator = android.view.animation.LinearInterpolator()
+            addUpdateListener { a -> v.setWorkingPhase(a.animatedValue as Float) }
             start()
         }
     }
 
-    private fun stopPulse() {
-        pulse?.cancel()
-        pulse = null
-        container?.scaleX = 1f
-        container?.scaleY = 1f
+    private fun stopWorkWave() {
+        work?.cancel()
+        work = null
     }
 
     private fun vibrate(timings: LongArray) {
@@ -544,7 +592,6 @@ class BubbleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         mainHandler.removeCallbacksAndMessages(null)
-        stopPulse()
         container?.let { v -> try { wm.removeView(v) } catch (_: Exception) {} }
         dismissView?.let { v -> try { wm.removeView(v) } catch (_: Exception) {} }
         container = null

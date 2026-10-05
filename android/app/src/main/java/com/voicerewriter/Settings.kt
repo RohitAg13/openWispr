@@ -57,6 +57,12 @@ data class Settings(
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
     val polishLevel: PolishLevel = PolishLevel.FULL, // LLM polish intensity (replaces the old on/off toggle)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
+    /**
+     * Show the result and wait before inserting it. Off by default: the field the user is
+     * already looking at is a better place to read new text than a sheet showing it out of
+     * context, and the review step cost every dictation 2-6s. On restores the old flow.
+     */
+    val reviewBeforeInsert: Boolean = false,
     val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
     val hasCompletedOnboarding: Boolean = false, // first-run onboarding shown once; re-launchable from Settings
     // Experimental: Parakeet vocab-bias via sherpa hotwords + modified_beam_search. Off by
@@ -111,6 +117,7 @@ class SettingsRepository(private val context: Context) {
         val DETERMINISTIC_CLEANUP = booleanPreferencesKey("deterministicCleanup")
         val POLISH_LEVEL = stringPreferencesKey("polishLevel")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
+        val REVIEW_BEFORE_INSERT = booleanPreferencesKey("reviewBeforeInsert")
         val BUBBLE_ONLY_ON_FIELDS = booleanPreferencesKey("bubbleOnlyOnFields")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("hasCompletedOnboarding")
         val PARAKEET_HOTWORDS_EXPERIMENTAL = booleanPreferencesKey("parakeetHotwordsExperimental")
@@ -135,6 +142,7 @@ class SettingsRepository(private val context: Context) {
             deterministicCleanup = p[Keys.DETERMINISTIC_CLEANUP] ?: defaults.deterministicCleanup,
             polishLevel = PolishLevel.from(p[Keys.POLISH_LEVEL]),
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
+            reviewBeforeInsert = p[Keys.REVIEW_BEFORE_INSERT] ?: defaults.reviewBeforeInsert,
             bubbleOnlyOnFields = p[Keys.BUBBLE_ONLY_ON_FIELDS] ?: defaults.bubbleOnlyOnFields,
             hasCompletedOnboarding = p[Keys.HAS_COMPLETED_ONBOARDING] ?: defaults.hasCompletedOnboarding,
             parakeetHotwordsExperimental = p[Keys.PARAKEET_HOTWORDS_EXPERIMENTAL] ?: defaults.parakeetHotwordsExperimental,
@@ -161,6 +169,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.DETERMINISTIC_CLEANUP] = s.deterministicCleanup
             p[Keys.POLISH_LEVEL] = s.polishLevel.key
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
+            p[Keys.REVIEW_BEFORE_INSERT] = s.reviewBeforeInsert
             p[Keys.BUBBLE_ONLY_ON_FIELDS] = s.bubbleOnlyOnFields
             p[Keys.HAS_COMPLETED_ONBOARDING] = s.hasCompletedOnboarding
             p[Keys.PARAKEET_HOTWORDS_EXPERIMENTAL] = s.parakeetHotwordsExperimental
