@@ -455,8 +455,16 @@ function structuredDataHtml({ faqs, breadcrumbs, canonicalPath }) {
  * `defer` so it never blocks first paint, and it is the last thing in <head> so a slow or
  * unreachable analytics host cannot delay the page.
  */
+/**
+ * Both Umami tags, in this order. `script.js` is the tracker: it POSTs to `/api/send` and is the
+ * only thing that puts pageviews and visitors on the dashboard. `recorder.js` POSTs to
+ * `/api/record` and does session replay *only* — it sends no pageview, so shipping it alone
+ * (as this site did from #65 until now) records sessions into a dashboard that reports zero
+ * traffic. Session recording is disclosed in privacy.md §5; keep the two in step.
+ */
 function analyticsHtml() {
   return `<!-- Umami, self-hosted. Website only: the apps ship no analytics of any kind. -->
+<script defer src="https://umami.rohitagarwal.dev/script.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>
 <script defer src="https://umami.rohitagarwal.dev/recorder.js" data-website-id="6b499216-2550-4523-9d2a-a14cd2021af3"></script>`;
 }
 
