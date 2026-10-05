@@ -36,7 +36,7 @@ Sourced from the competitor's own documentation, changelog, and public statement
 
 > "I want to thank you for the creation of this app. It is the only legitimate alternative to Wispr Flow."
 >
-> — Emailed · OnePlus · v1.4.0. A real message from a user, quoted with permission. Name withheld by request.
+> — Emailed · OnePlus · v1.4.0. Quoted with permission, name withheld.
 
 *Read the numbers*
 

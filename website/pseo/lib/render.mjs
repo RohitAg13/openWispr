@@ -339,7 +339,7 @@ function testimonialHtml(t) {
     <div style="font-family:'IBM Plex Mono',monospace; font-size:40px; line-height:1; color:oklch(0.84 0.055 62); margin-bottom:16px;">&ldquo;</div>
     <blockquote style="margin:0 0 22px; font-size:25px; line-height:1.4; font-weight:600; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">${escapeHtml(t.quote)}</blockquote>
     ${t.href ? `<a href="${escapeHtml(t.href)}">${src}</a>` : src}
-    <div style="font-size:12.5px; line-height:1.6; color:oklch(0.58 0.025 52); margin-top:14px;">A real message from a user, quoted with permission. Name withheld by request.</div>
+    <div style="font-size:12.5px; line-height:1.6; color:oklch(0.58 0.025 52); margin-top:14px;">Quoted with permission, name withheld.</div>
   </div>
 </div>`;
 }

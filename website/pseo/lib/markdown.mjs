@@ -131,8 +131,7 @@ function pageMarkdown(data) {
     const t = data.testimonial;
     const src = t.href ? `[${t.source}](${t.href})` : t.source;
     parts.push(
-      `> "${t.quote}"\n>\n> — ${src}. A real message from a user, quoted with permission. ` +
-        'Name withheld by request.'
+      `> "${t.quote}"\n>\n> — ${src}. Quoted with permission, name withheld.`
     );
   }
 
