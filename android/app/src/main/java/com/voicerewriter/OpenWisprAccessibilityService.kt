@@ -213,6 +213,21 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             if (t != null) {
                 pendingText = null
                 setClipboard(t)
+                // Say what happened. Reaching here means accessibility is running and we still
+                // couldn't find an editable node to write into — which is the normal outcome in
+                // apps that don't expose their composer (#78), not something the user did.
+                //
+                // Android 13+ raises its own "Copied" confirmation for the clipboard write, but
+                // that reports a success and names no failure, so the dictation reads as having
+                // worked while the field stays empty. This is the only place that says otherwise.
+                //
+                // Deliberately not the same as the no-accessibility path in acceptVoice, which
+                // stays silent: a user who declined the permission gets the clipboard by choice
+                // and doesn't need telling after every dictation.
+                //
+                // Said on the bubble rather than in a toast of ours: this service runs in the
+                // background, and Android drops background toasts before they reach the screen.
+                BubbleService.instance?.showClipboardFallback()
             }
         }, retryDelays.last() + 300)
     }

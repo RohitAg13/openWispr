@@ -47,6 +47,9 @@ import kotlin.math.abs
 class BubbleService : Service() {
 
     companion object {
+        /** How long the clipboard mark holds before the bubble goes back to idle. */
+        private const val FALLBACK_HOLD_MS = 2600L
+
         @Volatile
         var isRunning = false
 
@@ -449,7 +452,34 @@ class BubbleService : Service() {
         startWorkWave()
     }
 
+    /**
+     * We transcribed fine but couldn't type it anywhere, so it went to the clipboard (#78).
+     * Android raises its own "Copied" confirmation for that write, which reports a success and
+     * names no failure — the dictation reads as having worked while the field stays empty.
+     *
+     * A toast of our own is not an option: the accessibility service runs in the background,
+     * and Android suppresses background toasts, so it never reaches the screen. The bubble is
+     * already on screen and is ours, so it carries the message: the clipboard mark holds for
+     * [FALLBACK_HOLD_MS], then the bubble returns to idle on its own.
+     */
+    fun showClipboardFallback() {
+        mainHandler.post {
+            // Held like the working state: by now the dictation is over, so without this the
+            // gate could hide the bubble before the user has seen where their text went.
+            recording = true
+            ensureVisible()
+            stopWorkWave()
+            container?.background =
+                ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
+            waveView?.visibility = View.GONE
+            iconView?.setImageResource(R.drawable.ic_clipboard)
+            iconView?.visibility = View.VISIBLE
+            mainHandler.postDelayed({ showIdle() }, FALLBACK_HOLD_MS)
+        }
+    }
+
     fun showIdle() {
+        iconView?.setImageResource(R.drawable.ic_aperture)
         recording = false
         stopWorkWave()
         container?.background =
