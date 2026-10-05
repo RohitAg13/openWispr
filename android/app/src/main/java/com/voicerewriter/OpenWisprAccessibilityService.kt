@@ -221,17 +221,22 @@ class OpenWisprAccessibilityService : AccessibilityService() {
     private fun attemptInsert() {
         val text = pendingText ?: return
         val node = findHostFocusedEditable() ?: return
+        var viaPaste = false
         val ok = try {
             // Prefer a clipboard-free splice at the cursor; fall back to paste only when
             // we can't determine the cursor (e.g. some WebView fields).
-            insertAtCursor(node, text) || pasteViaClipboard(node, text)
+            insertAtCursor(node, text) || run { viaPaste = true; pasteViaClipboard(node, text) }
         } catch (e: Exception) {
             Log.e(TAG, "insert action failed", e); false
         } finally {
             @Suppress("DEPRECATION") node.recycle()
         }
         if (ok) {
-            Log.i(TAG, "inserted into host field")
+            // Worth distinguishing: the paste path leaves the dictation on the clipboard,
+            // overwriting whatever the user had copied, and on Android 13+ the system shows
+            // its own "Copied" confirmation for it. Both read as success without this.
+            Log.i(TAG, if (viaPaste) "inserted via clipboard paste (clipboard overwritten)"
+                       else "inserted at cursor (clipboard untouched)")
             pendingText = null
             main.removeCallbacksAndMessages(null)
             // The haptic tick is the confirmation. A toast on top of text visibly appearing in
