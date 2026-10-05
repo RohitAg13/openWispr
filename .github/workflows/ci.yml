@@ -23,6 +23,13 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools". Google removed the obsolete "tools"
+          # package from the SDK repository, so sdkmanager now exits 1 on it and
+          # this step fails before anything is built — every Android run since
+          # 2026-09-16 died here. We only need platform-tools; the NDK and CMake
+          # come from the next step, and Gradle fetches platforms/build-tools.
+          packages: platform-tools
 
       - name: Install NDK + CMake (whisper.cpp + llama.cpp native modules)
         run: sdkmanager "ndk;25.1.8937393" "ndk;29.0.13113456" "cmake;3.22.1" "cmake;3.31.6"

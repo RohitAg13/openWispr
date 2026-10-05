@@ -25,6 +25,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # See the same step in ci.yml: the default "tools" package no longer
+          # exists in the SDK repository and makes sdkmanager exit 1.
+          packages: platform-tools
 
       - name: Install NDK + CMake (whisper.cpp + llama.cpp native modules)
         run: |
