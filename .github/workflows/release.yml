@@ -149,6 +149,8 @@ jobs:
       # actually read, which is why #58 went four releases undiagnosed. Print the track as Play
       # returns it, so a failure carries its own evidence instead of needing a re-run to
       # investigate. Informational only: never fail the job on this.
+      # continue-on-error so a broken diagnostic can't block a release — but see below: that
+      # is exactly how this one shipped broken and cost a release's worth of evidence.
       - name: "Dump internal track state (diagnostic for #58)"
         if: ${{ env.PLAY_JSON != '' }}
         continue-on-error: true
@@ -166,7 +168,16 @@ jobs:
               scope: "https://www.googleapis.com/auth/androidpublisher",
             )
             pkg = "com.voicerewriter"
-            edit = svc.insert_edit_app_edit(pkg)
+            edit = svc.insert_edit(pkg)
+            # List every track rather than probing two by name: if "internal" is empty, the
+            # question is immediately where the release actually went, and a named lookup
+            # cannot answer that.
+            begin
+              puts "=== all tracks ==="
+              puts JSON.pretty_generate(svc.list_edit_tracks(pkg, edit.id).to_h)
+            rescue => e
+              puts "list_edit_tracks: #{e.class}: #{e.message}"
+            end
             %w[internal production].each do |name|
               begin
                 puts "--- track #{name} ---"
@@ -175,7 +186,7 @@ jobs:
                 puts "#{name}: #{e.class}: #{e.message}"
               end
             end
-            svc.delete_edit_app_edit(pkg, edit.id)
+            svc.delete_edit(pkg, edit.id)
           '
 
       # Staged at 20% (see the promote_production lane) — Play has no rollback, so the only
