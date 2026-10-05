@@ -55,6 +55,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -84,6 +85,9 @@ import java.util.Locale
  * sheet; Settings opens the existing full settings screen — only Home is new here.
  * Implements the "OpenWispr Mobile" design handoff (Home tab).
  */
+/** How many unfinished recordings to show before collapsing the rest behind "See all". */
+private const val UNFINISHED_PREVIEW = 3
+
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge() // draw under the status/nav bars; the cream/plum bg fills the whole screen
@@ -123,6 +127,9 @@ class HomeActivity : ComponentActivity() {
         var teachOpen by remember { mutableStateOf<String?>(null) }
         var editOpen by remember { mutableStateOf<String?>(null) }
         var toast by remember { mutableStateOf<String?>(null) }
+        // Unfinished recordings are capped on first paint: they lead the screen, and an
+        // unlucky run of failures used to push Recent and everything below it off the bottom.
+        var showAllUnfinished by remember { mutableStateOf(false) }
 
         fun reload() {
             scope.launch {
@@ -164,13 +171,40 @@ class HomeActivity : ComponentActivity() {
                         // Unfinished recordings sit above "Recent": they're the only thing on
                         // this screen that still needs the user, so they lead.
                         if (d != null && d.unfinished.isNotEmpty()) {
+                            // The expand control lives in the header, not under the list: once
+                            // expanded there can be a dozen cards, and a "Show fewer" at the
+                            // bottom of them is somewhere you have to go looking for.
+                            Row(
+                                Modifier.fillMaxWidth().padding(top = 26.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    "Unfinished",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (d.unfinished.size > UNFINISHED_PREVIEW) {
+                                    ActionText(
+                                        if (showAllUnfinished) "Show fewer" else "See all ${d.unfinished.size}",
+                                        onClick = { showAllUnfinished = !showAllUnfinished },
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            }
+                            // Said once for the whole section rather than on every card. It is the
+                            // same sentence every time, and repeating it was most of each card's height.
                             Text(
-                                "Unfinished",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(top = 26.dp, bottom = 12.dp),
+                                if (d.unfinished.size == 1)
+                                    "This didn't finish transcribing. The audio is still on this device."
+                                else
+                                    "These didn't finish transcribing. The audio is still on this device.",
+                                fontFamily = Mulish, fontSize = 12.5.sp, lineHeight = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 10.dp),
                             )
-                            d.unfinished.forEach { rec ->
+                            val shown = if (showAllUnfinished) d.unfinished else d.unfinished.take(UNFINISHED_PREVIEW)
+                            shown.forEach { rec ->
                                 UnfinishedCard(
                                     rec = rec,
                                     onRetry = { startActivity(RewriteActivity.retryIntent(ctx, rec.id)) },
@@ -181,7 +215,7 @@ class HomeActivity : ComponentActivity() {
                                         }
                                     },
                                 )
-                                Spacer(Modifier.height(11.dp))
+                                Spacer(Modifier.height(7.dp))
                             }
                             Spacer(Modifier.height(2.dp))
                         }
@@ -508,36 +542,35 @@ class HomeActivity : ComponentActivity() {
             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween) {
+            // Two lines, not four stacked blocks. An unfinished recording needs to be
+            // recognised and acted on, which takes a name, when, how long — and the two
+            // buttons. Everything else was prose the user reads once, now in the header.
+            Row(
+                Modifier.fillMaxWidth().padding(start = 13.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         rec.appLabel.ifBlank { "Dictation" },
                         fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp,
                         color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
-                    Text(clockTime(rec.timestamp), fontFamily = PlexMono, fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${durationLabel(rec.durationSec)} · ${clockTime(rec.timestamp)} · audio saved",
+                        fontFamily = PlexMono, fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    MetaChip(durationLabel(rec.durationSec))
-                    MetaChip("audio saved", dot = true)
-                }
-                Text(
-                    "This one didn't finish transcribing. The recording is still on this device. Run it again.",
-                    fontFamily = Mulish, fontSize = 13.sp, lineHeight = 19.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically) {
-                    ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
-                    Box(
-                        Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primary)
-                            .clickable(onClick = onRetry).padding(18.dp, 9.dp),
-                    ) {
-                        Text("Retry", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onPrimary)
-                    }
+                ActionText("Delete", onClick = onDelete, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(6.dp))
+                Box(
+                    Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primary)
+                        .clickable(onClick = onRetry).padding(16.dp, 8.dp),
+                ) {
+                    Text("Retry", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
