@@ -6,7 +6,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.view.View
+import kotlin.math.PI
 import kotlin.math.max
+import kotlin.math.sin
 
 /**
  * Tiny live waveform: a row of vertical bars whose heights follow the most recent
@@ -28,6 +30,21 @@ class WaveformView(context: Context) : View(context) {
         val norm = (amplitude / 14000f).coerceIn(0f, 1f)
         for (i in 0 until barCount - 1) levels[i] = levels[i + 1]
         levels[barCount - 1] = max(0.15f, norm)
+        invalidate()
+    }
+
+    /**
+     * Processing, not listening: the bars run a slow travelling wave of their own rather
+     * than following the microphone. Deliberately the same five bars as [push] — the bubble
+     * shouldn't visually jump when recording ends, it should just change rhythm.
+     *
+     * [phase] cycles 0..1. Shallower and slower than speech: this is "working", not "hearing".
+     */
+    fun setWorkingPhase(phase: Float) {
+        for (i in 0 until barCount) {
+            val a = sin((phase + i * 0.14f) * 2f * PI.toFloat())
+            levels[i] = 0.2f + 0.34f * (a * 0.5f + 0.5f)
+        }
         invalidate()
     }
 

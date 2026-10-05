@@ -79,12 +79,11 @@ class BubbleService : Service() {
     private var waveView: WaveformView? = null
     private lateinit var params: WindowManager.LayoutParams
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var pulse: ValueAnimator? = null
 
     private var dismissView: View? = null
     private var overlayType = 0
     private var bubbleSize = 0
-    private var spin: ValueAnimator? = null
+    private var work: ValueAnimator? = null
     private var dismissSize = 0
     private var overDismiss = false
 
@@ -416,11 +415,11 @@ class BubbleService : Service() {
     fun showRecording() {
         recording = true
         ensureVisible()
+        stopWorkWave() // or it and push() would fight over the same bars
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
         iconView?.visibility = View.GONE
         waveView?.visibility = View.VISIBLE
-        startPulse()
     }
 
     fun showAmplitude(amp: Int) {
@@ -428,9 +427,13 @@ class BubbleService : Service() {
     }
 
     /**
-     * Transcribing and polishing. Distinct from [showRecording]: the waveform is gone,
-     * because nothing is being heard any more, and the aperture turns instead. With no
-     * sheet on the voice path, this is the only thing telling the user we're still working.
+     * Transcribing and polishing. With no sheet on the voice path, this is the only thing
+     * telling the user we're still working.
+     *
+     * Keeps the same five bars as [showRecording] rather than swapping in a spinner: the
+     * bubble changes rhythm, never shape. The bars run a slow shallow ripple of their own,
+     * which reads as working rather than hearing, since nothing is driving them from the
+     * microphone any more.
      *
      * Keeps [recording] set so the bubble stays on screen for the duration — our own
      * activity holds focus while this runs, so the host field it was gating on isn't
@@ -439,18 +442,16 @@ class BubbleService : Service() {
     fun showWorking() {
         recording = true
         ensureVisible()
-        stopPulse()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
-        waveView?.visibility = View.GONE
-        iconView?.visibility = View.VISIBLE
-        startSpin()
+        waveView?.visibility = View.VISIBLE
+        iconView?.visibility = View.GONE
+        startWorkWave()
     }
 
     fun showIdle() {
         recording = false
-        stopPulse()
-        stopSpin()
+        stopWorkWave()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background)
         waveView?.visibility = View.GONE
@@ -524,44 +525,21 @@ class BubbleService : Service() {
     }
 
     /** Gentle breathing animation while recording. */
-    private fun startSpin() {
-        stopSpin()
-        val v = iconView ?: return
-        spin = ValueAnimator.ofFloat(0f, 360f).apply {
-            duration = 1100
+    private fun startWorkWave() {
+        stopWorkWave()
+        val v = waveView ?: return
+        work = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1400
             repeatCount = ValueAnimator.INFINITE
             interpolator = android.view.animation.LinearInterpolator()
-            addUpdateListener { a -> v.rotation = a.animatedValue as Float }
+            addUpdateListener { a -> v.setWorkingPhase(a.animatedValue as Float) }
             start()
         }
     }
 
-    private fun stopSpin() {
-        spin?.cancel()
-        spin = null
-        iconView?.rotation = 0f
-    }
-
-    private fun startPulse() {
-        stopPulse()
-        val c = container ?: return
-        pulse = ValueAnimator.ofFloat(1f, 1.12f).apply {
-            duration = 650
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            addUpdateListener { a ->
-                val v = a.animatedValue as Float
-                c.scaleX = v; c.scaleY = v
-            }
-            start()
-        }
-    }
-
-    private fun stopPulse() {
-        pulse?.cancel()
-        pulse = null
-        container?.scaleX = 1f
-        container?.scaleY = 1f
+    private fun stopWorkWave() {
+        work?.cancel()
+        work = null
     }
 
     private fun vibrate(timings: LongArray) {
@@ -584,7 +562,6 @@ class BubbleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         mainHandler.removeCallbacksAndMessages(null)
-        stopPulse()
         container?.let { v -> try { wm.removeView(v) } catch (_: Exception) {} }
         dismissView?.let { v -> try { wm.removeView(v) } catch (_: Exception) {} }
         container = null
