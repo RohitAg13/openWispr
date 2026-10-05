@@ -84,6 +84,7 @@ class BubbleService : Service() {
     private var dismissView: View? = null
     private var overlayType = 0
     private var bubbleSize = 0
+    private var spin: ValueAnimator? = null
     private var dismissSize = 0
     private var overDismiss = false
 
@@ -426,9 +427,30 @@ class BubbleService : Service() {
         waveView?.push(amp)
     }
 
+    /**
+     * Transcribing and polishing. Distinct from [showRecording]: the waveform is gone,
+     * because nothing is being heard any more, and the aperture turns instead. With no
+     * sheet on the voice path, this is the only thing telling the user we're still working.
+     *
+     * Keeps [recording] set so the bubble stays on screen for the duration — our own
+     * activity holds focus while this runs, so the host field it was gating on isn't
+     * focused and the gate would otherwise hide the bubble mid-dictation.
+     */
+    fun showWorking() {
+        recording = true
+        ensureVisible()
+        stopPulse()
+        container?.background =
+            ContextCompat.getDrawable(this, R.drawable.bubble_background_recording)
+        waveView?.visibility = View.GONE
+        iconView?.visibility = View.VISIBLE
+        startSpin()
+    }
+
     fun showIdle() {
         recording = false
         stopPulse()
+        stopSpin()
         container?.background =
             ContextCompat.getDrawable(this, R.drawable.bubble_background)
         waveView?.visibility = View.GONE
@@ -502,6 +524,24 @@ class BubbleService : Service() {
     }
 
     /** Gentle breathing animation while recording. */
+    private fun startSpin() {
+        stopSpin()
+        val v = iconView ?: return
+        spin = ValueAnimator.ofFloat(0f, 360f).apply {
+            duration = 1100
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = android.view.animation.LinearInterpolator()
+            addUpdateListener { a -> v.rotation = a.animatedValue as Float }
+            start()
+        }
+    }
+
+    private fun stopSpin() {
+        spin?.cancel()
+        spin = null
+        iconView?.rotation = 0f
+    }
+
     private fun startPulse() {
         stopPulse()
         val c = container ?: return

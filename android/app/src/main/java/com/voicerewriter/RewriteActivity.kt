@@ -148,6 +148,14 @@ class RewriteActivity : ComponentActivity() {
      */
     private var pendingId by mutableStateOf<String?>(null)
 
+    /**
+     * True when this dictation runs with no sheet at all — the bubble carries listening and
+     * in-progress, and the text goes straight into the field. Resolved in [onCreate] rather
+     * than from the async settings load, because the sheet's first frame would otherwise
+     * appear before the setting arrived, which is the flash this is meant to remove.
+     */
+    private var chromeless = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         repo = SettingsRepository(applicationContext)
@@ -163,6 +171,19 @@ class RewriteActivity : ComponentActivity() {
             autoRecord = intent.getBooleanExtra(EXTRA_AUTO_RECORD, false)
             pushToTalk = intent.getBooleanExtra(EXTRA_PUSH_TO_TALK, false)
             retryId = intent.getStringExtra(EXTRA_RETRY_ID)
+        }
+
+        // A retry from Home keeps its sheet: there is no focused field behind it, so with no
+        // sheet the result would land on the clipboard with nothing on screen to say so.
+        chromeless = voiceMode && autoRecord && retryId == null &&
+            runCatching { kotlinx.coroutines.runBlocking { !repo.get().reviewBeforeInsert } }
+                .getOrDefault(false)
+
+        // The theme dims whatever is behind the sheet. With no sheet that's a grey wash over
+        // the user's app with nothing on it, so the dictation would look like a glitch.
+        if (chromeless) {
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            runCatching { window.setDimAmount(0f) }
         }
 
         setContent {
@@ -777,6 +798,21 @@ class RewriteActivity : ComponentActivity() {
                 BubbleService.instance?.showIdle()
             }
         }
+
+        // On the direct-insert path the bubble *is* the UI. Recording already turns it into a
+        // waveform; this carries it through transcribe and polish, which is otherwise a silent
+        // gap with nothing on screen at all.
+        LaunchedEffect(stage) {
+            if (chromeless && (stage == Stage.TRANSCRIBING || stage == Stage.CORRECTING)) {
+                BubbleService.instance?.showWorking()
+            }
+        }
+
+        // No sheet: listening and working live on the bubble, and the text lands in the field.
+        // An error still needs somewhere to be said, so it brings the sheet back rather than
+        // failing invisibly. Everything above this point is effects and runs either way; the
+        // sheet body below is pure UI, which is what makes returning here safe.
+        if (chromeless && stage != Stage.ERROR) return
 
         BottomSheet(onScrimTap = { if (stage == Stage.RECORDING) onMicTap() else cancelAndFinish() }) {
             SheetHeader(
