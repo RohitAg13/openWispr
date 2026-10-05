@@ -10,13 +10,20 @@ build step, and the quality bar every generated page is held to.
 
 The prior pSEO project this borrows from (`~/Documents/Personal/AutoMata/astro-news/docs/ai-seo-handover/`)
 runs on Astro with GSC-driven analyzers, an LLM planner, and auto-merging weekly crons. None of
-that infrastructure exists here yet — OpenWispr's site has no Search Console history, no
-`data/experiments/ledger.jsonl`, no analyzers. Copying the harness wholesale on day zero would be
-exactly the failure mode `05-what-doesnt.md` warns about ("empty ledger makes the recency filter
-toothless", "don't enable the weekly harness with <60d of GSC data"). So this is deliberately
-**Phase 0**: the content-generation half of the playbook (data file → template → static page),
-built by hand for the first batch, with the harness/analyzer half stubbed and documented for when
-GSC access exists (see the punch list below).
+that infrastructure exists here yet — no `data/experiments/ledger.jsonl`, no analyzers. Copying
+the harness wholesale on day zero would have been exactly the failure mode `05-what-doesnt.md`
+warns about ("empty ledger makes the recency filter toothless", "don't enable the weekly harness
+with <60d of GSC data"). So this is deliberately **Phase 0**: the content-generation half of the
+playbook (data file → template → static page), built by hand for the first batch, with the
+harness/analyzer half stubbed and documented.
+
+**As of 2026-10-05 the GSC half is no longer blocked.** `sc-domain:openwispr.dev` is verified and
+has data from 2026-08-03 — 162 clicks and 4,994 impressions over 90 days, which clears the ~60-day
+bar the checklist sets for the CTR audit. The service account
+`gsc-content-automation@gen-lang-client-0558212781.iam.gserviceaccount.com` (shared with the
+AutoMata project, where the working client and credentials live) is a restricted user on the
+property. The punch list below is updated accordingly; findings from the first pull are in
+`scratch/spec-seo-gsc-oct2026.md`.
 
 The one lesson taken wholesale from `04-what-works.md` / `05-what-doesnt.md`: **pSEO only earns
 its keep when the page answers a query with real demand and a genuine fact difference — not when
@@ -654,15 +661,18 @@ score < 70); here it's a manual checklist because there's no analyzer yet to aut
 None of this blocks the pages already shipped; it's the natural next phase once the user adds
 keys, following `docs/ai-seo-handover/01-setup-checklist.md`'s bring-up order.
 
-- **Google Search Console.** No property is verified yet for `openwispr.dev`. Needed before any
-  of the analyzers below can run. ~15 min per the handover checklist (DNS TXT verification).
-- **GSC service account + `scripts/lib/gsc-client.ts`.** Not copied over — no credentials to test
-  it against yet. When ready, copy from
-  `~/Documents/Personal/AutoMata/astro-news/scripts/lib/gsc-client.ts` verbatim per
-  `docs/ai-seo-handover/07-reusable-code.md`.
-- **`ctr-audit.ts` / `topic-opportunities.ts` analyzers.** Meaningless with zero GSC history.
-  Per the setup checklist, don't even attempt the CTR audit below ~60 days of impressions data —
-  copy these over once that data exists, not before.
+- ~~**Google Search Console.**~~ **Done.** `sc-domain:openwispr.dev` is verified, with data from
+  2026-08-03.
+- **GSC service account + `scripts/lib/gsc-client.ts`.** Credentials now exist and are proven
+  against this property: the AutoMata service account reads it as `siteRestrictedUser`, and
+  `GSC_SERVICE_ACCOUNT_EMAIL` / `GSC_SERVICE_ACCOUNT_KEY` live in that project's `.env`. Still to
+  do here: copy `~/Documents/Personal/AutoMata/astro-news/scripts/lib/gsc-client.ts` verbatim per
+  `docs/ai-seo-handover/07-reusable-code.md`, and decide where this repo keeps the key (it is not
+  in this repo and must not be committed).
+- **`ctr-audit.ts` / `topic-opportunities.ts` analyzers.** Now worth copying. The ~60-day bar is
+  met, and the first manual pull already found what a CTR audit would: brand queries sitting at
+  position 5-8 with ~1% CTR across ~1,850 impressions, and two comparison pages converting at 7%
+  from position 17. See `scratch/spec-seo-gsc-oct2026.md`.
 - **Topic-opportunities-driven page ideas.** The next batch of long-tail pages should ideally come
   from `topic-opportunities.ts` output (queries OpenWispr already ranks pos 10–80 for with no
   dedicated page) rather than more hand-guessing from `research/`. Requires GSC first.
