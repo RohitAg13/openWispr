@@ -319,6 +319,31 @@ function journalNoteHtml() {
 </div>`;
 }
 
+/**
+ * One real, consented user quote. Rendered only when a data file supplies `testimonial`.
+ *
+ * Deliberately not a card grid and deliberately unnamed: consent covered the words, not an
+ * identity. `source` carries only what cannot be traced back to a person (an issue number, or
+ * a device brand and app version) — never a full device model string, which together with a
+ * date narrows to one user. `href`, when present, points at the author's own public post, which
+ * is what lets an unnamed quote still be checked. No star ratings anywhere: there is no rating
+ * system behind these, so drawing stars would be inventing evidence.
+ *
+ * Distinct from journalNoteHtml(), which is the project talking about itself.
+ */
+function testimonialHtml(t) {
+  if (!t || !t.quote) return '';
+  const src = `<span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:oklch(0.55 0.03 50); text-transform:uppercase;">${escapeHtml(t.source)}</span>`;
+  return `<div id="testimonial" style="background:oklch(0.985 0.01 80); border-bottom:1px solid oklch(0.91 0.012 72);">
+  <div style="max-width:760px; margin:0 auto; padding:64px 32px; text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:40px; line-height:1; color:oklch(0.84 0.055 62); margin-bottom:16px;">&ldquo;</div>
+    <blockquote style="margin:0 0 22px; font-size:25px; line-height:1.4; font-weight:600; letter-spacing:-0.02em; color:oklch(0.3 0.03 45);">${escapeHtml(t.quote)}</blockquote>
+    ${t.href ? `<a href="${escapeHtml(t.href)}">${src}</a>` : src}
+    <div style="font-size:12.5px; line-height:1.6; color:oklch(0.58 0.025 52); margin-top:14px;">A real message from a user, quoted with permission. Name withheld by request.</div>
+  </div>
+</div>`;
+}
+
 /** Small "keep reading" block linking to sibling generated pages — avoids orphan pages. */
 function relatedLinksHtml(links) {
   if (!links || links.length === 0) return '';
@@ -467,6 +492,7 @@ export {
   heroHtml,
   proseSectionHtml,
   comparisonTableHtml,
+  testimonialHtml,
   faqSectionHtml,
   journalNoteHtml,
   relatedLinksHtml,

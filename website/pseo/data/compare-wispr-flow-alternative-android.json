@@ -12,9 +12,18 @@
   "subhead": "Wispr Flow does ship an Android app — but it's the same cloud-only architecture as its desktop product, with a noticeably rockier Play Store record. OpenWispr is an independent, unaffiliated, MIT-licensed app with Android as a first-class target, not an afterthought.",
   "ctaNote": "No account needed. Free, with no word cap, on Google Play today.",
   "breadcrumbs": [
-    { "label": "OpenWispr", "href": "/" },
-    { "label": "Compare", "href": "/#compare" },
-    { "label": "Wispr Flow alternative for Android", "href": "/compare/wispr-flow-alternative-android.html" }
+    {
+      "label": "OpenWispr",
+      "href": "/"
+    },
+    {
+      "label": "Compare",
+      "href": "/#compare"
+    },
+    {
+      "label": "Wispr Flow alternative for Android",
+      "href": "/compare/wispr-flow-alternative-android.html"
+    }
   ],
   "intro": {
     "eyebrow": "Independent, not affiliated",
@@ -28,16 +37,65 @@
     "competitorName": "Wispr Flow (Android)",
     "competitorNote": "Same cloud backend as desktop",
     "rows": [
-      { "feature": "Where transcription happens", "us": "Your phone, always", "them": "Their servers — the same cloud-only backend used on desktop", "usGood": true },
-      { "feature": "Works in airplane mode", "us": "Yes, fully — nothing to lose signal to", "them": "No — per their own docs, dictation \"may fail without notice\" if the connection drops", "usGood": true },
-      { "feature": "Price", "us": "Free, one tier, no cap, no expiry", "them": "Free on Android, no stated cap — their pricing page flagged this \"limited time only\" as of July 2026; that wording is gone as of this writing, though whether the allowance itself changed is unconfirmed", "usGood": true },
-      { "feature": "Google Play rating", "us": "New app — building its review history", "them": "3.69/5 from 3,128 ratings as of July 2026, with 16.6% one-star lifetime — versus 4.8/5 on iOS for the same product and backend (ratings shift over time; check the live listing)", "usGood": false },
-      { "feature": "Account required", "us": "Never", "them": "Yes", "usGood": true },
-      { "feature": "Open source", "us": "Yes — MIT license, full source on GitHub", "them": "No", "usGood": true },
-      { "feature": "Audio kept if a transcription fails", "us": "Nothing to lose in transit — it never leaves the device", "them": "Wasn't preserved on failed Android transcriptions until their March 2026 update (v1.4.1)", "usGood": true },
-      { "feature": "Retry a failed transcription", "us": "Actively in development", "them": "Yes, since v1.4.1 — but disabled under their zero-retention privacy setting", "usGood": false },
-      { "feature": "Support channel", "us": "Public GitHub issue tracker", "them": "~1,000 tickets/day across 11 staff, with AI-bot first replies (per their own public statement)", "usGood": true }
+      {
+        "feature": "Where transcription happens",
+        "us": "Your phone, always",
+        "them": "Their servers — the same cloud-only backend used on desktop",
+        "usGood": true
+      },
+      {
+        "feature": "Works in airplane mode",
+        "us": "Yes, fully — nothing to lose signal to",
+        "them": "No — per their own docs, dictation \"may fail without notice\" if the connection drops",
+        "usGood": true
+      },
+      {
+        "feature": "Price",
+        "us": "Free, one tier, no cap, no expiry",
+        "them": "Free on Android, no stated cap — their pricing page flagged this \"limited time only\" as of July 2026; that wording is gone as of this writing, though whether the allowance itself changed is unconfirmed",
+        "usGood": true
+      },
+      {
+        "feature": "Google Play rating",
+        "us": "New app — building its review history",
+        "them": "3.69/5 from 3,128 ratings as of July 2026, with 16.6% one-star lifetime — versus 4.8/5 on iOS for the same product and backend (ratings shift over time; check the live listing)",
+        "usGood": false
+      },
+      {
+        "feature": "Account required",
+        "us": "Never",
+        "them": "Yes",
+        "usGood": true
+      },
+      {
+        "feature": "Open source",
+        "us": "Yes — MIT license, full source on GitHub",
+        "them": "No",
+        "usGood": true
+      },
+      {
+        "feature": "Audio kept if a transcription fails",
+        "us": "Nothing to lose in transit — it never leaves the device",
+        "them": "Wasn't preserved on failed Android transcriptions until their March 2026 update (v1.4.1)",
+        "usGood": true
+      },
+      {
+        "feature": "Retry a failed transcription",
+        "us": "Actively in development",
+        "them": "Yes, since v1.4.1 — but disabled under their zero-retention privacy setting",
+        "usGood": false
+      },
+      {
+        "feature": "Support channel",
+        "us": "Public GitHub issue tracker",
+        "them": "~1,000 tickets/day across 11 staff, with AI-bot first replies (per their own public statement)",
+        "usGood": true
+      }
     ]
+  },
+  "testimonial": {
+    "quote": "I want to thank you for the creation of this app. It is the only legitimate alternative to Wispr Flow.",
+    "source": "Emailed · OnePlus · v1.4.0"
   },
   "sections": [
     {
@@ -66,16 +124,46 @@
     }
   ],
   "faqs": [
-    { "q": "Does Wispr Flow even have an Android app?", "a": "Yes. Wispr Flow ships on Android, running the same cloud-only backend as its desktop and iOS apps — there is no on-device mode on Android or any other platform, per their own security FAQ." },
-    { "q": "Is there a good Wispr Flow alternative for Android that works offline?", "a": "OpenWispr is a free, MIT-licensed, independent alternative built with Android as a first-class platform. Its transcription and text cleanup run entirely on-device — put your phone in airplane mode and it keeps working, because there is no cloud step to fail over from." },
-    { "q": "Is Wispr Flow's Android app as good as its iOS app?", "a": "Its own Google Play data suggests not, at least historically. As of late July 2026, Wispr Flow's Play Store rating was 3.69/5 from 3,128 ratings (16.6% one-star lifetime), compared to 4.8/5 on the iOS App Store for the same product and backend — a wide gap for identical software. Ratings shift over time, so check the current listings rather than treating this as fixed." },
-    { "q": "Is Wispr Flow's Android free tier really unlimited?", "a": "Wispr Flow's pricing page listed the Android free tier as \"Unlimited (limited time only)\" as of July 2026, flagging it as a temporary state. As of this writing that specific \"limited time\" wording is gone from their page, which now just says \"Unlimited on Android\" — whether the allowance changed or the notice was simply dropped isn't confirmed, so check their current pricing directly. OpenWispr's free tier has no cap and has never carried a time-limit notice." },
-    { "q": "Is OpenWispr affiliated with Wispr Flow in any way?", "a": "No. OpenWispr is an independent, MIT-licensed project with no affiliation, partnership, or endorsement relationship with Wispr Flow. This comparison exists to answer a common search honestly, using Wispr Flow's own published documentation and public app-store data." },
-    { "q": "Does OpenWispr have as many Android users or reviews as Wispr Flow?", "a": "Not yet — OpenWispr's Android app is newer and doesn't have a comparable review history to Wispr Flow's 3,128 Play Store ratings. If an established track record matters most to you, that is currently a real advantage for Wispr Flow." }
+    {
+      "q": "Does Wispr Flow even have an Android app?",
+      "a": "Yes. Wispr Flow ships on Android, running the same cloud-only backend as its desktop and iOS apps — there is no on-device mode on Android or any other platform, per their own security FAQ."
+    },
+    {
+      "q": "Is there a good Wispr Flow alternative for Android that works offline?",
+      "a": "OpenWispr is a free, MIT-licensed, independent alternative built with Android as a first-class platform. Its transcription and text cleanup run entirely on-device — put your phone in airplane mode and it keeps working, because there is no cloud step to fail over from."
+    },
+    {
+      "q": "Is Wispr Flow's Android app as good as its iOS app?",
+      "a": "Its own Google Play data suggests not, at least historically. As of late July 2026, Wispr Flow's Play Store rating was 3.69/5 from 3,128 ratings (16.6% one-star lifetime), compared to 4.8/5 on the iOS App Store for the same product and backend — a wide gap for identical software. Ratings shift over time, so check the current listings rather than treating this as fixed."
+    },
+    {
+      "q": "Is Wispr Flow's Android free tier really unlimited?",
+      "a": "Wispr Flow's pricing page listed the Android free tier as \"Unlimited (limited time only)\" as of July 2026, flagging it as a temporary state. As of this writing that specific \"limited time\" wording is gone from their page, which now just says \"Unlimited on Android\" — whether the allowance changed or the notice was simply dropped isn't confirmed, so check their current pricing directly. OpenWispr's free tier has no cap and has never carried a time-limit notice."
+    },
+    {
+      "q": "Is OpenWispr affiliated with Wispr Flow in any way?",
+      "a": "No. OpenWispr is an independent, MIT-licensed project with no affiliation, partnership, or endorsement relationship with Wispr Flow. This comparison exists to answer a common search honestly, using Wispr Flow's own published documentation and public app-store data."
+    },
+    {
+      "q": "Does OpenWispr have as many Android users or reviews as Wispr Flow?",
+      "a": "Not yet — OpenWispr's Android app is newer and doesn't have a comparable review history to Wispr Flow's 3,128 Play Store ratings. If an established track record matters most to you, that is currently a real advantage for Wispr Flow."
+    }
   ],
   "relatedLinks": [
-    { "kicker": "General comparison", "title": "OpenWispr vs Wispr Flow (full comparison)", "href": "/compare/wispr-flow.html" },
-    { "kicker": "Long-tail guide", "title": "On-device Whisper dictation for Android", "href": "/android/on-device-whisper-dictation-android.html" },
-    { "kicker": "Long-tail guide", "title": "Free, open-source voice dictation, no subscription", "href": "/android/free-open-source-voice-dictation.html" }
+    {
+      "kicker": "General comparison",
+      "title": "OpenWispr vs Wispr Flow (full comparison)",
+      "href": "/compare/wispr-flow.html"
+    },
+    {
+      "kicker": "Long-tail guide",
+      "title": "On-device Whisper dictation for Android",
+      "href": "/android/on-device-whisper-dictation-android.html"
+    },
+    {
+      "kicker": "Long-tail guide",
+      "title": "Free, open-source voice dictation, no subscription",
+      "href": "/android/free-open-source-voice-dictation.html"
+    }
   ]
 }

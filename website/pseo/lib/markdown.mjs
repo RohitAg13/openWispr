@@ -127,6 +127,15 @@ function pageMarkdown(data) {
     );
   }
 
+  if (data.testimonial && data.testimonial.quote) {
+    const t = data.testimonial;
+    const src = t.href ? `[${t.source}](${t.href})` : t.source;
+    parts.push(
+      `> "${t.quote}"\n>\n> — ${src}. A real message from a user, quoted with permission. ` +
+        'Name withheld by request.'
+    );
+  }
+
   for (const section of data.sections) parts.push(sectionMd(section));
 
   if (data.faqs && data.faqs.length) {

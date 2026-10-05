@@ -35,6 +35,10 @@ The core architectural difference is simple: Wispr Flow's [own security document
 
 Sourced from the competitor's own documentation, changelog, and public statements. Figures can change — check the linked sources for the latest.
 
+> "I want to thank you for the creation of this app. It is the only legitimate alternative to Wispr Flow."
+>
+> — Emailed · OnePlus · v1.4.0. A real message from a user, quoted with permission. Name withheld by request.
+
 *Read their own docs*
 
 ## What Wispr Flow's documentation says about itself

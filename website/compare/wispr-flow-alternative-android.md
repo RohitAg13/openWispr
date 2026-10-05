@@ -34,6 +34,10 @@ The Android-specific case for switching is different from the general one. Wispr
 
 Sourced from the competitor's own documentation, changelog, and public statements. Figures can change — check the linked sources for the latest.
 
+> "I want to thank you for the creation of this app. It is the only legitimate alternative to Wispr Flow."
+>
+> — Emailed · OnePlus · v1.4.0. A real message from a user, quoted with permission. Name withheld by request.
+
 *Read the numbers*
 
 ## Wispr Flow's own app-store data shows Android is its weakest platform

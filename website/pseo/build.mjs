@@ -19,6 +19,7 @@ import {
   heroHtml,
   proseSectionHtml,
   comparisonTableHtml,
+  testimonialHtml,
   faqSectionHtml,
   journalNoteHtml,
   relatedLinksHtml,
@@ -53,6 +54,7 @@ ${proseSectionHtml({ eyebrow: data.intro.eyebrow, heading: data.intro.heading, p
     <div style="text-align:center; font-size:12.5px; color:oklch(0.58 0.025 52); margin-top:16px;">Sourced from the competitor's own documentation, changelog, and public statements as cited below. Figures can change — see linked sources for the latest.</div>
   </div>
 </div>
+${testimonialHtml(data.testimonial)}
 ${data.sections.map((s) => proseSectionHtml(s)).join('\n')}
 ${faqSectionHtml(data.faqs)}
 ${relatedLinksHtml(data.relatedLinks)}`;
