@@ -1,6 +1,6 @@
-Dictate in your own language, with no sheet in the way.
+Dictate in 100 languages, typed straight into the field you're in.
 
-• Dictation language: choose from 100. Until now everything was decoded as English, so speaking German returned fluent English that wasn't what you said.
-• No review sheet. Tap, speak, and the text lands at your cursor. Settings keeps the old flow if you want it.
+• Dictation language: pick yours in Settings. Until now everything was decoded as English, so speaking German returned fluent English that wasn't what you said.
+• Dictation now types where your cursor is, with no step in between to confirm it. Want to read it first? Settings has a toggle.
 • The bubble now shows up in apps it used to miss, Samsung Notes among them.
 • Unfinished recordings no longer swallow the home screen.
