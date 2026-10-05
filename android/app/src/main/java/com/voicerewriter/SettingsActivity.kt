@@ -133,6 +133,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var deterministicCleanup by remember { mutableStateOf(true) }
     var polishLevel by remember { mutableStateOf(PolishLevel.OFF) }
     var vadAutoStop by remember { mutableStateOf(true) }
+    var reviewBeforeInsert by remember { mutableStateOf(false) }
     var parakeetHotwordsExperimental by remember { mutableStateOf(false) }
     var bubbleOnlyOnFields by remember { mutableStateOf(true) }
     var keepHistory by remember { mutableStateOf(DictationHistory.keepHistory(context)) }
@@ -173,6 +174,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         defaultMode = s.defaultMode
         deterministicCleanup = s.deterministicCleanup; polishLevel = s.polishLevel
         vadAutoStop = s.vadAutoStop; bubbleOnlyOnFields = s.bubbleOnlyOnFields
+        reviewBeforeInsert = s.reviewBeforeInsert
         parakeetHotwordsExperimental = s.parakeetHotwordsExperimental
         a11yEnabled = SetupUtils.accessibilityEnabled(context)
         notifOn = SetupUtils.notificationsGranted(context)
@@ -227,6 +229,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         sttModel = sttModel.trim(), sttLanguage = sttLanguage, defaultMode = defaultMode,
         deterministicCleanup = deterministicCleanup, polishLevel = polishLevel,
         vadAutoStop = vadAutoStop, bubbleOnlyOnFields = bubbleOnlyOnFields,
+        reviewBeforeInsert = reviewBeforeInsert,
         hasCompletedOnboarding = true,
         parakeetHotwordsExperimental = parakeetHotwordsExperimental,
     )
@@ -434,6 +437,12 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                     ) { pickingLanguage = true }
                     Divider()
                     ToggleRow("Auto-stop on pause", "End recording when you stop talking", vadAutoStop) { vadAutoStop = it; persist() }
+                    Divider()
+                    ToggleRow(
+                        "Review before inserting",
+                        "Show the text and wait, instead of typing it straight into the field",
+                        reviewBeforeInsert,
+                    ) { reviewBeforeInsert = it; persist() }
                     if (sttProvider == "local" && OnDeviceStt.isParakeet(OnDeviceStt.resolveModel(sttModel, sttLanguage))) {
                         Divider()
                         ToggleRow(

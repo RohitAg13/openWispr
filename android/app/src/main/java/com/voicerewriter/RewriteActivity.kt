@@ -454,7 +454,22 @@ class RewriteActivity : ComponentActivity() {
         fun toReview(text: String) {
             // A blank result (e.g. cleanup or polish ate everything) should not leave an empty sheet.
             if (text.isBlank()) { error = "Nothing to insert. Try again."; stage = Stage.ERROR; return }
-            finalText = text; editText = text; countdown = 1f; editing = false; stage = Stage.REVIEW
+            finalText = text; editText = text; countdown = 1f; editing = false
+            // Dictation goes straight into the field unless the user asked to review first.
+            // Inserting *is* the review: the text lands where they're already looking, with more
+            // context than a sheet can give, and without spending editWindowMs() on every take.
+            //
+            // Only the voice path. A retry from Home has no focused field to insert into, so its
+            // result would vanish onto the clipboard with nothing shown — it keeps the sheet.
+            val s = settings
+            if (autoRecord && s != null && !s.reviewBeforeInsert) {
+                recordHistory(transcript, text, durationSec, edited = false,
+                    onDevice = s.sttProvider == "local")
+                recordCorpus(text, text, edited = false)
+                acceptVoice(text)
+                return
+            }
+            stage = Stage.REVIEW
         }
 
         fun process(s: Settings, spoken: String) {
