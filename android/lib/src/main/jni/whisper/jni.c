@@ -163,7 +163,8 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_freeContext(
 
 JNIEXPORT void JNICALL
 Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
-        JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads, jfloatArray audio_data, jstring prompt) {
+        JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads, jfloatArray audio_data, jstring prompt,
+        jstring language) {
     UNUSED(thiz);
     struct whisper_context *context = (struct whisper_context *) context_ptr;
     jfloat *audio_data_arr = (*env)->GetFloatArrayElements(env, audio_data, NULL);
@@ -176,7 +177,17 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
     params.print_timestamps = false;
     params.print_special = false;
     params.translate = false;
-    params.language = "en";
+    // Decode in the language the user picked, never translate. This was hardcoded to "en",
+    // which silently broke every non-English dictation: the ggml weights we ship are the
+    // multilingual builds, so Whisper *could* always do Hindi (or any of its 99 others) — it
+    // was just being told the audio was English and dutifully romanised or invented instead.
+    // Kotlin passes a code from whisper's own g_lang table, so this needs no validation here;
+    // NULL falls back to "en" for safety if a caller ever skips it.
+    const char *lang_chars = NULL;
+    if (language != NULL) {
+        lang_chars = (*env)->GetStringUTFChars(env, language, NULL);
+    }
+    params.language = (lang_chars != NULL && lang_chars[0] != '\0') ? lang_chars : "en";
     params.n_threads = num_threads;
     params.offset_ms = 0;
     params.no_context = true;
@@ -226,6 +237,10 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
     (*env)->ReleaseFloatArrayElements(env, audio_data, audio_data_arr, JNI_ABORT);
     if (prompt_chars != NULL) {
         (*env)->ReleaseStringUTFChars(env, prompt, prompt_chars);
+    }
+    // Released only after whisper_full has run: params.language points into this buffer.
+    if (lang_chars != NULL) {
+        (*env)->ReleaseStringUTFChars(env, language, lang_chars);
     }
 }
 
