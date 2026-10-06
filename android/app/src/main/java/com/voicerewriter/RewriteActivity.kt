@@ -614,14 +614,12 @@ class RewriteActivity : ComponentActivity() {
                     } else {
                         SttEngine.transcribe(s, PendingAudio.wavFile(this@RewriteActivity, recId!!), bias)
                     }
-                    // On a transliterating model, refuse to rewrite short stretches of text at
-                    // all. Learned entries like "mean", "by", "home" and "honey" otherwise
-                    // swallow the commonest Hindi words — main, mein, bhai, hoon, thik — some
-                    // phonetically and some by an exact alias, so guarding only the fuzzy path
-                    // is not enough. Proper nouns, which is what this earns its keep on, are
-                    // comfortably longer than the floor.
-                    val minMatch = if (isTransliteratingModel(s)) 6 else 0
-                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, minMatch)
+                    // On a transliterating model, protect the Hindi function words by name.
+                    // Learned entries like "mean", "by", "home" and "honey" otherwise swallow
+                    // main, mein, bhai, hoon and thik. Names still get corrected at any length,
+                    // which a length floor could not manage.
+                    val guardHindi = isTransliteratingModel(s)
+                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, guardHindi)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
