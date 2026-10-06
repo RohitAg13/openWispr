@@ -614,13 +614,14 @@ class RewriteActivity : ComponentActivity() {
                     } else {
                         SttEngine.transcribe(s, PendingAudio.wavFile(this@RewriteActivity, recId!!), bias)
                     }
-                    // On a transliterating model, hold phonetic vocab matching to longer
-                    // windows. Short learned entries ("mean", "by", "home") otherwise swallow
-                    // the commonest Hindi words — main, mein, bhai, ho — since Soundex cannot
-                    // tell them apart. Proper nouns, which is what fuzzy matching earns its
-                    // keep on, are comfortably longer than the floor.
-                    val minFuzzy = if (isTransliteratingModel(s)) 6 else 0
-                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, minFuzzy)
+                    // On a transliterating model, refuse to rewrite short stretches of text at
+                    // all. Learned entries like "mean", "by", "home" and "honey" otherwise
+                    // swallow the commonest Hindi words — main, mein, bhai, hoon, thik — some
+                    // phonetically and some by an exact alias, so guarding only the fuzzy path
+                    // is not enough. Proper nouns, which is what this earns its keep on, are
+                    // comfortably longer than the floor.
+                    val minMatch = if (isTransliteratingModel(s)) 6 else 0
+                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, minMatch)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {

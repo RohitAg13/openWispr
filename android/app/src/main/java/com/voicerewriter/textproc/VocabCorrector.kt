@@ -45,8 +45,8 @@ object VocabCorrector {
     }
 
     /**
-     * [minFuzzyChars] raises the floor for *phonetic* matching: a window shorter than this many
-     * characters must match exactly instead. Zero (the default) keeps the historical behaviour.
+     * [minMatchChars] is a floor on how short a stretch of text may be before this function
+     * will rewrite it at all. Zero (the default) keeps the historical behaviour.
      *
      * It exists because a short learned entry can hijack any similar-sounding word, and on
      * romanized Hindi that is ruinous rather than merely wrong. Measured 2026-10-06 on real
@@ -56,10 +56,15 @@ object VocabCorrector {
      * Soundex("mean") are both M500. The same clip through whisper.cpp with no vocab was clean,
      * which is how we know the corrector and not the model was doing the damage.
      *
-     * A floor of ~6 keeps what fuzzy matching is actually for — snapping a mangled proper noun
-     * like `srshti` back to `Srushti` — while leaving function words alone.
+     * The floor covers exact matches as well, which a fuzzy-only floor missed: the recogniser
+     * heard `mani` for the Hindi `main`, and an *exact* learned alias `Mani` rewrote it to
+     * `mean` with no phonetic guessing involved. Any rule that only guards the fuzzy path
+     * leaves that open.
+     *
+     * A floor of ~6 keeps what this is actually for — snapping a mangled proper noun like
+     * `srshti` back to `Srushti` — while leaving the short function words alone.
      */
-    fun correct(text: String, vocab: List<VocabEntry>, minFuzzyChars: Int = 0): String {
+    fun correct(text: String, vocab: List<VocabEntry>, minMatchChars: Int = 0): String {
         if (text.isBlank() || vocab.isEmpty()) return text
         val toks = tokenize(text)
         if (toks.isEmpty()) return text
@@ -89,11 +94,11 @@ object VocabCorrector {
             var i = 0
             while (i + span <= toks.size) {
                 val window = toks.subList(i, i + span)
+                // Too short to rewrite at all, under this caller's floor.
+                if (window.sumOf { it.norm.length } < minMatchChars) { i++; continue }
                 val score = matchScore(window.map { it.norm }, t.tokens)
-                // Snippets and contacts fire on an exact match only; deliberate names fuzzy —
-                // but only once the window is long enough to be worth guessing about.
-                val longEnough = window.sumOf { it.norm.length } >= minFuzzyChars
-                val ok = if (t.fuzzy && longEnough) score >= FUZZY_THRESHOLD else score >= 0.999
+                // Snippets and contacts fire on an exact match only; deliberate names fuzzy.
+                val ok = if (t.fuzzy) score >= FUZZY_THRESHOLD else score >= 0.999
                 if (ok) hits.add(Hit(window.first().start, window.last().end, t.replacement, score, span))
                 i++
             }
