@@ -426,13 +426,28 @@ class RewriteActivity : ComponentActivity() {
      * other one genuinely rescues transcripts — and on-device it costs nothing but a few
      * seconds. Null when the user only has one engine, or is on a cloud provider.
      */
+    /**
+     * True when the engine this dictation actually used emits a transliterated script rather
+     * than prose in the dictation language — today, the Hinglish fine-tune. Resolved through
+     * [OnDeviceStt.resolveModel] rather than read off `settings.sttModel`, because that is what
+     * decides which model ran. Cloud providers are never transliterating.
+     */
+    private fun isTransliteratingModel(s: Settings): Boolean {
+        if (s.sttProvider != "local") return false
+        val id = OnDeviceStt.resolveModel(this, s.sttModel, s.sttLanguage)
+        if (OnDeviceStt.isParakeet(id)) return false
+        return WhisperModelManager.model(id).isTransliterating
+    }
+
     private fun altOnDeviceEngine(s: Settings): Pair<String, String>? {
         if (s.sttProvider != "local") return null
         val current = OnDeviceStt.resolveModel(this, s.sttModel, s.sttLanguage)
         if (!OnDeviceStt.isParakeet(current)) {
             return if (ParakeetModelManager.isReady(this)) ParakeetModelManager.MODEL_ID to "Parakeet" else null
         }
-        return WhisperModelManager.MODELS
+        // GENERIC, not MODELS: the alternate engine is a general-purpose fallback, and the
+        // Hinglish fine-tune would answer an English dictation in romanized Hindi.
+        return WhisperModelManager.GENERIC
             .firstOrNull { WhisperModelManager.isReady(this, it.id) }
             ?.let { it.id to "Whisper" }
     }
@@ -505,7 +520,14 @@ class RewriteActivity : ComponentActivity() {
             // NumberNormalizer and SpokenFormNormalizer encode English spoken conventions. Run on
             // Hindi it degrades correct output rather than improving it, so non-English dictation
             // takes the raw transcript. Per-language rules would be their own project.
-            val englishOnlyCleanup = s.deterministicCleanup && DictationLanguage.isEnglish(s.sttLanguage)
+            // The second clause catches what a language check alone cannot. Romanized Hinglish
+            // is Latin text produced while the decoder was told "en", so `isEnglish` says yes
+            // and the English-shaped stage would run on "kal office mein meeting thi" —
+            // sentence-casing it, hunting "um"/"uh" among Hindi function words, and normalizing
+            // numbers by English convention. The script is Latin; the language is not English.
+            val englishOnlyCleanup = s.deterministicCleanup &&
+                DictationLanguage.isEnglish(s.sttLanguage) &&
+                !isTransliteratingModel(s)
             val cleaned0 = if (englishOnlyCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
             // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a

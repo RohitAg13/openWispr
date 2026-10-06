@@ -42,8 +42,10 @@ object OnDeviceStt {
     fun resolveModel(context: Context, modelId: String, language: String): String {
         val id = resolveModel(modelId, language)
         if (DictationLanguage.isEnglish(language) || !isParakeet(modelId)) return id
-        // Biggest-first: MODELS is ordered tiny -> small, and accuracy tracks size.
-        return WhisperModelManager.MODELS.lastOrNull { WhisperModelManager.isReady(context, it.id) }?.id ?: id
+        // Biggest-first: GENERIC is ordered tiny -> small, and accuracy tracks size. It excludes
+        // the transliterating fine-tunes on purpose: the Hinglish model emits Roman script, so
+        // handing it a Tamil or Marathi dictation would produce confident nonsense.
+        return WhisperModelManager.GENERIC.lastOrNull { WhisperModelManager.isReady(context, it.id) }?.id ?: id
     }
 
     /**
