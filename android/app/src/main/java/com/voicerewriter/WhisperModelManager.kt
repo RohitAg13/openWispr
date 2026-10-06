@@ -73,10 +73,13 @@ object WhisperModelManager {
         // measured, and was rejected: 25s per take on the same phone for byte-identical output.
         WhisperModel(
             id = HINGLISH_MODEL,
-            label = "Hinglish (Roman script)",
+            // Labelled beta on purpose. It has been tested on one speaker, and its weak spots
+            // are known: very short takes, and Hinglish having no settled spelling, so
+            // "yeh"/"yah" are both defensible and the model will not always pick yours.
+            label = "Hinglish (beta)",
             fileName = "ggml-hinglish-swift-q5_1.bin",
             url = "https://huggingface.co/rohitag13/whisper-hindi2hinglish-swift-GGUF/resolve/main/ggml-hinglish-swift-q5_1.bin",
-            sizeLabel = "~57MB · Hindi + English",
+            sizeLabel = "~57MB · Hindi + English, Roman script",
             decodeLanguage = "en",
         ),
     )
