@@ -45,12 +45,39 @@ object LocalWhisperStt {
         }
         val tLoaded = System.nanoTime()
         // transcribeData runs on whisper's own single-thread dispatcher internally.
-        val lang = DictationLanguage.normalize(settings.sttLanguage)
+        val model = WhisperModelManager.model(id)
+        // A transliterating fine-tune decodes in its own fixed language, not the user's: the
+        // Hinglish model is trained to map Hindi phonetics onto Latin tokens and must be told
+        // "en" to do it. Everything else honours the dictation language picker.
+        val lang = model.decodeLanguage ?: DictationLanguage.normalize(settings.sttLanguage)
+        // The vocab glossary is deliberately withheld from a transliterating model. Measured on
+        // 2026-10-06 against the same clip: with `Glossary: Srushti, ...` as the initial_prompt
+        // the name was still wrong *and* "office mein" became "officemen" — an English word list
+        // pulls this decoder back toward English spellings, which is the one thing it was
+        // fine-tuned not to do. VocabCorrector.correct() runs on the output either way and does
+        // land the name, because the output is Latin (Soundex "srshti" == Soundex "Srushti").
+        val prompt = if (model.isTransliterating) null else biasPrompt?.ifBlank { null }
+        // Beam search and natural segmentation, for a transliterating model only.
+        //
+        // Both were measured against the owner's own Hinglish dictations, replayed through
+        // whisper-cli on the same phone with the same weights. Greedy decoding picks a real
+        // English word over the Hindi function word that fits — "hindi mein vah log to" where
+        // beam 5 gives the correct "hindi mein bolo to" — because an English-primed decoder
+        // finds English the locally-likely answer at every ambiguous step. That pressure is
+        // peculiar to a model we deliberately decode as `en` while the speaker is not speaking
+        // English, which is why this is scoped here rather than changed globally.
+        //
+        // The cost lands on decode, not encode: +344ms on a 9s clip, against a ~400ms encode.
+        // English dictation keeps greedy + single-segment until someone measures it the same
+        // way; the same fix may well help there too, and that deserves its own numbers.
+        val beamSize = if (model.isTransliterating) 5 else 1
         val raw = whisper.transcribeData(
             samples,
             printTimestamp = false,
-            prompt = biasPrompt?.ifBlank { null },
+            prompt = prompt,
             language = lang,
+            beamSize = beamSize,
+            singleSegment = !model.isTransliterating,
         )
         val tDone = System.nanoTime()
         Log.i(

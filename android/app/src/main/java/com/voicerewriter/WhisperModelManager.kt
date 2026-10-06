@@ -27,15 +27,72 @@ object WhisperModelManager {
         val fileName: String,
         val url: String,
         val sizeLabel: String,
-    )
+        /**
+         * The language whisper.cpp must decode with, for a fine-tune that maps speech in one
+         * language onto *another script*. Null for the stock multilingual builds, which decode
+         * in whatever language the user picked.
+         *
+         * The Hinglish model is trained to emit romanized Hindi, and its own model card is
+         * explicit that it must be decoded as `en`: forcing `hi` makes it output Devanagari
+         * again and the romanization collapses. So the user's dictation language cannot be the
+         * thing we hand the decoder, and this field is where that divergence lives.
+         */
+        val decodeLanguage: String? = null,
+    ) {
+        /**
+         * True for a transliterating fine-tune — one whose output is neither the stock
+         * language's script nor English prose. Two things key off it:
+         *
+         *  1. The English-shaped deterministic cleanup must not run (see RewriteActivity):
+         *     romanized Hinglish looks English enough to slip past a language check, but
+         *     sentence-casing and filler-hunting it degrades correct output.
+         *  2. The vocab glossary must not be used as whisper's `initial_prompt` — measured
+         *     2026-10-06, it failed to fix the name it was given *and* broke `office mein`
+         *     into `officemen`. An English glossary drags this decoder toward English word
+         *     shapes. Post-hoc [VocabCorrector.correct] still applies and still works.
+         */
+        val isTransliterating: Boolean get() = decodeLanguage != null
+    }
 
     private fun hf(file: String) = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$file"
+
+    const val HINGLISH_MODEL = "hinglish"
 
     val MODELS = listOf(
         WhisperModel("tiny", "Tiny (fastest)", "ggml-tiny.bin", hf("ggml-tiny.bin"), "~75MB"),
         WhisperModel("base", "Base (balanced)", "ggml-base.bin", hf("ggml-base.bin"), "~142MB"),
         WhisperModel("small", "Small (most accurate)", "ggml-small.bin", hf("ggml-small.bin"), "~488MB"),
+        // Oriserve/Whisper-Hindi2Hinglish-Swift (Apache 2.0), a whisper-base fine-tune that
+        // transcribes Hindi and code-switched Hindi-English straight into Roman script:
+        // "Kal office mein meeting thi", not "कल ऑफिस में मीटिंग थी". Our own ggml conversion
+        // of their safetensors, quantized q5_1 — not a third-party ggml build, of which there
+        // are several on the Hub with no provenance.
+        //
+        // Measured on a Galaxy S25 Ultra: 57MB on disk, 197MB peak RSS, 47-113ms to load,
+        // ~1.3s for a real 4-second take. The 0.8B sibling (Apex) was also converted and
+        // measured, and was rejected: 25s per take on the same phone for byte-identical output.
+        WhisperModel(
+            id = HINGLISH_MODEL,
+            // Labelled beta on purpose. It has been tested on one speaker, and its weak spots
+            // are known: very short takes, and Hinglish having no settled spelling, so
+            // "yeh"/"yah" are both defensible and the model will not always pick yours.
+            label = "Hinglish (beta)",
+            fileName = "ggml-hinglish-swift-q5_1.bin",
+            url = "https://huggingface.co/rohitag13/whisper-hindi2hinglish-swift-GGUF/resolve/main/ggml-hinglish-swift-q5_1.bin",
+            sizeLabel = "~57MB · Hindi + English, Roman script",
+            decodeLanguage = "en",
+        ),
     )
+
+    /**
+     * The stock multilingual size ladder, without the language-specific fine-tunes.
+     *
+     * Use this wherever the question is "which general-purpose Whisper should we fall back to",
+     * because a transliterating model is not a substitute for one: picking the Hinglish model
+     * for a Tamil dictation, or for English, would silently produce the wrong thing. [MODELS]
+     * stays the full set, so the download whitelist and the Settings picker see everything.
+     */
+    val GENERIC: List<WhisperModel> get() = MODELS.filter { !it.isTransliterating }
 
     const val DEFAULT_MODEL = "tiny"
     private const val MIN_VALID_BYTES = 30L * 1024 * 1024

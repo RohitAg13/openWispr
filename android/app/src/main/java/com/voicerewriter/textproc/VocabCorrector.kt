@@ -44,7 +44,36 @@ object VocabCorrector {
         return if (sb.endsWith(": ")) "" else sb.append(".").toString()
     }
 
-    fun correct(text: String, vocab: List<VocabEntry>): String {
+    /**
+     * [guardRomanizedHindi] protects romanized Hindi function words from being rewritten at all.
+     *
+     * It exists because a short learned entry can hijack a similar-sounding word, and on
+     * romanized Hindi that is ruinous rather than merely wrong. Measured 2026-10-06 against
+     * this author's own 708-entry vocab: learned entries `mean` (alias "Mani"), `by` (alias
+     * "back"), `honey` (alias "home") and `home` ate `main`, `mein`, `bhai`, `hoon` and `thik`
+     * — five of the commonest words in the language. Some went phonetically (Soundex cannot
+     * tell `main` from `mean`) and one by an exact alias, so guarding only the fuzzy path was
+     * not enough. The same clips through whisper.cpp with no vocab were clean, which is how we
+     * know the corrector and not the model was doing the damage.
+     *
+     * A length floor was tried first and rejected: it protected the function words but stopped
+     * correcting short *names*, so "Sam aur Mama" became "Samp aur maama" — landing the cost on
+     * exactly what vocab correction is for. Length was only ever a proxy. This names the words
+     * instead, which lets `srshti` -> `Srushti` and `Samp` -> `Sam` both work.
+     *
+     * Single tokens only: a deliberate multi-word phrase is not going to collide by accident,
+     * and exempting them keeps snippet triggers working.
+     *
+     * It also restricts single-token corrections to *proper nouns* — a replacement starting
+     * with a capital. The stoplist alone could not be enough, because it can only name
+     * spellings we have seen: the recogniser emitted `mani` for `main`, which is not a word in
+     * any list, and the exact alias `Mani` -> `mean` fired on it. The two rules cover each
+     * other. Naming the words catches the common case robustly; requiring a proper noun catches
+     * every mis-spelling of them we have not thought of, because rewriting a romanized Hindi
+     * word into a lowercase English one is wrong almost by definition, while rewriting it into
+     * a name is the entire point of the feature.
+     */
+    fun correct(text: String, vocab: List<VocabEntry>, guardRomanizedHindi: Boolean = false): String {
         if (text.isBlank() || vocab.isEmpty()) return text
         val toks = tokenize(text)
         if (toks.isEmpty()) return text
@@ -74,6 +103,13 @@ object VocabCorrector {
             var i = 0
             while (i + span <= toks.size) {
                 val window = toks.subList(i, i + span)
+                // A romanized Hindi function word is never a vocab term, however it scores;
+                // and a lone token may only ever be corrected into a proper noun.
+                if (guardRomanizedHindi && span == 1 &&
+                    (window.first().norm in HINDI_FUNCTION_WORDS || !t.replacement.first().isUpperCase())
+                ) {
+                    i++; continue
+                }
                 val score = matchScore(window.map { it.norm }, t.tokens)
                 // Snippets and contacts fire on an exact match only; deliberate names fuzzy.
                 val ok = if (t.fuzzy) score >= FUZZY_THRESHOLD else score >= 0.999
@@ -185,5 +221,47 @@ object VocabCorrector {
         "mark", "rose", "grace", "hope", "bill", "art", "max", "ray", "dawn", "jack",
         "drew", "rich", "faith", "joy", "may", "june", "guy", "frank", "grant", "page",
         "lane", "reed", "hunter", "chase", "cash", "dale", "rob", "bob", "sunny", "victor",
+    )
+
+    /**
+     * Romanized Hindi function words, never matched as a single-token vocab term.
+     *
+     * The same job [COMMON_WORDS] does for English, for the other language in the sentence.
+     * Hinglish has no standard orthography, so the frequent variants are all listed rather
+     * than normalized — `hoon`/`hun`/`hu`, `yeh`/`ye`/`yah`, `nahi`/`nahin` are all current.
+     * Only consulted when the caller asks (see `guardRomanizedHindi`), so English dictation
+     * is unaffected.
+     */
+    private val HINDI_FUNCTION_WORDS = setOf(
+        // pronouns and demonstratives
+        // "mani" is not a spelling anyone chooses, but it is what the recogniser hands us
+        // for मैं, so it belongs here with the word it means.
+        "main", "mai", "mani", "mein", "mera", "meri", "mere", "hum", "hamara", "humara",
+        "tum", "tera", "teri", "tere", "tu", "aap", "apna", "apne", "apni",
+        "yeh", "ye", "yah", "voh", "vo", "vah", "woh", "iska", "uska", "inka", "unka",
+        "isko", "usko", "inko", "unko", "ise", "use", "jo", "jis", "jise",
+        // postpositions and the wala family
+        "ka", "ki", "ke", "ko", "se", "par", "pe", "tak", "liye", "lie",
+        "wala", "vala", "waala", "vaala", "wali", "vali", "wale", "vale",
+        // auxiliaries and very common verbs
+        "hai", "hain", "hu", "hun", "hoon", "ho", "hota", "hoti", "hote",
+        "tha", "thi", "the", "hoga", "hogi", "honge", "raha", "rahi", "rahe",
+        "kar", "karna", "karne", "karo", "kiya", "kiye", "karu", "karoon", "karunga",
+        "ja", "jaa", "jaega", "jaunga", "jaoonga", "gaya", "gayi", "gaye",
+        "de", "dena", "diya", "di", "le", "lena", "liya", "lo", "mil", "mila",
+        // conjunctions and particles
+        "aur", "ya", "lekin", "magar", "kyunki", "kyonki", "to", "toh", "phir",
+        "bhi", "bas", "agar", "warna", "varna", "matlab", "jaise", "waise", "vaise",
+        // negation and question words
+        "nahi", "nahin", "na", "mat", "kya", "kyun", "kyon", "kaise", "kaisa", "kaisi",
+        "kab", "kahan", "kaun", "kitna", "kitne", "kitni",
+        // quantity and degree
+        "kuch", "kuchh", "sab", "sabhi", "bahut", "thoda", "thodi", "zyada", "jyada",
+        "sirf", "sirph", "bilkul", "itna", "itne", "utna",
+        // time
+        "kal", "aaj", "aj", "abhi", "ab", "parso", "subah", "shaam", "raat",
+        // vocatives and discourse words -- the ones actually observed being eaten
+        "bhai", "yaar", "acha", "achha", "achchha", "accha", "thik", "theek", "sahi",
+        "haan", "han", "arre", "arey", "chalo", "dekh", "dekho", "bol", "bolo", "batao",
     )
 }
