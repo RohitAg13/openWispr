@@ -542,8 +542,15 @@ class RewriteActivity : ComponentActivity() {
             // (or "new line"/"new paragraph" into real breaks), handing it to the tiny on-device
             // model reflows it back onto one line. Keep the structured text verbatim.
             val deterministicStructure = cleaned.contains('\n')
+            // The cleanup model has never seen Hinglish. It is a 0.6B fine-tuned on English
+            // transcript cleanup, and on romanized Hindi it does not polish, it mangles:
+            // measured 2026-10-06, "Is baar main try karoonga ki main vaise chizen bataoon jo
+            // main user leni bolta hoon" came back as a three-item bullet list with most of the
+            // words gone. preservesContent() let it through, because the guard cannot tell a
+            // reformat from a rewrite in a language it also does not know. Until there is a
+            // Hinglish-capable cleanup model, the transcript is better off untouched.
             if (!s.llmPolishEnabled || wordCount < 4 || (isCode && s.polishLevel != PolishLevel.FULL) ||
-                deterministicStructure) {
+                deterministicStructure || isTransliteratingModel(s)) {
                 toReview(cleaned); return
             }
             stage = Stage.CORRECTING
@@ -607,7 +614,13 @@ class RewriteActivity : ComponentActivity() {
                     } else {
                         SttEngine.transcribe(s, PendingAudio.wavFile(this@RewriteActivity, recId!!), bias)
                     }
-                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
+                    // On a transliterating model, hold phonetic vocab matching to longer
+                    // windows. Short learned entries ("mean", "by", "home") otherwise swallow
+                    // the commonest Hindi words — main, mein, bhai, ho — since Soundex cannot
+                    // tell them apart. Proper nouns, which is what fuzzy matching earns its
+                    // keep on, are comfortably longer than the floor.
+                    val minFuzzy = if (isTransliteratingModel(s)) 6 else 0
+                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, minFuzzy)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
