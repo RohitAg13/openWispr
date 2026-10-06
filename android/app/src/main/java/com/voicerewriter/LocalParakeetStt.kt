@@ -94,7 +94,7 @@ object LocalParakeetStt {
                 joiner = ParakeetModelManager.joinerPath(context),
             ),
             tokens = ParakeetModelManager.tokensPath(context),
-            numThreads = WhisperCpuConfig.preferredThreadCount, // same 2..4 core budget as whisper
+            numThreads = WhisperCpuConfig.preferredThreadCount, // same big-core budget as whisper
             modelType = "nemo_transducer",
             modelingUnit = if (hotwords != null) "bpe" else "",
             bpeVocab = if (hotwords != null) bpeVocabPath(context) else "",
