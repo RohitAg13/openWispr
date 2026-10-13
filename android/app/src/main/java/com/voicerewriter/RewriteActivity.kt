@@ -708,7 +708,7 @@ class RewriteActivity : ComponentActivity() {
                 while (isActive && audioRecorder.isRecording) {
                     val raw = audioRecorder.amplitude()
                     BubbleService.instance?.showAmplitude(raw)
-                    amps.add((raw / 14000f).coerceIn(0f, 1f))
+                    amps.add(AudioRecorder.level(raw))
                     if (amps.size > 56) amps.removeAt(0)
                     delay(55)
                 }

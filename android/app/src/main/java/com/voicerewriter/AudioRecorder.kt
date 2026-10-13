@@ -10,6 +10,7 @@ import android.os.Looper
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.abs
+import kotlin.math.sqrt
 import kotlin.math.max
 import kotlin.math.min
 
@@ -24,6 +25,29 @@ class AudioRecorder(private val context: Context) {
 
     companion object {
         const val SAMPLE_RATE = 16_000 // Whisper is trained at 16 kHz
+
+        /**
+         * Peak sample value treated as "full" by the level meters.
+         *
+         * Measured, not guessed: a real 5.3s dictation recorded through this class peaks at 3592
+         * of a possible 32767, with ordinary speech between 1300 and 2900 and the gaps between
+         * words around 150. [MediaRecorder.AudioSource.VOICE_RECOGNITION] records quiet by
+         * design — it is tuned for a recognizer, not for playback — so scaling against full
+         * scale, or against the 14000 both meters used to use, pins every bar to its floor and
+         * the waveform never visibly moves.
+         */
+        private const val FULL_SCALE_PEAK = 6000f
+
+        /**
+         * Map a raw peak from [amplitude] onto 0..1 for a level meter.
+         *
+         * Square root, because loudness is perceived roughly logarithmically: a linear meter
+         * spends most of its travel on the loudest tenth of the range and leaves normal speech
+         * crawling along the bottom. Shared by the bubble's waveform and the sheet's orb so the
+         * two cannot drift apart — they are showing the same signal and should agree.
+         */
+        fun level(peak: Int): Float =
+            sqrt((peak / FULL_SCALE_PEAK).coerceIn(0f, 1f))
         private const val SPEECH_START_PROB = 0.5f
         private const val SPEECH_END_PROB = 0.35f
 

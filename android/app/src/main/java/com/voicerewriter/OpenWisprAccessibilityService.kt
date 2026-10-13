@@ -257,6 +257,11 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             // The haptic tick is the confirmation. A toast on top of text visibly appearing in
             // the field is telling the user something they can already see.
             vibrateTick()
+            // The bubble says so too, briefly. Not redundant with the text appearing: the field
+            // may be scrolled, hidden behind the keyboard, or simply not where the user is
+            // looking — and this is the only signal that tells a real insert apart from the
+            // clipboard fallback below, which from the user's side looks identical.
+            BubbleService.instance?.showInserted()
         }
     }
 
