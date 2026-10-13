@@ -199,8 +199,12 @@ jobs:
       # problem. Worse, the loop's comment claimed promotion is idempotent — it is not
       # necessarily, since `upload_to_play_store` defaults to `deactivate_on_promote: true`,
       # which empties the source track. Had an attempt ever half-succeeded, the retries would
-      # have reported a shipped release as a failure. One attempt, honest exit code; retry by
-      # re-running this job once the cause in #58 is understood.
+      # have reported a shipped release as a failure. One attempt, honest exit code.
+      #
+      # The cause is now understood: supply filtered the source track by `release_status`, which
+      # never matches on a staged rollout. The lane names the versionCode to avoid that filter.
+      # Re-running this job is still the right retry, but note it checks out the tag, so a fix on
+      # main does not reach an already-tagged run — it takes effect from the next tag.
       - name: Promote to production (staged rollout)
         if: ${{ env.PLAY_JSON != '' }}
         working-directory: android
