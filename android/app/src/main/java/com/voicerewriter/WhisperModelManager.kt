@@ -79,7 +79,12 @@ object WhisperModelManager {
             label = "Hinglish (beta)",
             fileName = "ggml-hinglish-swift-q5_1.bin",
             url = "https://huggingface.co/rohitag13/whisper-hindi2hinglish-swift-GGUF/resolve/main/ggml-hinglish-swift-q5_1.bin",
-            sizeLabel = "~57MB · Hindi + English, Roman script",
+            // Not "Hindi + English": measured 2026-10-13 against stock whisper-base on the same
+            // clips, this is *worse* on plain English phrasing and numbers ("techno Patent" for
+            // "techno pattern", "and four minutes" for "in 4 minutes") and better on Indian
+            // words inside English ("masaala tea" where stock gave "Masalaati"). It is a model
+            // for mixed speech, not a general upgrade, and the picker should not imply otherwise.
+            sizeLabel = "~57MB · for mixed Hindi-English speech",
             decodeLanguage = "en",
         ),
     )
