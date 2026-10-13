@@ -16,16 +16,24 @@ class WhisperContext private constructor(private var ptr: Long) {
         Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     )
 
+    /**
+     * [beamSize] > 1 selects beam search over greedy decoding; [singleSegment] forces the whole
+     * clip into one segment. The defaults keep the historical behaviour (greedy, one segment),
+     * which is the cheap choice for a short English take. See [WhisperModel.isTransliterating]
+     * for why a romanizing fine-tune wants the opposite.
+     */
     suspend fun transcribeData(
         data: FloatArray,
         printTimestamp: Boolean = true,
         prompt: String? = null,
         language: String = "en",
+        beamSize: Int = 1,
+        singleSegment: Boolean = true,
     ): String = withContext(scope.coroutineContext) {
         require(ptr != 0L)
         val numThreads = WhisperCpuConfig.preferredThreadCount
         Log.d(LOG_TAG, "Selecting $numThreads threads")
-        WhisperLib.fullTranscribe(ptr, numThreads, data, prompt, language)
+        WhisperLib.fullTranscribe(ptr, numThreads, data, prompt, language, beamSize, singleSegment)
         val textCount = WhisperLib.getTextSegmentCount(ptr)
         return@withContext buildString {
             for (i in 0 until textCount) {
@@ -145,6 +153,8 @@ private class WhisperLib {
             audioData: FloatArray,
             prompt: String?,
             language: String,
+            beamSize: Int,
+            singleSegment: Boolean,
         )
         external fun getTextSegmentCount(contextPtr: Long): Int
         external fun getTextSegment(contextPtr: Long, index: Int): String

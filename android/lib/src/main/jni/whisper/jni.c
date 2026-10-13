@@ -164,14 +164,21 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_freeContext(
 JNIEXPORT void JNICALL
 Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
         JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads, jfloatArray audio_data, jstring prompt,
-        jstring language) {
+        jstring language, jint beam_size, jboolean single_segment) {
     UNUSED(thiz);
     struct whisper_context *context = (struct whisper_context *) context_ptr;
     jfloat *audio_data_arr = (*env)->GetFloatArrayElements(env, audio_data, NULL);
     const jsize audio_data_length = (*env)->GetArrayLength(env, audio_data);
 
     // The below adapted from the Objective-C iOS sample
-    struct whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    // Beam search when the caller asks for it. Greedy commits to the locally-best token, which
+    // on code-switched speech picks a real English word over the Hindi function word that
+    // actually fits: measured on a Hinglish clip, greedy produced "hindi mein vah log to" where
+    // beam 5 produced the correct "hindi mein bolo to". Costs decode time, not encode time
+    // (+344ms on a 9s clip), which is the cheap half of the budget.
+    struct whisper_full_params params = whisper_full_default_params(
+            beam_size > 1 ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY);
+    if (beam_size > 1) params.beam_search.beam_size = beam_size;
     params.print_realtime = false;
     params.print_progress = false;
     params.print_timestamps = false;
@@ -191,7 +198,10 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
     params.n_threads = num_threads;
     params.offset_ms = 0;
     params.no_context = true;
-    params.single_segment = true;
+    // single_segment forces the whole clip into one segment. Cheap and right for a short
+    // English take, but whisper's own segmentation re-anchors the decoder at pauses, and
+    // turning it off is measurably better on longer code-switched speech. Caller decides.
+    params.single_segment = (single_segment == JNI_TRUE);
 
     // Latency: stock Whisper zero-pads the mel to 30s (audio_ctx=1500) and runs the full
     // encoder over it, so a short dictation clip wastes ~7x encoder compute. Size audio_ctx

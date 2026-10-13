@@ -426,13 +426,28 @@ class RewriteActivity : ComponentActivity() {
      * other one genuinely rescues transcripts — and on-device it costs nothing but a few
      * seconds. Null when the user only has one engine, or is on a cloud provider.
      */
+    /**
+     * True when the engine this dictation actually used emits a transliterated script rather
+     * than prose in the dictation language — today, the Hinglish fine-tune. Resolved through
+     * [OnDeviceStt.resolveModel] rather than read off `settings.sttModel`, because that is what
+     * decides which model ran. Cloud providers are never transliterating.
+     */
+    private fun isTransliteratingModel(s: Settings): Boolean {
+        if (s.sttProvider != "local") return false
+        val id = OnDeviceStt.resolveModel(this, s.sttModel, s.sttLanguage)
+        if (OnDeviceStt.isParakeet(id)) return false
+        return WhisperModelManager.model(id).isTransliterating
+    }
+
     private fun altOnDeviceEngine(s: Settings): Pair<String, String>? {
         if (s.sttProvider != "local") return null
         val current = OnDeviceStt.resolveModel(this, s.sttModel, s.sttLanguage)
         if (!OnDeviceStt.isParakeet(current)) {
             return if (ParakeetModelManager.isReady(this)) ParakeetModelManager.MODEL_ID to "Parakeet" else null
         }
-        return WhisperModelManager.MODELS
+        // GENERIC, not MODELS: the alternate engine is a general-purpose fallback, and the
+        // Hinglish fine-tune would answer an English dictation in romanized Hindi.
+        return WhisperModelManager.GENERIC
             .firstOrNull { WhisperModelManager.isReady(this, it.id) }
             ?.let { it.id to "Whisper" }
     }
@@ -505,7 +520,14 @@ class RewriteActivity : ComponentActivity() {
             // NumberNormalizer and SpokenFormNormalizer encode English spoken conventions. Run on
             // Hindi it degrades correct output rather than improving it, so non-English dictation
             // takes the raw transcript. Per-language rules would be their own project.
-            val englishOnlyCleanup = s.deterministicCleanup && DictationLanguage.isEnglish(s.sttLanguage)
+            // The second clause catches what a language check alone cannot. Romanized Hinglish
+            // is Latin text produced while the decoder was told "en", so `isEnglish` says yes
+            // and the English-shaped stage would run on "kal office mein meeting thi" —
+            // sentence-casing it, hunting "um"/"uh" among Hindi function words, and normalizing
+            // numbers by English convention. The script is Latin; the language is not English.
+            val englishOnlyCleanup = s.deterministicCleanup &&
+                DictationLanguage.isEnglish(s.sttLanguage) &&
+                !isTransliteratingModel(s)
             val cleaned0 = if (englishOnlyCleanup)
                 TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
             // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a
@@ -520,8 +542,15 @@ class RewriteActivity : ComponentActivity() {
             // (or "new line"/"new paragraph" into real breaks), handing it to the tiny on-device
             // model reflows it back onto one line. Keep the structured text verbatim.
             val deterministicStructure = cleaned.contains('\n')
+            // The cleanup model has never seen Hinglish. It is a 0.6B fine-tuned on English
+            // transcript cleanup, and on romanized Hindi it does not polish, it mangles:
+            // measured 2026-10-06, "Is baar main try karoonga ki main vaise chizen bataoon jo
+            // main user leni bolta hoon" came back as a three-item bullet list with most of the
+            // words gone. preservesContent() let it through, because the guard cannot tell a
+            // reformat from a rewrite in a language it also does not know. Until there is a
+            // Hinglish-capable cleanup model, the transcript is better off untouched.
             if (!s.llmPolishEnabled || wordCount < 4 || (isCode && s.polishLevel != PolishLevel.FULL) ||
-                deterministicStructure) {
+                deterministicStructure || isTransliteratingModel(s)) {
                 toReview(cleaned); return
             }
             stage = Stage.CORRECTING
@@ -585,7 +614,12 @@ class RewriteActivity : ComponentActivity() {
                     } else {
                         SttEngine.transcribe(s, PendingAudio.wavFile(this@RewriteActivity, recId!!), bias)
                     }
-                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab)
+                    // On a transliterating model, protect the Hindi function words by name.
+                    // Learned entries like "mean", "by", "home" and "honey" otherwise swallow
+                    // main, mein, bhai, hoon and thik. Names still get corrected at any length,
+                    // which a length floor could not manage.
+                    val guardHindi = isTransliteratingModel(s)
+                    val text = if (vocab.isEmpty()) raw else VocabCorrector.correct(raw, vocab, guardHindi)
                     if (text.isBlank()) { error = "Empty transcript. Try again."; stage = Stage.ERROR }
                     else process(s, text)
                 } catch (e: Exception) {
