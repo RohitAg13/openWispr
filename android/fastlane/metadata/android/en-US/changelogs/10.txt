@@ -1,0 +1,7 @@
+A new bubble: it shows what it's doing, and you can feel it.
+
+• Each state now has its own shape and movement — listening, thinking, inserted, copied — so a glance tells you where your words went.
+• Starting and stopping feel different now, so you know which one happened without looking at the screen.
+• The waveform follows your voice again. It had been sitting flat.
+• Drag the bubble to either edge and it stays there.
+• On dark screens, a dark bubble.
