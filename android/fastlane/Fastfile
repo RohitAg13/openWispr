@@ -10,6 +10,18 @@ default_platform(:android)
 
 DEFAULT_AAB = "app/build/outputs/bundle/release/app-release.aab".freeze
 
+# The versionCode currently in the build file, as a string.
+#
+# Needed by `promote_production` to name the release it is promoting; see the comment there for
+# why naming it is what makes the promote work at all. Read from the same file Gradle builds
+# from, so the number cannot disagree with the binary that was uploaded from this commit.
+def android_version_code
+  file = "app/build.gradle.kts"
+  code = File.read(file)[/^\s*versionCode\s*=\s*(\d+)/, 1]
+  UI.user_error!("Couldn't read versionCode from #{file}") if code.nil?
+  code
+end
+
 platform :android do
   desc "Validate the Play service-account key (auth smoke test)"
   lane :whoami do
@@ -43,9 +55,34 @@ platform :android do
   lane :promote_production do |options|
     rollout = options.fetch(:rollout, "0.2").to_s
     full = rollout.to_f >= 1.0
+    # Naming the versionCode is not a nicety — it is the fix for #58, which failed every staged
+    # release from v1.1.0 to v1.6.0 with "Track 'internal' doesn't have any releases" while the
+    # internal track demonstrably held the release (the diagnostic step in release.yml reads it
+    # back seconds earlier, from its own edit).
+    #
+    # supply/lib/supply/uploader.rb, promote_track:
+    #
+    #     releases = track_from.releases
+    #     if Supply.config[:version_code].to_s != ""
+    #       releases = releases.select { |r| r.version_codes.include?(version_code.to_s) }
+    #     else
+    #       releases = releases.select { |r| r.status == Supply.config[:release_status] }
+    #     end
+    #     UI.user_error!("Track '...' doesn't have any releases") if releases.size == 0
+    #
+    # With no version_code it filters the *source* track by `release_status` — but
+    # `release_status` is the status we want on the *destination*. The `internal` lane publishes
+    # as "completed"; a staged promote asks for "inProgress"; nothing matches and supply reports
+    # the source track as empty. That also explains why it only ever failed on staged rollouts:
+    # `rollout:1.0` sets release_status to "completed", which happens to match the source.
+    #
+    # Passing version_code takes the other branch and skips the status filter entirely.
+    version_code = options.fetch(:version_code, nil).to_s
+    version_code = android_version_code if version_code.empty?
     upload_to_play_store(
       track: "internal",
       track_promote_to: "production",
+      version_code: version_code,
       # "inProgress" is what makes a rollout staged; "completed" ignores the fraction and
       # goes to everyone, which is the trap this lane is trying to avoid.
       release_status: full ? "completed" : "inProgress",
