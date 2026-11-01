@@ -63,14 +63,14 @@ class OpenWisprAccessibilityService : AccessibilityService() {
         val isEnabled: Boolean get() = instance != null
 
         /**
-         * Stage [text] on the clipboard and insert it into the host app's focused
+         * Insert [text] into the host app's focused
          * field as soon as that app is back in front. Returns true if the service
          * is running (so the caller knows auto-insert will be attempted).
          * Call from the main thread.
          */
-        fun enqueueInsert(text: String): Boolean {
+        internal fun enqueueInsert(text: String, capture: ClipboardPasteCapture): Boolean {
             val svc = instance ?: return false
-            svc.startInsert(text)
+            svc.startInsert(text, capture)
             return true
         }
 
@@ -83,6 +83,7 @@ class OpenWisprAccessibilityService : AccessibilityService() {
 
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var pendingText: String? = null
+    private var pendingPasteSession: ClipboardPasteSession? = null
     private val retryDelays = longArrayOf(250, 500, 900, 1400, 2000)
 
     override fun onServiceConnected() {
@@ -198,12 +199,13 @@ class OpenWisprAccessibilityService : AccessibilityService() {
 
     // ---------------- insertion ----------------
 
-    private fun startInsert(text: String) {
+    private fun startInsert(text: String, capture: ClipboardPasteCapture) {
         // Note: we deliberately do NOT stage the clipboard here. The common insert path
         // writes the text straight into the field (ACTION_SET_TEXT) without touching the
         // clipboard, so a successful dictation no longer clobbers what the user had copied.
         // The clipboard is only used as a fallback (see attemptInsert / the give-up branch).
         pendingText = text
+        pendingPasteSession = capture.session
         main.removeCallbacksAndMessages(null)
         // Backstop retries in case the focus event doesn't arrive.
         for (delay in retryDelays) main.postDelayed({ attemptInsert() }, delay)
@@ -212,6 +214,7 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             val t = pendingText
             if (t != null) {
                 pendingText = null
+                pendingPasteSession = null
                 setClipboard(t)
                 // Say what happened. Reaching here means accessibility is running and we still
                 // couldn't find an editable node to write into — which is the normal outcome in
@@ -247,12 +250,10 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             @Suppress("DEPRECATION") node.recycle()
         }
         if (ok) {
-            // Worth distinguishing: the paste path leaves the dictation on the clipboard,
-            // overwriting whatever the user had copied, and on Android 13+ the system shows
-            // its own "Copied" confirmation for it. Both read as success without this.
-            Log.i(TAG, if (viaPaste) "inserted via clipboard paste (clipboard overwritten)"
+            Log.i(TAG, if (viaPaste) "inserted via temporary clipboard paste"
                        else "inserted at cursor (clipboard untouched)")
             pendingText = null
+            pendingPasteSession = null
             main.removeCallbacksAndMessages(null)
             // The haptic tick is the confirmation. A toast on top of text visibly appearing in
             // the field is telling the user something they can already see.
@@ -291,15 +292,19 @@ class OpenWisprAccessibilityService : AccessibilityService() {
             putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, cursor)
             putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, cursor)
         }
-        node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs)
+        // Text was already accepted. Cursor-placement failure must not cause a
+        // later retry to insert it again.
+        runCatching { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs) }
+            .onFailure { Log.w(TAG, "cursor placement failed after accepted insertion", it) }
         return true
     }
 
-    /** Fallback insert: stage on the clipboard and paste. Honors cursor position, but the
-     *  text is necessarily left on the clipboard (only used when [insertAtCursor] can't). */
+    /** Fallback insert: borrow the clipboard, then restore its original contents. */
     private fun pasteViaClipboard(node: AccessibilityNodeInfo, text: String): Boolean {
-        setClipboard(text)
-        return node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+        val session = pendingPasteSession ?: return false
+        return session.paste(text) {
+            node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+        }
     }
 
     /** Focused editable node in the active window, only if it's NOT our own app. */
