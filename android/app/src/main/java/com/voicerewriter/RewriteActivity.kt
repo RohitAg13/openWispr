@@ -240,7 +240,12 @@ class RewriteActivity : ComponentActivity() {
         // No toast on the clipboard fallback: users who skipped Accessibility chose the
         // clipboard deliberately, so being told about it after every single dictation (and
         // nudged to grant the permission again) is nagging, not information.
-        val enqueued = OpenWisprAccessibilityService.enqueueInsert(result)
+        // Capture before finish(): Android 10+ prevents background clipboard reads
+        // once the host app regains focus.
+        val capture = if (OpenWisprAccessibilityService.isEnabled) {
+            ClipboardPasteSession.capture(applicationContext, window.decorView.hasWindowFocus())
+        } else ClipboardPasteCapture(null, "accessibility_disabled")
+        val enqueued = OpenWisprAccessibilityService.enqueueInsert(result, capture)
         if (!enqueued) setClipboard(result)
         LastDictation.set(this, result)
         // Delivery is confirmed — inserted, or on the clipboard where the user can reach it —
