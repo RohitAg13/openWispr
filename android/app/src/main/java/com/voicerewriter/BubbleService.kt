@@ -132,10 +132,9 @@ class BubbleService : Service() {
      */
     private var holdUntil = 0L
 
-    // Field-gated visibility: when on (and accessibility is available), the bubble
-    // only appears while a text field is focused — like a contextual keyboard key.
+    // When enabled, idle visibility follows the keyboard (needs accessibility).
     @Volatile private var gateSetting = true
-    private var fieldFocused = false
+    private var keyboardVisible = false
     private var recording = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -153,9 +152,9 @@ class BubbleService : Service() {
         addBubble()
         isRunning = true
         instance = this
-        // If gated, start hidden until the accessibility service reports a focused field.
+        // If gated, start hidden until the accessibility service reports a visible keyboard.
         applyGating(animate = false)
-        // In case a field is already focused when the bubble starts, ask for a check.
+        // In case the keyboard is already visible when the bubble starts, ask for a check.
         OpenWisprAccessibilityService.reevaluate()
         warmModels()
     }
@@ -706,24 +705,23 @@ class BubbleService : Service() {
             holdUntil = 0L
             recording = false
             setState(BubbleView.State.IDLE)
-            applyGating(animate = true) // re-hide if gated and no field is focused
+            applyGating(animate = true) // re-hide if gated and the keyboard is hidden
         }
     }
 
-    // ---- field-gated visibility (driven by the accessibility service) ----
+    // ---- keyboard-gated visibility (driven by the accessibility service) ----
 
-    /** Whether visibility should track focused text fields (needs accessibility on). */
+    /** Whether idle visibility should follow the keyboard (needs accessibility on). */
     private fun gateActive(): Boolean = gateSetting && OpenWisprAccessibilityService.isEnabled
 
-    private fun shouldShow(): Boolean = recording || fieldFocused || !gateActive()
+    private fun shouldShow(): Boolean = recording || keyboardVisible || !gateActive()
 
     /**
-     * Called by the accessibility service when a host app's editable field gains or
-     * loses input focus. No-op when gating is off (bubble is always visible then).
+     * Called by accessibility with the current on-screen keyboard visibility.
      */
-    fun setFieldFocused(focused: Boolean) {
+    fun setKeyboardVisible(visible: Boolean) {
         mainHandler.post {
-            fieldFocused = focused
+            keyboardVisible = visible
             // Reconcile against the *actual* shown state (incl. alpha), so a transition
             // that left the view VISIBLE-but-transparent can't strand it hidden.
             if (shouldShow() != isShown()) applyGating(animate = true)
