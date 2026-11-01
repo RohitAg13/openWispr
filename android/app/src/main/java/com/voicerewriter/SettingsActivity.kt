@@ -530,14 +530,14 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
                         if (want) enableBubble() else { SetupUtils.stopBubble(context); bubbleOn = false }
                     }
                     Divider()
-                    // Field gating is driven by the accessibility service (BubbleService.gateActive
-                    // needs it to know what's focused). With the grant revoked the toggle keeps
+                    // Keyboard gating is driven by the accessibility service.
+                    // With the grant revoked the toggle keeps
                     // reading "on" while the bubble is in fact always visible, which looks like the
                     // setting broke. Say so instead.
                     ToggleRow(
-                        "Only on text fields",
+                        "Only while keyboard is visible",
                         if (bubbleOnlyOnFields && !a11yEnabled) "Needs auto-insert. The bubble stays visible until you turn it back on."
-                        else "Appear only when you can type",
+                        else "Turn off to keep the bubble always visible",
                         bubbleOnlyOnFields,
                     ) { bubbleOnlyOnFields = it; persist() }
                 }

@@ -63,7 +63,7 @@ data class Settings(
      * context, and the review step cost every dictation 2-6s. On restores the old flow.
      */
     val reviewBeforeInsert: Boolean = false,
-    val bubbleOnlyOnFields: Boolean = true, // show the bubble only while a text field is focused (needs accessibility)
+    val bubbleOnlyOnFields: Boolean = true, // show the bubble only while the keyboard is visible (needs accessibility)
     val hasCompletedOnboarding: Boolean = false, // first-run onboarding shown once; re-launchable from Settings
     // Experimental: Parakeet vocab-bias via sherpa hotwords + modified_beam_search. Off by
     // default — that decode path has an open upstream bug (k2-fsa/sherpa-onnx#3267) that
