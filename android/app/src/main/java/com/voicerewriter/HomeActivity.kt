@@ -71,6 +71,7 @@ import com.voicerewriter.ui.Mulish
 import com.voicerewriter.ui.OpenWisprTheme
 import com.voicerewriter.ui.PlexMono
 import com.voicerewriter.ui.SunsetBrush
+import kotlin.math.roundToLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -981,13 +982,25 @@ class HomeActivity : ComponentActivity() {
      * it matches [formatSaved], which has always compacted ("1.5h").
      */
     private fun formatWords(n: Long): String = when {
-        n < 10_000 -> "%,d".format(n)                                      // "9,999"
-        n < 1_000_000 -> "%.1f".format(n / 1_000.0).dropZero() + "k"       // "12.4k", "120k"
-        else -> "%.1f".format(n / 1_000_000.0).dropZero() + "M"            // "1.2M"
+        n < 10_000 -> "%,d".format(n)                      // "9,999" — locale separator is correct
+        // 999_500, not 1_000_000: above it, n/1000 rounds to "1000.0" and we would print
+        // "1000k" instead of "1M".
+        n < 999_500 -> compact(n / 1_000.0) + "k"          // "12.4k", "120k"
+        else -> compact(n / 1_000_000.0) + "M"             // "1.2M", "15M"
     }
 
-    /** "12.0" -> "12", so a round value doesn't spend two glyphs saying ".0". */
-    private fun String.dropZero(): String = removeSuffix(".0")
+    /**
+     * One decimal place, dropped when it would be a zero, so a round value doesn't spend two
+     * glyphs saying ".0".
+     *
+     * Decided numerically rather than by stripping a ".0" suffix: `"%.1f"` uses the default
+     * locale, so in a comma-decimal locale the suffix is ",0" and string matching silently
+     * fails — "120,0k" reached the one place on the screen with the least room for it. The
+     * locale itself is left alone, because "12,4k" is the correct German rendering; only the
+     * decision about whether to show a decimal has to be locale-independent.
+     */
+    private fun compact(value: Double): String =
+        if ((value * 10).roundToLong() % 10L == 0L) "%.0f".format(value) else "%.1f".format(value)
 
     private fun formatSaved(minutes: Double): String {
         if (minutes < 1) return "0m"
