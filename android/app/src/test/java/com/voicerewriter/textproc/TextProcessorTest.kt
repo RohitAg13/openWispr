@@ -38,4 +38,36 @@ class TextProcessorTest {
             TextProcessor.process("cd slash usr slash bin", isCodeContext = true),
         )
     }
+
+    // --- capitalizationEnabled = false (Settings → "Capitalize sentences" off) ---
+
+    private val noCaps = TextProcessingConfig(capitalizationEnabled = false)
+
+    @Test fun capitalizationOffLeavesCaseAlone() {
+        assertEquals(
+            "send it to bob, then wait. see you tomorrow",
+            TextProcessor.process("send it to bob comma then wait period see you tomorrow", noCaps),
+        )
+    }
+
+    @Test fun capitalizationOffStillCleansEverythingElse() {
+        // The point of the setting is case only: fillers, spoken forms, numbers and
+        // self-corrections must all still run, or it becomes a cleanup off-switch.
+        assertEquals("let's meet at 3", TextProcessor.process("let's meet at 2 actually 3", noCaps))
+        assertEquals("hello\nworld", TextProcessor.process("hello new line world", noCaps))
+    }
+
+    @Test fun capitalizationOffDoesNotRecapitalizeAHalvedSelfCorrection() {
+        // A correction that drops more than half the text re-uppercases the survivor, which
+        // is a *second* path into capitalization and was not gated by the setting.
+        assertEquals(
+            "to john",
+            TextProcessor.process("send it to mark, scratch that, to john", noCaps),
+        )
+        // Same input with the setting on keeps the old behaviour.
+        assertEquals(
+            "To john",
+            TextProcessor.process("send it to mark, scratch that, to john"),
+        )
+    }
 }

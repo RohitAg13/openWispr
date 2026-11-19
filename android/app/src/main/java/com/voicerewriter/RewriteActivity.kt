@@ -529,7 +529,11 @@ class RewriteActivity : ComponentActivity() {
                 DictationLanguage.isEnglish(s.sttLanguage) &&
                 !isTransliteratingModel(s)
             val cleaned0 = if (englishOnlyCleanup)
-                TextProcessor.process(spoken, TextProcessingConfig(), isCodeContext = isCode) else spoken
+                TextProcessor.process(
+                    spoken,
+                    TextProcessingConfig(capitalizationEnabled = s.autoCapitalize),
+                    isCodeContext = isCode,
+                ) else spoken
             // Chat/messaging: drop the trailing full stop Whisper adds to short one-liners — a
             // period on a single casual message reads as terse/formal, which people don't want.
             val cleaned = if (englishOnlyCleanup) dropChatTerminalPeriod(cleaned0, category) else cleaned0

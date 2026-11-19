@@ -55,6 +55,13 @@ data class Settings(
     // --- Dictation / rewrite behavior ---
     val defaultMode: String = Defaults.MODE_DICTATE, // "dictate" | "rewrite"
     val deterministicCleanup: Boolean = true, // fast rule-based cleanup (fillers, spoken forms, numbers, self-corrections)
+    /**
+     * Sentence-case the result. Off means the text is left in whatever case the recognizer
+     * produced, which for Whisper is mostly lowercase with names and places capitalized —
+     * requested by a user who writes that way deliberately. Only [TextProcessor]'s
+     * capitalization stage is affected; filler removal, numbers and self-corrections still run.
+     */
+    val autoCapitalize: Boolean = true,
     val polishLevel: PolishLevel = PolishLevel.FULL, // LLM polish intensity (replaces the old on/off toggle)
     val vadAutoStop: Boolean = true, // Silero VAD: auto-stop when the speaker pauses
     /**
@@ -115,6 +122,7 @@ class SettingsRepository(private val context: Context) {
         val STT_LANGUAGE = stringPreferencesKey("sttLanguage")
         val DEFAULT_MODE = stringPreferencesKey("defaultMode")
         val DETERMINISTIC_CLEANUP = booleanPreferencesKey("deterministicCleanup")
+        val AUTO_CAPITALIZE = booleanPreferencesKey("autoCapitalize")
         val POLISH_LEVEL = stringPreferencesKey("polishLevel")
         val VAD_AUTO_STOP = booleanPreferencesKey("vadAutoStop")
         val REVIEW_BEFORE_INSERT = booleanPreferencesKey("reviewBeforeInsert")
@@ -140,6 +148,7 @@ class SettingsRepository(private val context: Context) {
             sttLanguage = DictationLanguage.normalize(p[Keys.STT_LANGUAGE] ?: defaults.sttLanguage),
             defaultMode = p[Keys.DEFAULT_MODE] ?: defaults.defaultMode,
             deterministicCleanup = p[Keys.DETERMINISTIC_CLEANUP] ?: defaults.deterministicCleanup,
+            autoCapitalize = p[Keys.AUTO_CAPITALIZE] ?: defaults.autoCapitalize,
             polishLevel = PolishLevel.from(p[Keys.POLISH_LEVEL]),
             vadAutoStop = p[Keys.VAD_AUTO_STOP] ?: defaults.vadAutoStop,
             reviewBeforeInsert = p[Keys.REVIEW_BEFORE_INSERT] ?: defaults.reviewBeforeInsert,
@@ -167,6 +176,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.STT_LANGUAGE] = DictationLanguage.normalize(s.sttLanguage)
             p[Keys.DEFAULT_MODE] = s.defaultMode
             p[Keys.DETERMINISTIC_CLEANUP] = s.deterministicCleanup
+            p[Keys.AUTO_CAPITALIZE] = s.autoCapitalize
             p[Keys.POLISH_LEVEL] = s.polishLevel.key
             p[Keys.VAD_AUTO_STOP] = s.vadAutoStop
             p[Keys.REVIEW_BEFORE_INSERT] = s.reviewBeforeInsert
