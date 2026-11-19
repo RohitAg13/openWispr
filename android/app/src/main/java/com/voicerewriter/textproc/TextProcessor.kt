@@ -70,8 +70,10 @@ object TextProcessor {
             val before = text
             text = SelfCorrectionDetector.detectAndResolve(text)
             // If a correction cut the text in half, recapitalize the survivor
-            // ("send to mark, scratch that, to john" -> "To john"). Skip for code.
-            if (!isCodeContext) {
+            // ("send to mark, scratch that, to john" -> "To john"). Skip for code, and skip
+            // when the user has turned sentence case off — otherwise this stage would
+            // capitalize for them behind the back of the setting that says not to.
+            if (!isCodeContext && config.capitalizationEnabled) {
                 val bw = before.split(Regex("\\s+")).count { it.isNotEmpty() }
                 val aw = text.split(Regex("\\s+")).count { it.isNotEmpty() }
                 if (bw > 0 && aw > 0 && aw.toDouble() / bw <= 0.5 &&

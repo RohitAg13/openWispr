@@ -2,6 +2,7 @@ package com.voicerewriter
 
 import android.Manifest
 import android.content.Context
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -131,6 +132,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
     var sttLanguage by remember { mutableStateOf(DictationLanguage.DEFAULT) }
     var defaultMode by remember { mutableStateOf(Defaults.MODE_DICTATE) }
     var deterministicCleanup by remember { mutableStateOf(true) }
+    var autoCapitalize by remember { mutableStateOf(true) }
     var polishLevel by remember { mutableStateOf(PolishLevel.OFF) }
     var vadAutoStop by remember { mutableStateOf(true) }
     var reviewBeforeInsert by remember { mutableStateOf(false) }
@@ -173,6 +175,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         sttLanguage = DictationLanguage.normalize(s.sttLanguage)
         defaultMode = s.defaultMode
         deterministicCleanup = s.deterministicCleanup; polishLevel = s.polishLevel
+        autoCapitalize = s.autoCapitalize
         vadAutoStop = s.vadAutoStop; bubbleOnlyOnFields = s.bubbleOnlyOnFields
         reviewBeforeInsert = s.reviewBeforeInsert
         parakeetHotwordsExperimental = s.parakeetHotwordsExperimental
@@ -228,6 +231,7 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         sttProvider = sttProvider, sttEndpoint = sttEndpoint.trim(), sttKey = sttKey.trim(),
         sttModel = sttModel.trim(), sttLanguage = sttLanguage, defaultMode = defaultMode,
         deterministicCleanup = deterministicCleanup, polishLevel = polishLevel,
+        autoCapitalize = autoCapitalize,
         vadAutoStop = vadAutoStop, bubbleOnlyOnFields = bubbleOnlyOnFields,
         reviewBeforeInsert = reviewBeforeInsert,
         hasCompletedOnboarding = true,
@@ -300,11 +304,12 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+      Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
         HeroHeader()
 
         Column(
-            Modifier.fillMaxWidth().padding(16.dp).navigationBarsPadding(),
+            Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
             // ---------------- SETUP STATUS ----------------
@@ -460,6 +465,13 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
             Section("Cleanup & polish") {
                 Card {
                     ToggleRow("Smart cleanup", "Fillers, punctuation, numbers, backtracking · on-device, instant", deterministicCleanup) { deterministicCleanup = it; persist() }
+                    if (deterministicCleanup) {
+                        ToggleRow(
+                            "Capitalize sentences",
+                            "Off keeps the recognizer's own casing — mostly lowercase, with names and places capitalized",
+                            autoCapitalize,
+                        ) { autoCapitalize = it; persist() }
+                    }
                     Divider()
                     Padded {
                         Text("AI polish", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
@@ -649,6 +661,21 @@ private fun SettingsScreen(repo: SettingsRepository, launch: (suspend () -> Unit
 
             Spacer(Modifier.height(8.dp))
         }
+      }
+
+        AppBottomBar(
+            selected = NavTab.SETTINGS,
+            // finish() rather than starting HomeActivity: Home is already under us
+            // on the back stack, and a second copy would make back go somewhere odd.
+            onHome = { (context as? Activity)?.finish() },
+            onTalk = {
+                context.startActivity(
+                    Intent(context, RewriteActivity::class.java)
+                        .putExtra(RewriteActivity.EXTRA_AUTO_RECORD, true),
+                )
+            },
+            onSettings = {},
+        )
     }
 }
 

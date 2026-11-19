@@ -71,6 +71,7 @@ import com.voicerewriter.ui.Mulish
 import com.voicerewriter.ui.OpenWisprTheme
 import com.voicerewriter.ui.PlexMono
 import com.voicerewriter.ui.SunsetBrush
+import kotlin.math.roundToLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -310,7 +311,12 @@ class HomeActivity : ComponentActivity() {
                         Spacer(Modifier.height(8.dp))
                     }
 
-                    BottomBar(onTalk = ::openTalk, onSettings = ::openSettings)
+                    AppBottomBar(
+                        selected = NavTab.HOME,
+                        onHome = {},
+                        onTalk = ::openTalk,
+                        onSettings = ::openSettings,
+                    )
                 }
 
                 // Snackbar
@@ -403,9 +409,25 @@ class HomeActivity : ComponentActivity() {
                 value,
                 fontFamily = Mulish,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 30.sp,
+                // Shrink by length rather than wrap. Compose 1.7 has no autoSize (it arrives
+                // in 1.8), and these cells are ~73dp on a 360dp screen, so a long value has
+                // to give somewhere. Giving on size keeps one line; giving on width is what
+                // produced the two-characters-per-line band. [formatWords] keeps the common
+                // case at four glyphs, so 30.sp is what almost everyone sees.
+                fontSize = when (value.length) {
+                    in 0..5 -> 30.sp
+                    6 -> 25.sp
+                    else -> 21.sp
+                },
                 letterSpacing = (-0.02).em,
                 color = MaterialTheme.colorScheme.onSurface,
+                // The real guard. Without these, a token with no break opportunity — any
+                // number, with or without separators — is broken mid-token, and the band
+                // collapses into a column of single characters. Clipping a stat is
+                // recoverable; that was not.
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(9.dp))
             Eyebrow(label, size = 9.5f)
@@ -414,7 +436,9 @@ class HomeActivity : ComponentActivity() {
 
     @Composable
     private fun StatDivider() {
-        Box(Modifier.padding(horizontal = 16.dp).width(1.dp).height(60.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)))
+        // 10dp rather than 16dp: the two dividers were spending 66dp of a 284dp row on
+        // whitespace, which is a third of one stat cell. Buys ~8dp per cell back.
+        Box(Modifier.padding(horizontal = 10.dp).width(1.dp).height(60.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)))
     }
 
     @Composable
@@ -884,61 +908,6 @@ class HomeActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun BottomBar(onTalk: () -> Unit, onSettings: () -> Unit) {
-        // Light tap feedback so the carousel feels physical. VIRTUAL_KEY is the standard
-        // "button press" haptic and respects the system's touch-feedback setting.
-        val view = LocalView.current
-        fun haptic() = view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        // Plain Box (not Surface) so the raised Talk FAB can overflow above the bar without being clipped.
-        Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-            Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
-            Row(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(14.dp, 8.dp, 14.dp, 12.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                    // Home (active)
-                    NavItem(label = "Home", selected = true, onClick = { haptic() }) {
-                        Icon(painterResource(R.drawable.ic_aperture), null,
-                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                    }
-                    // Talk (raised FAB)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            Modifier.offset(y = (-18).dp).size(58.dp).clip(CircleShape).background(SunsetBrush)
-                                .clickable { haptic(); onTalk() },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(painterResource(R.drawable.ic_aperture), null, tint = MarkCream,
-                                modifier = Modifier.size(30.dp))
-                        }
-                        Text("Talk", fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.offset(y = (-12).dp))
-                    }
-                    // Settings
-                    NavItem(label = "Settings", selected = false, onClick = { haptic(); onSettings() }) {
-                        Icon(painterResource(R.drawable.ic_settings_lines), null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-                    }
-                }
-        }
-    }
-
-    @Composable
-    private fun NavItem(label: String, selected: Boolean, onClick: () -> Unit, icon: @Composable () -> Unit) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.width(88.dp).clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick)) {
-            Box(
-                Modifier.width(64.dp).height(32.dp).clip(RoundedCornerShape(16.dp))
-                    .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent),
-                contentAlignment = Alignment.Center,
-            ) { icon() }
-            Text(label, fontFamily = Mulish, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-
-    @Composable
     private fun Eyebrow(text: String, size: Float = 11f, tracking: Double = 0.1) {
         Text(
             text.uppercase(),
@@ -999,7 +968,39 @@ class HomeActivity : ComponentActivity() {
         return HomeData(keep, groups.map { DayGroup(it.key, it.value) }, DictationHistory.stats(ctx), unfinished)
     }
 
-    private fun formatWords(n: Long): String = "%,d".format(n)
+    /**
+     * Compact, because this value shares a row with two others and the cell is narrow.
+     *
+     * `"%,d"` was the bug behind the stats band wrapping to about two characters per line on
+     * a Samsung S21 (reported by email, 2026-11): it grows without bound, so a heavy user hit
+     * "120,000" — seven glyphs needing ~107dp at 30.sp, in a cell that is ~73dp on a 360dp
+     * screen (360 − 36 outer − 40 inner − 66 for two dividers, over three cells). Thousands
+     * separators also give the line breaker nothing to break on, so Compose split *inside* the
+     * token, one or two characters per line. At Samsung's large font scale it needed ~139dp.
+     *
+     * Four glyphs is the worst case now ("12.4k", "1.2M"), which fits with room to spare, and
+     * it matches [formatSaved], which has always compacted ("1.5h").
+     */
+    private fun formatWords(n: Long): String = when {
+        n < 10_000 -> "%,d".format(n)                      // "9,999" — locale separator is correct
+        // 999_500, not 1_000_000: above it, n/1000 rounds to "1000.0" and we would print
+        // "1000k" instead of "1M".
+        n < 999_500 -> compact(n / 1_000.0) + "k"          // "12.4k", "120k"
+        else -> compact(n / 1_000_000.0) + "M"             // "1.2M", "15M"
+    }
+
+    /**
+     * One decimal place, dropped when it would be a zero, so a round value doesn't spend two
+     * glyphs saying ".0".
+     *
+     * Decided numerically rather than by stripping a ".0" suffix: `"%.1f"` uses the default
+     * locale, so in a comma-decimal locale the suffix is ",0" and string matching silently
+     * fails — "120,0k" reached the one place on the screen with the least room for it. The
+     * locale itself is left alone, because "12,4k" is the correct German rendering; only the
+     * decision about whether to show a decimal has to be locale-independent.
+     */
+    private fun compact(value: Double): String =
+        if ((value * 10).roundToLong() % 10L == 0L) "%.0f".format(value) else "%.1f".format(value)
 
     private fun formatSaved(minutes: Double): String {
         if (minutes < 1) return "0m"
