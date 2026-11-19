@@ -51,7 +51,7 @@ jobs:
   # ran. They pass, and always did. Nobody was watching.
   macos:
     name: macOS build & unit tests
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
